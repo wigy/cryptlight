@@ -1,0 +1,12 @@
+# Allowlist: only what the game loads goes in the image, so anything new stays out unless it's named here.
+*
+!index.html
+!main.js
+!LICENSE
+!engine/
+!rules/
+!modules/
+!data/
+!assets/game/
+!assets/audio/
+!tools/serve.mjs

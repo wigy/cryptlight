@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = normalize(join(dirname(fileURLToPath(import.meta.url)), '..'));
 const PORT = Number(process.env.PORT ?? 8080);
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.jpg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
+const HOST = process.env.HOST ?? '127.0.0.1'; // Local only unless asked: the Docker image sets 0.0.0.0.
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.jpg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.ogg': 'audio/ogg' };
 
 createServer((req, res) => {
   const path = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
@@ -20,4 +21,7 @@ createServer((req, res) => {
   } catch {
     res.writeHead(404).end('not found');
   }
-}).listen(PORT, '127.0.0.1', () => console.log(`Cryptlight running at http://localhost:${PORT}`));
+}).listen(PORT, HOST, () => console.log(`Cryptlight running at http://localhost:${PORT}`));
+
+// Node ignores these by default when it runs as a container's main process, which makes `docker stop` hang.
+for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => process.exit(0));

@@ -90,6 +90,17 @@ License and must stay out of this repository. Add a build's `assets/audio` when 
 npm run sfx:process -- <folder of source recordings>   # trim, level and encode into assets/audio
 ```
 
+## Docker
+
+```
+docker build -t cryptlight .             # needs assets/audio, and fails without it
+docker run -p 8080:8080 cryptlight
+```
+
+The image holds only what the game loads, as listed in `.dockerignore`, including the licensed sounds. So build it
+where `assets/audio` exists, not from a fresh clone or public CI, and keep it in a private registry. Pushing it
+somewhere public would supply the sounds apart from the game. See "Sound" above.
+
 ## Credits and license
 
 The project is released under the [MIT License](LICENSE), except that material from the SRD, in `data/srd/`
