@@ -4,6 +4,8 @@ A general-purpose, real-time, first-person grid dungeon crawler engine in the tr
 Atari ST games, with a 5E compatible ruleset and an original first-level adventure,
 *The Well at Thornwick*. It needs no build step and no runtime dependencies.
 
+![A goblin warrior attacks in a torchlit dungeon corridor, with party portraits above, the combat log below and the action panel on the right](docs/screenshot.png)
+
 ```
 npm start        # then open http://localhost:8080
 npm test         # data, rules, engine, and a bot that plays the whole adventure
