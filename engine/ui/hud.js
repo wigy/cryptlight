@@ -55,7 +55,15 @@ export class Hud {
     this.stage.innerHTML = `
       <div id="party" class="panelbg"></div>
       <div id="viewwrap"><div id="floaters"></div><div id="banner"></div></div>
-      <div id="log" class="panelbg"></div>
+      <div id="log" class="panelbg"><div id="loglines"></div>
+        <div id="pad">
+          <button data-act="turn:-1" data-hint="Turn left (Q)">&#8634;</button>
+          <button data-act="step:0" data-hint="Forward (W)">&#8593;</button>
+          <button data-act="turn:1" data-hint="Turn right (E)">&#8635;</button>
+          <button data-act="step:3" data-hint="Sidestep left (A)">&#8592;</button>
+          <button data-act="step:2" data-hint="Back (S)">&#8595;</button>
+          <button data-act="step:1" data-hint="Sidestep right (D)">&#8594;</button>
+        </div></div>
       <div id="side" class="panelbg">
         <div id="status"></div>
         <div id="tools">
@@ -66,20 +74,12 @@ export class Hud {
           <button data-act="exit" data-hint="Save the game and return to the main menu.">Exit</button>
         </div>
         <div id="actions"></div>
-        <div id="pad">
-          <button data-act="turn:-1" data-hint="Turn left (Q)">&#8634;</button>
-          <button data-act="step:0" data-hint="Forward (W)">&#8593;</button>
-          <button data-act="turn:1" data-hint="Turn right (E)">&#8635;</button>
-          <button data-act="step:3" data-hint="Sidestep left (A)">&#8592;</button>
-          <button data-act="step:2" data-hint="Back (S)">&#8595;</button>
-          <button data-act="step:1" data-hint="Sidestep right (D)">&#8594;</button>
-        </div>
       </div>`;
     this.pauseButton = this.stage.querySelector('[data-act="pause"]');
     this.lockable = [...this.stage.querySelectorAll('#pad button, [data-act="rest"]')];
     const wrap = this.stage.querySelector('#viewwrap');
     wrap.prepend(this.app.canvas);
-    this.els = Object.fromEntries(['party', 'viewwrap', 'floaters', 'banner', 'log', 'status', 'actions'].map((id) => [id, this.stage.querySelector(`#${id}`)]));
+    this.els = Object.fromEntries(['party', 'viewwrap', 'floaters', 'banner', 'loglines', 'status', 'actions'].map((id) => [id, this.stage.querySelector(`#${id}`)]));
     this.els.inv = document.createElement('div');
     this.els.inv.id = 'inv';
     this.els.inv.hidden = true;
@@ -193,7 +193,7 @@ export class Hud {
 
   renderLog() {
     const lines = this.game.logLines.slice(-6);
-    setHtml(this.els.log, lines.map((l) => `<div style="color:${COLORS[l.color] ?? COLORS[5]}">${esc(l.text)}</div>`).join(''));
+    setHtml(this.els.loglines, lines.map((l) => `<div style="color:${COLORS[l.color] ?? COLORS[5]}">${esc(l.text)}</div>`).join(''));
   }
 
   renderInventory() {
@@ -264,11 +264,21 @@ export class Hud {
     this.command(el.dataset.act);
   }
 
+  /** Plays the press animation on a movement button, for clicks and keys alike. */
+  pressPad(act) {
+    const el = this.stage.querySelector(`#pad [data-act="${act}"]`);
+    if (!el) return;
+    el.classList.remove('pressed');
+    void el.offsetWidth; // Restarts the animation when the same button is pressed again.
+    el.classList.add('pressed');
+  }
+
   /** Runs a HUD command. Also the entry point for keyboard shortcuts. */
   command(act) {
     const g = this.game;
     const [verb, a, b] = act.split(':');
     if (g.paused && PAUSE_LOCKED.has(verb)) return;
+    if (verb === 'turn' || verb === 'step') this.pressPad(act);
     switch (verb) {
       case 'pause':
         g.paused = !g.paused;

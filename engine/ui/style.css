@@ -46,7 +46,12 @@ button:disabled { opacity: .45; cursor: default; }
 #paused { position: absolute; inset: 0; display: grid; place-items: center; background: #0007; font-size: 44px; letter-spacing: 8px; color: var(--gold); pointer-events: none; }
 
 /* Log */
-#log { position: absolute; left: 0; top: 660px; width: 896px; height: 140px; padding: 6px 12px; font-size: 16px; line-height: 21px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; border-top: 1px solid var(--line); }
+#log { position: absolute; left: 0; top: 660px; width: 896px; height: 140px; padding: 6px 12px; font-size: 16px; line-height: 21px; overflow: hidden; display: flex; gap: 12px; align-items: center; border-top: 1px solid var(--line); }
+#loglines { flex: 1; min-width: 0; height: 100%; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+#pad { flex: none; display: grid; grid-template-columns: repeat(3, 56px); grid-auto-rows: 60px; gap: 4px; }
+#pad button { padding: 0; font-size: 24px; line-height: 1; }
+#pad button.pressed { animation: padpress .18s ease-out; }
+@keyframes padpress { 0% { transform: scale(.86); border-color: var(--gold); color: #fff3cf; background: linear-gradient(#6b5530, #3e3019); } 100% { transform: scale(1); } }
 #hint { position: absolute; left: 0; bottom: 140px; width: 896px; max-height: 190px; padding: 8px 12px; background: #120e09ee; font-size: 15px; line-height: 19px; overflow: hidden; border-top: 1px solid var(--gold); pointer-events: none; z-index: 5; }
 #hint b { color: var(--gold); }
 
@@ -72,8 +77,6 @@ button:disabled { opacity: .45; cursor: default; }
 .act { text-align: left; padding: 6px 10px; font-size: 15px; }
 .act.sub::after { content: ''; }
 .actlist { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; min-height: 0; }
-#pad { margin-top: auto; flex: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; height: 148px; }
-#pad button { font-size: 30px; line-height: 1; }
 
 /* Inventory */
 #inv { position: absolute; inset: 0; padding: 10px 18px; display: grid; grid-template-columns: 300px 316px 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 10px 16px; background: #120e09; }

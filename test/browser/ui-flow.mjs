@@ -205,6 +205,20 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await until(`!!document.querySelector('.pack') && !document.querySelector('#inv').hidden`);
   await digit(2, false);
   await until(invClosed);
+  // Movement buttons sit in the text box and animate for clicks and keys alike.
+  assert.ok(await ev(`!!document.querySelector('#log #pad') && !document.querySelector('#side #pad')`), 'the pad is in the text box');
+  await ev(`(() => { window.__pressed = []; document.addEventListener('animationstart', (e) => { if (e.animationName === 'padpress') window.__pressed.push(e.target.dataset.act); }); })()`);
+  const pressed = (act) => until(`window.__pressed.includes('${act}')`);
+  await key('KeyW'); await pressed('step:0');
+  await key('ArrowLeft'); await pressed('step:3');
+  await key('PageUp'); await pressed('turn:-1');
+  await clickEl('#pad [data-act="turn:1"]'); await pressed('turn:1');
+  await key('KeyW'); await wait(60); // Pressing the same button again plays it again.
+  const before2 = await ev(`window.__pressed.length`);
+  await wait(400);
+  await key('KeyW');
+  await until(`window.__pressed.length > ${before2}`);
+  await shot('19-pad');
   // An empty slot goes straight to choosing.
   await clickEl('.who:nth-child(1) [data-act="abilities:0"]');
   await wait(100);
