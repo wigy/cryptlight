@@ -14,14 +14,9 @@ const NEAR_REACH = 2.1; // How far, in cells along the view, things can be picke
 const PAUSE_LOCKED = new Set(['turn', 'step', 'rest', 'dorest', 'menu', 'sub', 'do', 'quick', 'quicksub', 'quickset', 'slot', 'pack', 'consume']);
 
 const glyph = (body) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
-/** Pictures for quick actions that have no item to show. */
+/** Drawn fallback for quick actions with no item and no painted icon. */
 const GLYPHS = {
-  fist: glyph('<path d="M7 12V7.5a1.5 1.5 0 0 1 3 0V11m0-4.5a1.5 1.5 0 0 1 3 0V11m0-3.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.5a5.5 5.5 0 0 1-4.6-2.5L4.3 15a1.6 1.6 0 0 1 2.6-1.8L7 13.5"/>'),
-  dodge: glyph('<path d="M15 3.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 9l-3 4 4 3v5M10 13l-2 3-4 1M13 9l4 2 3-1"/><path d="M3 6c1.5-1 3-1 4.5 0M2 10c1.2-.7 2.3-.7 3.5 0" stroke-width="1.2"/>'),
-  search: glyph('<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/><path d="M7.5 10.5a3 3 0 0 1 3-3" stroke-width="1.2"/>'),
-  skill: glyph('<path d="M13 2 5 14h6l-1 8 9-13h-6z"/>'),
   plus: glyph('<path d="M12 7v10M7 12h10" stroke-width="1.3"/>'),
-  cast: glyph('<path d="M4 20 14 10M14 10l1.5-1.5"/><path d="M17 2.5l1 3 3 1-3 1-1 3-1-3-3-1 3-1zM7 5l.6 1.8L9.4 7.4l-1.8.6L7 9.8l-.6-1.8-1.8-.6 1.8-.6zM19 14l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6z" stroke-width="1.2"/>'),
 };
 
 export class Hud {
@@ -44,6 +39,11 @@ export class Hud {
   }
 
   img(name) { return this.app.assetUrl(name) ?? ''; }
+  /** A painted `icon-<name>` if the assets have one, otherwise the drawn glyph. */
+  glyphHtml(name) {
+    const url = this.app.assetUrl(`icon-${name}`);
+    return url ? `<img src="${url}" alt="">` : GLYPHS[name] ?? '';
+  }
   itemImg(item) { return this.img(`icon-${this.game.ruleset.itemInfo(item).icon}`); }
 
   // ---------------------------------------------------------------- play layout
@@ -186,7 +186,7 @@ export class Hud {
       const icons = (g.ruleset.memberQuickActions?.(g, m) ?? []).map((a) => {
         const act = a.empty ? `abilities:${i}` : a.submenu ? `quicksub:${i}:${a.submenu}` : `quick:${i}:${a.id}`;
         const named = a.kind ? ' named' : '';
-        const picture = a.item ? `<img src="${this.itemImg(a.item)}" alt="">` : GLYPHS[a.glyph] ?? '';
+        const picture = a.item ? `<img src="${this.itemImg(a.item)}" alt="">` : this.glyphHtml(a.glyph);
         return `<button class="quick${named}${a.empty ? ' empty' : ''}" data-act="${esc(act)}" ${a.enabled && !g.paused ? '' : 'disabled'} data-hint="${esc(`<b>${a.label}</b>. ${a.hint ?? ''}`)}">${picture}${named ? `<span>${esc(a.label)}</span>` : ''}</button>`;
       }).join('');
       return `<div class="who">
@@ -236,7 +236,7 @@ export class Hud {
     const row = (a) => {
       const id = a.quickId ?? a.id;
       const on = picked.includes(id);
-      return `<button class="ability${on ? ' on' : ''}" data-act="${esc(`quickset:${i}:${id}`)}" ${on || picked.length < 2 ? '' : 'disabled'} data-hint="${esc(`<b>${a.label}</b>. ${a.hint ?? ''}`)}">${GLYPHS[a.glyph] ?? ''}<span>${esc(a.label)}</span><i>${on ? '&#10003;' : ''}</i></button>`;
+      return `<button class="ability${on ? ' on' : ''}" data-act="${esc(`quickset:${i}:${id}`)}" ${on || picked.length < 2 ? '' : 'disabled'} data-hint="${esc(`<b>${a.label}</b>. ${a.hint ?? ''}`)}">${this.glyphHtml(a.glyph)}<span>${esc(a.label)}</span><i>${on ? '&#10003;' : ''}</i></button>`;
     };
     const section = (title, kind) => {
       const rows = list.filter((a) => a.kind === kind).map(row).join('');

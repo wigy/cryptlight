@@ -194,8 +194,9 @@ def main():
             if d.get('floodKey'):
                 cut = flood_key(cut)
             if not d.get('noTrim'):
-                cut = trim(keep_main_subject(cut))
-            fit(cut, SPRITE_MAX).save(os.path.join(OUT, f'{art_id}.webp'), quality=90, method=6)
+                # Loose pieces are usually stray torches, but `loose` keeps ones that belong, such as sparks.
+                cut = trim(cut if d.get('loose') else keep_main_subject(cut))
+            fit(cut, d.get('size', SPRITE_MAX)).save(os.path.join(OUT, f'{art_id}.webp'), quality=90, method=6)
             sizes[art_id] = cut.size
         elif kind == 'sheet':
             grid = d['grid']

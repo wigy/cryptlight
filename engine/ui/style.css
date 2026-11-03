@@ -70,7 +70,7 @@ button:disabled { opacity: .45; cursor: default; }
 .quicks { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 .quick { height: 62px; padding: 2px; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; background: var(--slot); color: var(--gold); }
 .quick img, .quick svg { width: 38px; height: 38px; object-fit: contain; display: block; flex: none; }
-.quick.named svg { width: 26px; height: 26px; }
+.quick.named img, .quick.named svg { width: 28px; height: 28px; }
 .quick.named span { font: 10px/11px sans-serif; color: var(--ink); text-align: center; max-height: 33px; overflow: hidden; overflow-wrap: anywhere; }
 .quick.empty { border-style: dashed; color: var(--dim); }
 .quick:disabled { opacity: .35; filter: grayscale(1); }
@@ -89,7 +89,7 @@ button:disabled { opacity: .45; cursor: default; }
 .abilities h3 { margin: 8px 0 4px; font-size: 14px; font-weight: normal; color: var(--dim); }
 .abilist { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
 .ability { display: grid; grid-template-columns: 24px 1fr 16px; gap: 8px; align-items: center; padding: 5px 8px; text-align: left; font-size: 14px; color: var(--ink); }
-.ability svg { width: 24px; height: 24px; color: var(--gold); }
+.ability img, .ability svg { width: 24px; height: 24px; object-fit: contain; color: var(--gold); }
 .ability i { font-style: normal; color: var(--gold); }
 .ability.on { border-color: var(--gold); background: linear-gradient(#54431f, #33280f); }
 .noability { color: var(--dim); font-size: 15px; }

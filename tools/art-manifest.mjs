@@ -44,7 +44,7 @@ add('spider', 'sprite', '1:1', `${SOLO} A giant hairy cave spider, front view co
 add('centipede', 'sprite', '1:1', `${SOLO} A giant armored cave centipede rearing up toward the viewer, front view, snapping mandibles. ${CUTOUT}`);
 
 // --- dungeon features
-add('chest', 'sprite', '1:1', `${SOLO} A closed old wooden treasure chest bound in iron, front view seen from slightly above. ${CUTOUT}`, { floodKey: true });
+add('chest', 'sprite', '1:1', `${SOLO} A closed old wooden treasure chest bound in iron, front view seen from slightly above. ${CUTOUT}`);
 add('chest-open', 'sprite', '1:1', `${SOLO} An open empty old wooden treasure chest bound in iron, lid up, front view seen from slightly above. ${CUTOUT}`);
 add('altar', 'sprite', '1:1', `${SOLO} A blood-stained black stone sacrificial altar carved with skulls, front view. ${CUTOUT}`);
 
@@ -52,6 +52,15 @@ add('altar', 'sprite', '1:1', `${SOLO} A blood-stained black stone sacrificial a
 export const ICONS = ['sword', 'dagger', 'axe', 'mace', 'bow', 'staff', 'spear', 'shield', 'heavy-armor', 'light-armor', 'potion', 'scroll', 'key', 'torch', 'food', 'tools', 'coin', 'amulet', 'ring', 'book', 'arrows', 'pouch', 'gem', 'bones', 'unknown'];
 const iconDesc = 'row 1: longsword, dagger, battle axe, spiked mace, wooden bow; row 2: wizard staff, spear, round shield, steel chain mail shirt, brown leather armor; row 3: red potion bottle, rolled parchment scroll, iron key, lit torch, bread and cheese; row 4: leather roll of lockpicks, stack of gold coins, silver amulet, gold ring, leather-bound book; row 5: quiver of arrows, leather pouch, glowing blue gemstone, pile of bones, small wooden crate';
 add('icons', 'sheet', '1:1', `A game inventory icon sheet: exactly 25 separate fantasy items in a neat 5 by 5 grid, evenly spaced, each centered in its own cell and not touching any other, painted in a consistent hand-painted fantasy RPG style with strong readable silhouettes. In order, ${iconDesc}. ${CUTOUT}`, { grid: 5 });
+
+// --- action icons for the character boxes; items already have theirs on the sheet above
+// Saying "icon" here made Gemini add graphic symbols and pictograms, so these ask for a plain painted object.
+const ACTION = `${SOLO} One single painted object with a strong simple silhouette, centered, filling most of the frame. Only this one object: no symbols, no pictograms, no arrows, no graphic overlays, no frame, no background plate. ${CUTOUT}`;
+add('icon-fist', 'sprite', '1:1', `A clenched human fist seen from the front, bare scarred knuckles, a leather wrap around the wrist. ${ACTION}`, { size: 128 });
+add('icon-dodge', 'sprite', '1:1', `A lone worn leather boot seen from the side, heel lifted as if springing away, with a pale wisp of dust curling behind the heel. ${ACTION}`, { size: 128 });
+add('icon-search', 'sprite', '1:1', `An antique brass magnifying glass with a round lens and a wooden handle, tilted diagonally. ${ACTION}`, { size: 128 });
+add('icon-cast', 'sprite', '1:1', `A complete slender carved wooden magic wand lying diagonally across the frame, from bottom left to top right, one unbroken piece with no hand holding it, golden sparks glowing around its tip. ${ACTION}`, { size: 128, loose: true });
+add('icon-skill', 'sprite', '1:1', `A single jagged bolt of golden lightning floating in empty space, glowing, with small crackling sparks. ${ACTION}`, { size: 128 });
 
 // --- portraits: the default party, then one per remaining class
 add('portrait-fighter', 'image', '1:1', `A stocky female dwarf fighter with braided copper hair, scarred cheek, steel chain mail. ${PORTRAIT}`);
