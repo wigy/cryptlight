@@ -68,5 +68,7 @@ Pass an object with these to `new Game(module, ruleset)`. `rules/srd5/ruleset.js
 | `memberAbilities(game, m)`, `toggleQuick(game, m, id)` | Optional. The inventory's Skills & Spells list (`kind` is `skill` or `spell`) and picking two for quick access |
 | `onNewGame`, `moveBlocked`, `partyStepSeconds`, `onPartyWillMove`, `markUnaware` | Optional hooks |
 
+`level.explored` records the automap, one number per cell (0 unseen, 1 seen, 2 visited). `Game.updateExplored` fills it in from `light(game).radius` and line of sight, and it's saved with the level.
+
 All game state must stay plain JSON, because saving serializes it directly. Use `game.rng`, never `Math.random`, so runs stay reproducible.
 `main.js` currently wires in Thornwick and srd5 by name; change `MODULE` and the ruleset there to run something else.

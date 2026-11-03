@@ -5,6 +5,7 @@ import { Rng } from './rng.js';
 export const DIRS = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }]; // N E S W
 const LOG_LIMIT = 60;
 const DOOR_SPEED = 1.4; // Fractions of a door per real second.
+const UNSEEN = 0, SEEN = 1, VISITED = 2; // Values in level.explored, one per cell.
 
 const clone = (x) => structuredClone(x);
 
@@ -85,6 +86,7 @@ export class Game {
     this.ruleset.onNewGame?.(this);
     if (this.module.intro) for (const line of this.module.intro) this.log(line, 9);
     this.runObjectsAt(this.party.x, this.party.y, 'enter');
+    this.updateExplored();
   }
 
   instantiateItem(s) {
@@ -155,6 +157,37 @@ export class Game {
       if ((x !== x1 || y !== y1) && this.blocksSight(x, y, level)) return false;
     }
     return true;
+  }
+
+  // ---------------------------------------------------------------- automap
+  /**
+   * Records what the party can see now: lit cells in the first-person view with a clear line, walls included.
+   * Cheap to call every tick, because it only looks again when something that affects the view has changed.
+   */
+  updateExplored() {
+    const p = this.party, level = this.level;
+    const radius = (this.ruleset.light?.(this).radius ?? 4) + 0.6; // The renderer's light reaches this far too.
+    const doors = level.objects.filter((o) => o.type === 'door').map((d) => (d.open >= 0.5 ? 1 : 0)).join('');
+    const key = [level.id, p.x, p.y, p.dir, radius, this.geometryVersion ?? 0, doors].join();
+    if (this.exploredKey === key) return;
+    this.exploredKey = key;
+    level.explored ??= new Array(level.width * level.height).fill(UNSEEN);
+    const f = DIRS[p.dir];
+    const reach = Math.ceil(radius);
+    const mark = (x, y, value) => {
+      const i = y * level.width + x;
+      if (level.explored[i] < value) { level.explored[i] = value; this.exploreVersion = (this.exploreVersion ?? 0) + 1; }
+    };
+    for (let y = Math.max(0, p.y - reach); y <= Math.min(level.height - 1, p.y + reach); y++) {
+      for (let x = Math.max(0, p.x - reach); x <= Math.min(level.width - 1, p.x + reach); x++) {
+        const dx = x - p.x, dy = y - p.y;
+        if (Math.hypot(dx, dy) > radius) continue;
+        const ahead = dx * f.x + dy * f.y, across = Math.abs(dx * f.y - dy * f.x);
+        if (ahead < 0 || across > ahead + 1) continue; // Outside the view: 45 degrees each way, plus your own cell's width.
+        if (this.los(p.x, p.y, x, y)) mark(x, y, SEEN);
+      }
+    }
+    mark(p.x, p.y, VISITED);
   }
 
   // ---------------------------------------------------------------- five-foot-square positions
@@ -552,6 +585,7 @@ export class Game {
   tick(dt) {
     if (this.over) return;
     if (this.paused) return; // Everything stops, including what only looks alive: flicker, breathing and effects.
+    this.updateExplored();
     this.realTime += dt;
     this.fx = this.fx.filter((f) => this.realTime - f.born < f.life);
     this.time += dt * this.ruleset.timeScale;
@@ -577,7 +611,7 @@ export class Game {
   restore(json) {
     const s = JSON.parse(json);
     if (s.module !== this.module.id || s.ruleset !== this.ruleset.id) throw new Error('save is for a different game');
-    Object.assign(this, { time: s.time, realTime: s.realTime, flags: s.flags, entities: s.entities, floorItems: s.floorItems, levels: s.levels, hand: s.hand, party: s.party, logLines: s.logLines, over: null, fx: [], paused: false });
+    Object.assign(this, { time: s.time, realTime: s.realTime, flags: s.flags, entities: s.entities, floorItems: s.floorItems, levels: s.levels, hand: s.hand, party: s.party, logLines: s.logLines, over: null, fx: [], paused: false, exploredKey: null });
     this.rng.state = s.rng;
     this.memberFx = new Map();
   }

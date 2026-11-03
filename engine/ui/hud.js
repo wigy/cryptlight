@@ -2,6 +2,7 @@
 // Everything is rules-agnostic; content comes from the ruleset's memberStatus / memberActions / memberSheet.
 import { COLORS } from '../colors.js';
 import { DIRS } from '../world.js';
+import { createAutomap, drawAutomap } from './automap.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 /** Replaces an element's content only when it actually changed, so hover and clicks survive updates. */
@@ -80,6 +81,9 @@ export class Hud {
     const wrap = this.stage.querySelector('#viewwrap');
     wrap.prepend(this.app.canvas);
     this.els = Object.fromEntries(['party', 'viewwrap', 'floaters', 'banner', 'loglines', 'status', 'actions'].map((id) => [id, this.stage.querySelector(`#${id}`)]));
+    this.els.automap = createAutomap();
+    this.els.automap.dataset.hint = 'Your map. Bright floor is where you have walked, dim floor is what you have only seen.';
+    this.stage.querySelector('#side').append(this.els.automap);
     this.els.inv = document.createElement('div');
     this.els.inv.id = 'inv';
     this.els.inv.hidden = true;
@@ -103,6 +107,7 @@ export class Hud {
     this.renderStatus();
     this.renderActions();
     this.renderLog();
+    drawAutomap(this.els.automap, g);
     this.renderInventory();
     // The overlay would cover the inventory, which is exactly what can still be used while paused.
     this.els.paused.hidden = !g.paused || this.inventory != null;

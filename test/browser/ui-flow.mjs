@@ -219,6 +219,11 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await key('KeyW');
   await until(`window.__pressed.length > ${before2}`);
   await shot('19-pad');
+  // The map sits in the corner, clear of the panels, and has been drawn on.
+  const mapBox = await ev(`(() => { const m = document.querySelector('#automap').getBoundingClientRect(), a = document.querySelector('#actions').getBoundingClientRect(); return { left: m.left, right: m.right, top: m.top, bottom: m.bottom, actionsBottom: a.bottom }; })()`);
+  assert.ok(mapBox.top >= mapBox.actionsBottom, 'the map is below the action boxes');
+  assert.ok(mapBox.right <= 1280 && mapBox.bottom <= 800 && mapBox.left > 896, 'the map is in the bottom right corner');
+  assert.ok(await ev(`(() => { const c = document.querySelector('#automap'); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; for (let i = 3; i < d.length; i += 4) if (d[i]) return true; return false; })()`), 'the map has something on it');
   // An empty slot goes straight to choosing.
   await clickEl('.who:nth-child(1) [data-act="abilities:0"]');
   await wait(100);

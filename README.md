@@ -27,6 +27,9 @@ item, click the near floor to set it down, or further away to throw it.
 | Space | Pause (look at gear and skills, but no moving or acting) |
 | K / L | Save / load |
 
+The map in the bottom right corner fills in as you explore: bright floor is where you have walked, dim floor is what
+you have only seen by your light.
+
 Combat runs in real time. Each character has an Action and a Bonus Action that recover after a 6-second round,
 which plays in 4 real seconds. Monsters follow the same clock. Your front two characters can reach the
 cell ahead; the back two need reach, ranged weapons or spells. Pause whenever you need to think.
