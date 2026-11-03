@@ -68,9 +68,34 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
 
   // Fight through the action panel, with real clicks.
   await ev(`(() => { const g = window.__game; for (const e of g.entities) if (e.proto === 'giant-rat') { e.hp = e.maxHp = 40; g.ruleset.wake(g, e, 0); } })()`);
+  await ev(`window.__game.party.members.forEach((m) => { m.hp = m.maxHp = 300; })`); // Survive the wait for the round to pass.
   await wait(2500);
   await shot('13-combat');
-  await clickEl('.who[data-act="menu:0"]');
+  await shot('14-action-boxes');
+  // The icons act directly, dim while recovering and light up again afterwards.
+  const quick = (i, act) => `document.querySelectorAll('.who')[${i}].querySelector('[data-act="quick:${i}:${act}"]')`;
+  assert.equal(await ev(`${quick(1, 'attack:off')}.disabled`), false, 'a second Light weapon can attack');
+  await clickEl(`.who:nth-child(2) [data-act="quick:1:attack:off"]`);
+  await wait(100);
+  assert.equal(await ev(`${quick(1, 'attack:off')}.disabled`), true, 'the off hand dims after attacking');
+  assert.equal(await ev(`${quick(1, 'attack:main')}.disabled`), false, 'the Action is separate from the Bonus Action');
+  await clickEl(`.who:nth-child(2) [data-act="quick:1:dodge"]`);
+  await wait(100);
+  assert.equal(await ev(`${quick(1, 'attack:main')}.disabled`), true, 'the main hand dims after spending the Action');
+  await shot('14-dimmed');
+  // Game time can lag real time under the software renderer, so wait on the clock itself.
+  for (let i = 0; i < 100 && await state(`g.time < g.party.members[1].actionReadyAt`); i++) await wait(100);
+  await wait(100);
+  assert.equal(await ev(`${quick(1, 'attack:main')}.disabled`), false, 'the main hand lights up when the Action is back');
+  // The Cast icon opens the spell list, and its Back returns to the boxes.
+  await clickEl(`[data-act="quicksub:3:cast"]`);
+  await wait(100);
+  assert.ok(await ev(`!!document.querySelector('[data-act="do:cast:fire-bolt"]')`), 'Cast opens the spell list');
+  await clickEl('.act[data-act="menu:up"]');
+  await wait(100);
+  assert.ok(await ev(`!!document.querySelector('.who')`), 'Back returns to the boxes');
+  assert.equal(await ev(`document.querySelector('[data-act="quicksub:0:cast"]')`), null);
+  await clickEl('.whohead[data-act="menu:0"]');
   await wait(100);
   await shot('14-actions');
   const before = await state(`g.party.members[0].actionReadyAt`);
@@ -80,7 +105,7 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   assert.equal(await ev(`document.querySelector('.who') !== null`), true, 'menu closes after acting');
 
   // Cast through the submenus.
-  await clickEl('.who[data-act="menu:3"]');
+  await clickEl('.whohead[data-act="menu:3"]');
   await clickEl('.act[data-act="sub:cast"]');
   await wait(100);
   await shot('15-spells');
@@ -94,6 +119,43 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await wait(400);
   assert.equal(await state(`g.time`), t0);
   await key('Space');
+
+  // The inventory's second mode picks two skills or spells, which then appear on the action box.
+  const ready3 = async () => { for (let i = 0; i < 100 && await state(`g.time < g.party.members[3].actionReadyAt`); i++) await wait(100); await wait(100); };
+  await clickEl('[data-card="3"] .portrait');
+  await wait(100);
+  await clickEl('[data-act="invmode:abilities"]');
+  await wait(100);
+  // Panels redraw on the next frame, which can be slow under the software renderer.
+  const picks = async (n) => { for (let i = 0; i < 50 && await ev(`document.querySelectorAll('.ability.on').length`) !== n; i++) await wait(100); assert.equal(await ev(`document.querySelectorAll('.ability.on').length`), n); };
+  await clickEl('[data-act="quickset:3:cast:fire-bolt"]');
+  await picks(1);
+  const others = await ev(`[...document.querySelectorAll('.ability:not(.on)')].map((b) => b.dataset.act)`);
+  assert.ok(others.length >= 2);
+  await clickEl(`[data-act="${others[0]}"]`);
+  await picks(2);
+  assert.equal(await ev(`document.querySelector('[data-act="${others[1]}"]').disabled`), true, 'a third choice is refused');
+  await shot('17-abilities');
+  await clickEl('[data-act="invmode:items"]');
+  await wait(100);
+  assert.ok(await ev(`!!document.querySelector('.pack')`), 'Items mode is still the inventory');
+  await clickEl('.close');
+  await wait(100);
+  await ready3();
+  assert.equal(await state(`g.party.members[3].quick[0]`), 'cast:fire-bolt');
+  await shot('18-quick-slots');
+  const castAt = await state(`g.party.members[3].actionReadyAt`);
+  await clickEl('[data-act="quick:3:cast:fire-bolt"]');
+  await wait(100);
+  assert.ok((await state(`g.party.members[3].actionReadyAt`)) > castAt, 'the quick slot casts the spell');
+  assert.equal(await ev(`document.querySelector('[data-act="quick:3:cast:fire-bolt"]').disabled`), true, 'and dims while recovering');
+  // An empty slot goes straight to choosing.
+  await clickEl('.who:nth-child(1) [data-act="abilities:0"]');
+  await wait(100);
+  assert.ok(await ev(`!!document.querySelector('.abilities')`), 'an empty slot opens the list');
+  await clickEl('[data-act="invmode:items"]');
+  await clickEl('.close');
+  await wait(100);
 
   // Tour the rest of the world for a look at every kind of thing it draws.
   const go = (level, x, y, dir) => ev(`(() => { const g = window.__game; g.entities.forEach((e) => { if (e.level === g.party.level) e.awake = false; }); g.teleport({ level: '${level}', x: ${x}, y: ${y}, dir: ${dir} }); g.entities.forEach((e) => { e.awake = false; e.notBeforeCheck = 1e9; }); })()`);

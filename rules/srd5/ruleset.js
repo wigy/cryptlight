@@ -239,7 +239,7 @@ export class Srd5Ruleset {
     const offDef = this.itemDef(off);
     if (offDef?.kind === 'weapon' && offDef.props.light && mainDef?.props?.light) {
       const nick = m.weaponMasteries.includes(offDef.id) && offDef.mastery === 'nick';
-      list.push({ id: 'attack:off', label: `${this.shortName(offDef)} (off)`, enabled: bonusReady, hint: `Light weapon extra attack. Uses your Bonus Action.${nick ? ' (Nick)' : ''}`, bonus: true });
+      list.push({ id: 'attack:off', label: `${this.shortName(offDef)} (off)`, enabled: nick ? canAct(m) && (m.nickReadyAt ?? 0) <= game.time : bonusReady, hint: nick ? 'Light weapon extra attack, once per round. Nick: no Bonus Action needed.' : 'Light weapon extra attack. Uses your Bonus Action.', bonus: !nick });
     }
     if (m.classId === 'monk' && !m.equipment.armor) list.push({ id: 'martial-arts', label: 'Bonus Strike', enabled: bonusReady, hint: 'Martial Arts: an Unarmed Strike as a Bonus Action.', bonus: true });
     const castable = this.knownSpells(m).length > 0;
@@ -252,12 +252,60 @@ export class Srd5Ruleset {
     return list;
   }
 
+  /** Class features and spells a member can pick for quick access. `quickId` (or `id`) identifies the choice. */
+  memberAbilities(game, m) {
+    const ready = canAct(m) && m.actionReadyAt <= game.time;
+    const bonusReady = canAct(m) && m.bonusReadyAt <= game.time;
+    const need = ({ bonus }) => (bonus ? bonusReady : ready);
+    const clean = (a) => ({ ...a, label: a.label.replace(/ >$/, '') });
+    const skills = this.classActions(game, m, ready, bonusReady).map((a) => ({ ...clean(a), kind: 'skill', glyph: 'skill' }));
+    const armored = lacksArmorTraining(m, this.srd);
+    const spells = this.castMenu(game, m, need).filter((a) => !a.back).map((a) => ({ ...clean(a), enabled: a.enabled && !armored, kind: 'spell', glyph: 'cast' }));
+    return [...skills, ...spells];
+  }
+
+  /** Adds an ability to the member's two quick slots, or removes it. Returns false when both slots are taken. */
+  toggleQuick(game, m, id) {
+    const known = new Set(this.memberAbilities(game, m).map((a) => a.quickId ?? a.id));
+    const quick = [0, 1].map((n) => (known.has(m.quick?.[n]) ? m.quick[n] : null)); // Forgets anything no longer available.
+    const at = quick.indexOf(id);
+    const free = at >= 0 ? at : quick.indexOf(null);
+    if (free < 0 || !known.has(id)) return false;
+    quick[free] = at >= 0 ? null : id;
+    m.quick = quick;
+    return true;
+  }
+
+  /** The row of icons on a member's action box, always in the same seven positions. Everything else stays in memberActions. */
+  memberQuickActions(game, m) {
+    const list = this.memberActions(game, m);
+    const find = (id) => list.find((a) => a.id === id);
+    const off = m.equipment.offHand;
+    const offInfo = off && this.itemInfo(off);
+    const cast = find('menu:cast');
+    const need = ({ bonus }) => canAct(m) && (bonus ? m.bonusReadyAt : m.actionReadyAt) <= game.time;
+    // A caster can still have a Bonus Action spell ready after spending the Action, so ask the spell list itself.
+    const canCast = !!cast?.enabled && this.castMenu(game, m, need).some((a) => !a.back && a.enabled);
+    const abilities = this.memberAbilities(game, m);
+    const quick = (n) => abilities.find((a) => (a.quickId ?? a.id) === m.quick?.[n])
+      ?? { id: `empty:${n}`, label: 'Quick slot', enabled: true, empty: true, glyph: 'plus', hint: 'Empty. Click to choose a skill or spell for quick access.' };
+    return [
+      { ...find('attack:main'), item: m.equipment.mainHand, glyph: 'fist' },
+      { ...(find('attack:off') ?? find('martial-arts') ?? { id: 'attack:off', label: offInfo?.name ?? 'Off hand', enabled: false, hint: off ? 'Needs a Light weapon in both hands to attack with.' : 'Empty.' }), item: off, glyph: 'fist' },
+      quick(0),
+      quick(1),
+      { ...find('dodge'), glyph: 'dodge' },
+      { ...find('search'), glyph: 'search' },
+      { ...(cast ?? { id: 'menu:cast', hint: 'Knows no spells.' }), label: 'Cast', enabled: canCast, glyph: 'cast' },
+    ];
+  }
+
   classActions(game, m, ready, bonus) {
     const r = m.resources;
     const out = [];
     const add = (id, label, enabled, hint, extra = {}) => out.push({ id, label, enabled, hint, ...extra });
     if (m.classId === 'barbarian') {
-      if (hasEffect(m, 'rage')) add('end-rage', 'End Rage', true, 'Stop raging.');
+      if (hasEffect(m, 'rage')) add('end-rage', 'End Rage', true, 'Stop raging.', { quickId: 'rage' }); // Keeps Rage's quick slot.
       else add('rage', `Rage (${r.rage})`, bonus && r.rage > 0, 'Bonus Action. +2 Str melee damage, resist B/P/S, Advantage on Str saves.', { bonus: true });
       if (m.level >= 2) add('reckless', 'Reckless', ready, 'Advantage on your attacks; attacks against you have Advantage until next turn.');
     }
@@ -431,7 +479,8 @@ export class Srd5Ruleset {
     if (ok) {
       if (slot === 'offHand') {
         const nick = m.weaponMasteries.includes(weapon.id) && weapon.mastery === 'nick';
-        if (!nick) this.spendBonus(game, m);
+        if (nick) m.nickReadyAt = game.time + ROUND; // Nick waives the Bonus Action, but still only once per turn.
+        else this.spendBonus(game, m);
       } else this.spendAction(game, m);
     }
     return ok;

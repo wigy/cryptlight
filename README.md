@@ -23,7 +23,7 @@ item, click the near floor to set it down, or further away to throw it.
 | A D / left right | Sidestep left, right |
 | Q E / PgUp PgDn | Turn left, right |
 | 1-4 | A character's gear and stats |
-| Shift+1-4 | A character's actions |
+| Shift+1-4 | A character's full action list |
 | Space | Pause (you can still give orders) |
 | K / L | Save / load |
 

@@ -52,10 +52,17 @@ button:disabled { opacity: .45; cursor: default; }
 #tools button { padding: 7px 0; font-size: 13px; }
 #actions { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 4px; overflow: hidden; background: #0007; padding: 6px; border: 1px solid var(--line); border-radius: 4px; }
 #actions h3 { margin: 0 0 2px; font-size: 15px; color: var(--gold); font-weight: normal; }
-.who { display: grid; grid-template-columns: 56px 1fr; gap: 10px; align-items: center; text-align: left; padding: 5px 8px; flex: 1; min-height: 0; max-height: 88px; }
-.who img { width: 56px; height: 56px; object-fit: contain; }
-.who b { display: block; font-size: 16px; color: var(--gold); font-weight: normal; }
-.who small { font-size: 13px; color: var(--dim); }
+.who { display: flex; flex-direction: column; gap: 5px; padding: 5px; background: #0006; border: 1px solid var(--line); border-radius: 3px; }
+.whohead { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 8px; }
+.whohead b { font-size: 16px; color: var(--gold); font-weight: normal; }
+.whohead small { font-size: 13px; color: var(--dim); }
+.quicks { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.quick { height: 62px; padding: 2px; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; background: var(--slot); color: var(--gold); }
+.quick img, .quick svg { width: 38px; height: 38px; object-fit: contain; display: block; flex: none; }
+.quick.named svg { width: 26px; height: 26px; }
+.quick.named span { font: 10px/11px sans-serif; color: var(--ink); text-align: center; max-height: 33px; overflow: hidden; overflow-wrap: anywhere; }
+.quick.empty { border-style: dashed; color: var(--dim); }
+.quick:disabled { opacity: .35; filter: grayscale(1); }
 .act { text-align: left; padding: 6px 10px; font-size: 15px; }
 .act.sub::after { content: ''; }
 .actlist { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; min-height: 0; }
@@ -63,7 +70,18 @@ button:disabled { opacity: .45; cursor: default; }
 #pad button { font-size: 30px; line-height: 1; }
 
 /* Inventory */
-#inv { position: absolute; inset: 0; padding: 14px 18px; display: grid; grid-template-columns: 300px 316px 1fr; gap: 16px; background: #120e09; }
+#inv { position: absolute; inset: 0; padding: 10px 18px; display: grid; grid-template-columns: 300px 316px 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 10px 16px; background: #120e09; }
+.invtabs { grid-column: 1 / -1; display: flex; gap: 4px; }
+.invtabs button { padding: 5px 14px; font-size: 15px; }
+.invtabs button.on { border-color: var(--gold); color: var(--gold); }
+.abilities { grid-column: 1 / 3; min-height: 0; overflow-y: auto; }
+.abilities h3 { margin: 8px 0 4px; font-size: 14px; font-weight: normal; color: var(--dim); }
+.abilist { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
+.ability { display: grid; grid-template-columns: 24px 1fr 16px; gap: 8px; align-items: center; padding: 5px 8px; text-align: left; font-size: 14px; color: var(--ink); }
+.ability svg { width: 24px; height: 24px; color: var(--gold); }
+.ability i { font-style: normal; color: var(--gold); }
+.ability.on { border-color: var(--gold); background: linear-gradient(#54431f, #33280f); }
+.noability { color: var(--dim); font-size: 15px; }
 #inv h2 { margin: 0 0 8px; font-size: 18px; color: var(--gold); font-weight: normal; }
 .doll { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .dollslot { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 6px; font-size: 13px; color: var(--dim); }

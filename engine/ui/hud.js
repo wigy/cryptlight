@@ -9,6 +9,17 @@ function setHtml(el, html) { if (el._html !== html) { el._html = html; el.innerH
 
 const NEAR_REACH = 2.1; // How far, in cells along the view, things can be picked up or worked.
 
+const glyph = (body) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+/** Pictures for quick actions that have no item to show. */
+const GLYPHS = {
+  fist: glyph('<path d="M7 12V7.5a1.5 1.5 0 0 1 3 0V11m0-4.5a1.5 1.5 0 0 1 3 0V11m0-3.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.5a5.5 5.5 0 0 1-4.6-2.5L4.3 15a1.6 1.6 0 0 1 2.6-1.8L7 13.5"/>'),
+  dodge: glyph('<path d="M15 3.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 9l-3 4 4 3v5M10 13l-2 3-4 1M13 9l4 2 3-1"/><path d="M3 6c1.5-1 3-1 4.5 0M2 10c1.2-.7 2.3-.7 3.5 0" stroke-width="1.2"/>'),
+  search: glyph('<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/><path d="M7.5 10.5a3 3 0 0 1 3-3" stroke-width="1.2"/>'),
+  skill: glyph('<path d="M13 2 5 14h6l-1 8 9-13h-6z"/>'),
+  plus: glyph('<path d="M12 7v10M7 12h10" stroke-width="1.3"/>'),
+  cast: glyph('<path d="M4 20 14 10M14 10l1.5-1.5"/><path d="M17 2.5l1 3 3 1-3 1-1 3-1-3-3-1 3-1zM7 5l.6 1.8L9.4 7.4l-1.8.6L7 9.8l-.6-1.8-1.8-.6 1.8-.6zM19 14l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6z" stroke-width="1.2"/>'),
+};
+
 export class Hud {
   constructor(stage, app) {
     this.stage = stage;
@@ -16,6 +27,7 @@ export class Hud {
     this.game = null;
     this.menu = null;     // {member, sub} while a character's action list is open; {rest:true} for rests.
     this.inventory = null;
+    this.invMode = 'items';
     this.hint = null;
     this.shownHits = new Map();
     this.handEl = document.getElementById('hand');
@@ -156,11 +168,16 @@ export class Hud {
     }
     const rows = g.party.members.map((m, i) => {
       const s = g.ruleset.memberStatus(g, m);
-      const main = m.equipment.mainHand;
-      const state = s.dead ? 'Dead' : s.down ? 'Down' : s.ready ? 'Ready' : `Recovering`;
-      return `<button class="who" data-act="menu:${i}" ${s.dead || s.down ? 'disabled' : ''} data-hint="Choose an action for ${esc(s.name)}. (Shift+${i + 1})">
-        ${main ? `<img src="${this.itemImg(main)}" alt="">` : '<span></span>'}
-        <span><b>${esc(s.name)}</b><small>${state}</small></span></button>`;
+      const state = s.dead ? 'Dead' : s.down ? 'Down' : s.ready ? 'Ready' : 'Recovering';
+      const icons = (g.ruleset.memberQuickActions?.(g, m) ?? []).map((a) => {
+        const act = a.empty ? `abilities:${i}` : a.submenu ? `quicksub:${i}:${a.submenu}` : `quick:${i}:${a.id}`;
+        const named = a.kind ? ' named' : '';
+        const picture = a.item ? `<img src="${this.itemImg(a.item)}" alt="">` : GLYPHS[a.glyph] ?? '';
+        return `<button class="quick${named}${a.empty ? ' empty' : ''}" data-act="${esc(act)}" ${a.enabled ? '' : 'disabled'} data-hint="${esc(`<b>${a.label}</b>. ${a.hint ?? ''}`)}">${picture}${named ? `<span>${esc(a.label)}</span>` : ''}</button>`;
+      }).join('');
+      return `<div class="who">
+        <button class="whohead" data-act="menu:${i}" ${s.dead || s.down ? 'disabled' : ''} data-hint="All actions for ${esc(s.name)}. (Shift+${i + 1})"><b>${esc(s.name)}</b><small>${state}</small></button>
+        <div class="quicks">${icons}</div></div>`;
     }).join('');
     setHtml(this.els.actions, rows);
   }
@@ -177,19 +194,42 @@ export class Hud {
     if (this.inventory == null) return;
     const i = this.inventory;
     const m = g.party.members[i];
+    const sheet = g.ruleset.memberSheet(g, m).map((l) => (typeof l === 'string' ? esc(l) : `<span style="color:${COLORS[l.color]}">${esc(l.text)}</span>`)).join('\n');
+    const tab = (mode, label) => `<button class="${this.invMode === mode ? 'on' : ''}" data-act="invmode:${mode}">${label}</button>`;
+    const top = `<div class="invtabs">${tab('items', 'Items')}${tab('abilities', 'Skills &amp; Spells')}</div>`;
+    const close = '<button class="close" data-act="inv:close">Close</button>';
+    if (this.invMode === 'abilities') {
+      setHtml(inv, `${top}${this.abilitiesHtml(i, m)}<div class="sheet">${sheet}</div>${close}`);
+      return;
+    }
     const slot = (act, it, label) => {
       const info = it && g.ruleset.itemInfo(it);
       return `<button class="slot" data-act="${act}" data-hint="${esc(info ? `<b>${info.name}</b>. ${info.description}` : `${label}: empty.`)}">${it ? `<img src="${this.itemImg(it)}" alt=""><span class="q">${it.qty > 1 ? it.qty : ''}</span>` : ''}</button>`;
     };
     const doll = g.ruleset.slots.map((s) => `<div class="dollslot">${slot(`slot:${i}:${s.id}`, m.equipment[s.id], s.label)}<span>${esc(s.label)}</span></div>`).join('');
     const pack = m.pack.map((it, n) => slot(`pack:${i}:${n}`, it, 'Pack')).join('');
-    const sheet = g.ruleset.memberSheet(g, m).map((l) => (typeof l === 'string' ? esc(l) : `<span style="color:${COLORS[l.color]}">${esc(l.text)}</span>`)).join('\n');
     const weight = g.ruleset.carriedWeight(m);
-    setHtml(inv, `<div><h2>Equipped</h2><div class="doll">${doll}</div></div>
+    setHtml(inv, `${top}<div><h2>Equipped</h2><div class="doll">${doll}</div></div>
       <div><h2>Pack (${Math.round(weight)} lb.)</h2><div class="pack">${pack}</div>
       <button class="mouth" data-act="consume:${i}" data-hint="Hold a potion or food over this and click to consume it.">Drink / eat what you're holding</button></div>
-      <div class="sheet">${sheet}</div>
-      <button class="close" data-act="inv:close">Close</button>`);
+      <div class="sheet">${sheet}</div>${close}`);
+  }
+
+  abilitiesHtml(i, m) {
+    const g = this.game;
+    const list = g.ruleset.memberAbilities?.(g, m) ?? [];
+    const picked = list.map((a) => a.quickId ?? a.id).filter((id) => m.quick?.includes(id));
+    const row = (a) => {
+      const id = a.quickId ?? a.id;
+      const on = picked.includes(id);
+      return `<button class="ability${on ? ' on' : ''}" data-act="${esc(`quickset:${i}:${id}`)}" ${on || picked.length < 2 ? '' : 'disabled'} data-hint="${esc(`<b>${a.label}</b>. ${a.hint ?? ''}`)}">${GLYPHS[a.glyph] ?? ''}<span>${esc(a.label)}</span><i>${on ? '&#10003;' : ''}</i></button>`;
+    };
+    const section = (title, kind) => {
+      const rows = list.filter((a) => a.kind === kind).map(row).join('');
+      return rows ? `<h3>${title}</h3><div class="abilist">${rows}</div>` : '';
+    };
+    const body = list.length ? `${section('Skills', 'skill')}${section('Spells', 'spell')}` : `<p class="noability">${esc(m.name)} has no skills or spells to choose yet.</p>`;
+    return `<div class="abilities"><h2>Quick access (${picked.length}/2)</h2>${body}</div>`;
   }
 
   addFloater(f) {
@@ -231,11 +271,17 @@ export class Hud {
       case 'inv': this.inventory = a === 'close' || this.inventory === Number(a) ? null : Number(a); this.hint = null; break;
       case 'menu':
         if (a === 'close') this.menu = null;
+        else if (a === 'up' && this.menu.root === this.menu.sub) this.menu = null; // Opened straight from an icon.
         else if (a === 'up') this.menu.sub = this.menu.sub?.startsWith('ally:') && this.menu.sub.startsWith('ally:cast-') ? 'cast' : null;
         else this.menu = { member: Number(a), sub: null };
         this.hint = null;
         break;
       case 'sub': this.menu.sub = act.slice(4); this.hint = null; break;
+      case 'quick': g.ruleset.doAction(g, g.party.members[Number(a)], act.split(':').slice(2).join(':')); break;
+      case 'quicksub': this.menu = { member: Number(a), sub: act.split(':').slice(2).join(':'), root: act.split(':').slice(2).join(':') }; this.hint = null; break;
+      case 'abilities': this.inventory = Number(a); this.invMode = 'abilities'; this.hint = null; break;
+      case 'invmode': this.invMode = a; this.hint = null; break;
+      case 'quickset': g.ruleset.toggleQuick(g, g.party.members[Number(a)], act.split(':').slice(2).join(':')); break;
       case 'do': {
         const m = g.party.members[this.menu.member];
         g.ruleset.doAction(g, m, act.slice(3));

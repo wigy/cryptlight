@@ -335,3 +335,66 @@ test('the game ends when nobody is left standing, even if some are only stable',
   tick(game, 0.2);
   assert.equal(game.over, 'lost');
 });
+
+test('quick actions keep their positions and follow the Action and Bonus Action timers', async () => {
+  const { game: g } = await newGame();
+  const members = g.party.members;
+  const icons = (m) => Object.fromEntries(g.ruleset.memberQuickActions(g, m).map((a, i) => [i, a]));
+  for (const m of members) assert.deepEqual(g.ruleset.memberQuickActions(g, m).map((a) => a.glyph), ['fist', 'fist', 'plus', 'plus', 'dodge', 'search', 'cast']);
+  const fighter = members.find((m) => !g.ruleset.knownSpells(m).length);
+  assert.equal(icons(fighter)[6].enabled, false, 'no spells, no Cast');
+  const caster = members.find((m) => g.ruleset.knownSpells(m).length);
+  assert.equal(icons(caster)[6].enabled, true);
+  assert.equal(icons(caster)[6].submenu, 'cast');
+  caster.actionReadyAt = g.time + 6;
+  assert.equal(icons(caster)[0].enabled, false);
+  assert.equal(icons(caster)[4].enabled, false);
+  assert.equal(icons(caster)[5].enabled, false);
+  caster.bonusReadyAt = g.time + 6;
+  assert.equal(icons(caster)[6].enabled, false, 'nothing left to cast with');
+  caster.actionReadyAt = caster.bonusReadyAt = g.time;
+  assert.equal(icons(caster)[0].enabled, true);
+});
+
+test('Nick waives the Bonus Action but only works once per round', async () => {
+  const { game: g, ruleset: r } = await newGame();
+  const rogue = g.party.members.find((m) => m.classId === 'rogue');
+  const off = () => r.memberActions(g, rogue).find((a) => a.id === 'attack:off');
+  assert.equal(off().enabled, true);
+  r.strike = () => true;
+  assert.equal(r.doAction(g, rogue, 'attack:off'), true);
+  assert.equal(off().enabled, false, 'spent for this round');
+  assert.ok(rogue.bonusReadyAt <= g.time, 'the Bonus Action is still free');
+  rogue.nickReadyAt = g.time;
+  assert.equal(off().enabled, true, 'back next round');
+});
+
+test('two skills or spells can be picked for quick access, and the choice is saved', async () => {
+  const { game: g, ruleset: r } = await newGame();
+  const wizard = g.party.members.find((m) => m.classId === 'wizard');
+  const ids = r.memberAbilities(g, wizard).map((a) => a.id);
+  assert.ok(ids.length >= 3);
+  assert.ok(r.toggleQuick(g, wizard, ids[0]));
+  assert.ok(r.toggleQuick(g, wizard, ids[1]));
+  assert.equal(r.toggleQuick(g, wizard, ids[2]), false, 'only two slots');
+  assert.equal(r.toggleQuick(g, wizard, 'not-a-real-ability'), false);
+  assert.deepEqual(r.memberQuickActions(g, wizard).slice(2, 4).map((a) => a.id), ids.slice(0, 2));
+  assert.deepEqual(JSON.parse(g.serialize()).party.members.find((m) => m.classId === 'wizard').quick, ids.slice(0, 2));
+  assert.ok(r.toggleQuick(g, wizard, ids[0]), 'picking again removes it');
+  assert.equal(r.memberQuickActions(g, wizard)[2].empty, true);
+  assert.equal(r.memberQuickActions(g, wizard)[3].id, ids[1], 'the other slot stays put');
+  wizard.actionReadyAt = wizard.bonusReadyAt = g.time + 6;
+  assert.equal(r.memberQuickActions(g, wizard)[3].enabled, false, 'dims while recovering');
+});
+
+test('a barbarian keeps Rage in its quick slot while raging', async () => {
+  const { game: g, ruleset: r } = await newGame();
+  const m = r.createMember({ classId: 'barbarian', speciesId: 'human', backgroundId: 'soldier', name: 'Test' });
+  g.party.members[0] = m;
+  assert.ok(r.toggleQuick(g, m, 'rage'));
+  assert.equal(r.memberQuickActions(g, m)[2].id, 'rage');
+  r.doAction(g, m, 'rage');
+  assert.equal(r.memberQuickActions(g, m)[2].id, 'end-rage');
+  r.doAction(g, m, 'end-rage');
+  assert.equal(r.memberQuickActions(g, m)[2].id, 'rage');
+});
