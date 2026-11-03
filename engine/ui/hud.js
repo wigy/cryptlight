@@ -281,7 +281,14 @@ export class Hud {
       case 'quicksub': this.menu = { member: Number(a), sub: act.split(':').slice(2).join(':'), root: act.split(':').slice(2).join(':') }; this.hint = null; break;
       case 'abilities': this.inventory = Number(a); this.invMode = 'abilities'; this.hint = null; break;
       case 'invmode': this.invMode = a; this.hint = null; break;
-      case 'quickset': g.ruleset.toggleQuick(g, g.party.members[Number(a)], act.split(':').slice(2).join(':')); break;
+      case 'quickset': {
+        const m = g.party.members[Number(a)];
+        const id = act.split(':').slice(2).join(':');
+        g.ruleset.toggleQuick(g, m, id);
+        if (m.quick?.includes(id)) this.inventory = null; // Picking is done; removing leaves the list open to choose again.
+        this.hint = null;
+        break;
+      }
       case 'do': {
         const m = g.party.members[this.menu.member];
         g.ruleset.doAction(g, m, act.slice(3));

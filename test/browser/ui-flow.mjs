@@ -122,25 +122,38 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
 
   // The inventory's second mode picks two skills or spells, which then appear on the action box.
   const ready3 = async () => { for (let i = 0; i < 100 && await state(`g.time < g.party.members[3].actionReadyAt`); i++) await wait(100); await wait(100); };
-  await clickEl('[data-card="3"] .portrait');
-  await wait(100);
-  await clickEl('[data-act="invmode:abilities"]');
-  await wait(100);
   // Panels redraw on the next frame, which can be slow under the software renderer.
-  const picks = async (n) => { for (let i = 0; i < 50 && await ev(`document.querySelectorAll('.ability.on').length`) !== n; i++) await wait(100); assert.equal(await ev(`document.querySelectorAll('.ability.on').length`), n); };
+  const until = async (expr) => { for (let i = 0; i < 50 && !(await ev(expr)); i++) await wait(100); assert.ok(await ev(expr), expr); };
+  const invClosed = `document.querySelector('#inv').hidden`;
+  await clickEl('[data-card="3"] .portrait');
+  await until(`!!document.querySelector('[data-act="invmode:abilities"]')`);
+  await clickEl('[data-act="invmode:abilities"]');
+  await until(`!!document.querySelector('.abilities')`);
   await clickEl('[data-act="quickset:3:cast:fire-bolt"]');
-  await picks(1);
+  await until(invClosed); // Picking closes the inventory.
+  await until(`!!document.querySelector('[data-act="abilities:3"]')`);
+  await clickEl('[data-act="abilities:3"]');
+  await until(`document.querySelectorAll('.ability.on').length === 1`);
   const others = await ev(`[...document.querySelectorAll('.ability:not(.on)')].map((b) => b.dataset.act)`);
   assert.ok(others.length >= 2);
   await clickEl(`[data-act="${others[0]}"]`);
-  await picks(2);
+  await until(invClosed);
+  await clickEl('[data-card="3"] .portrait');
+  await until(`document.querySelectorAll('.ability.on').length === 2`);
   assert.equal(await ev(`document.querySelector('[data-act="${others[1]}"]').disabled`), true, 'a third choice is refused');
   await shot('17-abilities');
+  // Removing keeps the list open so another can be chosen.
+  await clickEl(`[data-act="${others[0]}"]`);
+  await until(`document.querySelectorAll('.ability.on').length === 1`);
+  assert.equal(await ev(invClosed), false, 'removing leaves the list open');
+  await clickEl(`[data-act="${others[0]}"]`);
+  await until(invClosed);
+  await clickEl('[data-card="3"] .portrait');
+  await until(`!!document.querySelector('[data-act="invmode:items"]')`);
   await clickEl('[data-act="invmode:items"]');
-  await wait(100);
-  assert.ok(await ev(`!!document.querySelector('.pack')`), 'Items mode is still the inventory');
+  await until(`!!document.querySelector('.pack')`);
   await clickEl('.close');
-  await wait(100);
+  await until(invClosed);
   await ready3();
   assert.equal(await state(`g.party.members[3].quick[0]`), 'cast:fire-bolt');
   await shot('18-quick-slots');
