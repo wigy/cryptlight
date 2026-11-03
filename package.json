@@ -4,6 +4,7 @@
   "description": "A general-purpose real-time, first-person, grid-based dungeon crawler engine in the style of classic Atari ST games. 5E compatible ruleset.",
   "type": "module",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "start": "node tools/serve.mjs",
     "test": "node --test \"test/*.test.js\"",
