@@ -23,8 +23,8 @@ item, click the near floor to set it down, or further away to throw it.
 | A D / left right | Sidestep left, right |
 | Q E / PgUp PgDn | Turn left, right |
 | 1-4 | A character's gear and stats |
-| Shift+1-4 | A character's full action list |
-| Space | Pause (you can still give orders) |
+| Shift+1-4 | A character's skills and spells |
+| Space | Pause (look at gear and skills, but no moving or acting) |
 | K / L | Save / load |
 
 Combat runs in real time. Each character has an Action and a Bonus Action that recover after a 6-second round,

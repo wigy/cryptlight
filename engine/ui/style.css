@@ -9,6 +9,12 @@ button:hover:not(:disabled) { border-color: var(--gold); color: #fff3cf; backgro
 button:disabled { opacity: .45; cursor: default; }
 #hand { position: fixed; pointer-events: none; z-index: 50; width: 64px; height: 64px; transform: translate(-50%, -50%); filter: drop-shadow(0 3px 5px #000); }
 
+/* Paused: things stay visible and hoverable, but nothing can be moved or used. */
+#stage.paused .floater, #stage.paused .burst { animation-play-state: paused; }
+#stage.paused #view, #stage.paused .slot, #stage.paused .ability { cursor: default; }
+#stage.paused .slot:hover { border-color: var(--line); }
+#stage.paused .ability:hover:not(.on) { border-color: var(--line); color: var(--ink); background: linear-gradient(#3a2f1f, #241c12); }
+
 /* Party */
 #party { position: absolute; left: 0; top: 0; width: 896px; height: 116px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; }
 .card { position: relative; display: grid; grid-template-columns: 76px 1fr; gap: 6px; padding: 4px; background: #0008; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }

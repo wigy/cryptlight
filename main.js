@@ -54,7 +54,7 @@ class App {
     this.last = now;
     if (this.game && this.playing) {
       this.game.tick(dt);
-      this.view.render(this.game, dt);
+      this.view.render(this.game, this.game.paused ? 0 : dt);
       this.hud.update();
     }
     requestAnimationFrame((t) => this.frame(t));
@@ -149,7 +149,7 @@ class App {
     const map = { KeyQ: 'turn:-1', KeyE: 'turn:1', KeyW: 'step:0', KeyS: 'step:2', KeyA: 'step:3', KeyD: 'step:1', ArrowUp: 'step:0', ArrowDown: 'step:2', ArrowLeft: 'step:3', ArrowRight: 'step:1', PageUp: 'turn:-1', PageDown: 'turn:1', Space: 'pause', KeyK: 'save', KeyL: 'load' };
     let cmd = map[e.code];
     const digit = e.code.match(/^Digit([1-4])$/);
-    if (digit) cmd = `${e.shiftKey ? 'menu' : 'inv'}:${Number(digit[1]) - 1}`;
+    if (digit) cmd = `${e.shiftKey ? 'abilities' : 'items'}:${Number(digit[1]) - 1}`;
     if (e.code === 'Escape') { this.hud.menu = null; this.hud.inventory = null; return; }
     if (!cmd) return;
     e.preventDefault();

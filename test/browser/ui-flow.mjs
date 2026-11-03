@@ -73,15 +73,16 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await shot('13-combat');
   await shot('14-action-boxes');
   // The icons act directly, dim while recovering and light up again afterwards.
+  // Panels redraw on the next frame, which can be slow under the software renderer.
+  const until = async (expr) => { for (let i = 0; i < 50 && !(await ev(expr)); i++) await wait(100); assert.ok(await ev(expr), expr); };
   const quick = (i, act) => `document.querySelectorAll('.who')[${i}].querySelector('[data-act="quick:${i}:${act}"]')`;
   assert.equal(await ev(`${quick(1, 'attack:off')}.disabled`), false, 'a second Light weapon can attack');
+  await until(`window.__game.ruleset.targetsFor(window.__game, window.__game.party.members[1], { maxFeet: 5, melee: true }).length > 0`);
   await clickEl(`.who:nth-child(2) [data-act="quick:1:attack:off"]`);
-  await wait(100);
-  assert.equal(await ev(`${quick(1, 'attack:off')}.disabled`), true, 'the off hand dims after attacking');
+  await until(`${quick(1, 'attack:off')}.disabled`); // The off hand dims after attacking.
   assert.equal(await ev(`${quick(1, 'attack:main')}.disabled`), false, 'the Action is separate from the Bonus Action');
   await clickEl(`.who:nth-child(2) [data-act="quick:1:dodge"]`);
-  await wait(100);
-  assert.equal(await ev(`${quick(1, 'attack:main')}.disabled`), true, 'the main hand dims after spending the Action');
+  await until(`${quick(1, 'attack:main')}.disabled`); // The main hand dims after spending the Action.
   await shot('14-dimmed');
   // Game time can lag real time under the software renderer, so wait on the clock itself.
   for (let i = 0; i < 100 && await state(`g.time < g.party.members[1].actionReadyAt`); i++) await wait(100);
@@ -116,14 +117,41 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   // Pause stops the clock.
   await key('Space');
   const t0 = await state(`g.time`);
+  const r0 = await state(`g.realTime`);
+  const pos0 = await state(`[g.party.x, g.party.y, g.party.dir].join()`);
   await wait(400);
   assert.equal(await state(`g.time`), t0);
+  assert.equal(await state(`g.realTime`), r0, 'animations run on realTime, which stops too');
+  // Moving and acting are off, by icon and by key.
+  await until(`[...document.querySelectorAll('#pad button, .quick, .whohead, [data-act="rest"]')].every((b) => b.disabled)`);
+  await key('KeyW'); await key('KeyQ'); await wait(100);
+  assert.equal(await state(`[g.party.x, g.party.y, g.party.dir].join()`), pos0, 'keys do not move the party');
+  await click(VIEW.x + VIEW.w / 2, VIEW.y + VIEW.h / 2); await wait(100);
+  assert.equal(await state(`g.hand`), null, 'clicks in the view do nothing');
+  // Gear and skills can be looked at but not rearranged.
+  const packItem = await state(`g.party.members[2].pack.findIndex(Boolean)`);
+  const packed = await state(`g.party.members[2].pack[${packItem}].proto`);
+  await clickEl('[data-card="2"] .portrait');
+  await until(`!document.querySelector('#inv').hidden && !!document.querySelector('[data-act="invmode:abilities"]')`);
+  await clickEl('[data-act="invmode:items"]');
+  await until(`!!document.querySelector('.pack')`);
+  await clickEl(`.pack .slot:nth-child(${packItem + 1})`); await wait(100);
+  assert.equal(await state(`g.hand`), null, 'items cannot be picked up from the pack');
+  assert.equal(await state(`g.party.members[2].pack[${packItem}].proto`), packed);
+  await clickEl('[data-act="invmode:abilities"]');
+  await until(`!!document.querySelector('.ability')`);
+  await shot('16-paused-skills');
+  await clickEl('.ability'); await wait(100);
+  assert.equal(await state(`(g.party.members[2].quick ?? []).filter(Boolean).length`), 0, 'quick slots cannot be changed');
+  await clickEl('[data-act="invmode:items"]');
+  await until(`!!document.querySelector('.pack')`);
+  await clickEl('.close');
+  await until(`document.querySelector('#inv').hidden`);
   await key('Space');
+  await until(`!document.querySelector('#pad button').disabled`);
 
   // The inventory's second mode picks two skills or spells, which then appear on the action box.
   const ready3 = async () => { for (let i = 0; i < 100 && await state(`g.time < g.party.members[3].actionReadyAt`); i++) await wait(100); await wait(100); };
-  // Panels redraw on the next frame, which can be slow under the software renderer.
-  const until = async (expr) => { for (let i = 0; i < 50 && !(await ev(expr)); i++) await wait(100); assert.ok(await ev(expr), expr); };
   const invClosed = `document.querySelector('#inv').hidden`;
   await clickEl('[data-card="3"] .portrait');
   await until(`!!document.querySelector('[data-act="invmode:abilities"]')`);
@@ -149,7 +177,7 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await clickEl(`[data-act="${others[0]}"]`);
   await until(invClosed);
   await clickEl('[data-card="3"] .portrait');
-  await until(`!!document.querySelector('[data-act="invmode:items"]')`);
+  await until(`!document.querySelector('#inv').hidden && !!document.querySelector('[data-act="invmode:items"]')`);
   await clickEl('[data-act="invmode:items"]');
   await until(`!!document.querySelector('.pack')`);
   await clickEl('.close');
@@ -162,6 +190,21 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await wait(100);
   assert.ok((await state(`g.party.members[3].actionReadyAt`)) > castAt, 'the quick slot casts the spell');
   assert.equal(await ev(`document.querySelector('[data-act="quick:3:cast:fire-bolt"]').disabled`), true, 'and dims while recovering');
+  // Number keys open a character's pages: Shift for skills and spells, plain for items.
+  const digit = (n, shiftKey) => ev(`window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Digit${n}', shiftKey: ${shiftKey} }))`);
+  await digit(2, true);
+  await until(`!!document.querySelector('.abilities') && !document.querySelector('#inv').hidden`);
+  assert.equal(await ev(`!!document.querySelector('[data-act="menu:up"]')`), false, 'Shift+number no longer opens the action list');
+  await digit(2, false);
+  await until(`!!document.querySelector('.pack')`);
+  await digit(2, true);
+  await until(`!!document.querySelector('.abilities')`);
+  await digit(2, true);
+  await until(invClosed);
+  await digit(2, false);
+  await until(`!!document.querySelector('.pack') && !document.querySelector('#inv').hidden`);
+  await digit(2, false);
+  await until(invClosed);
   // An empty slot goes straight to choosing.
   await clickEl('.who:nth-child(1) [data-act="abilities:0"]');
   await wait(100);

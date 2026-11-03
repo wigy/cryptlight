@@ -551,9 +551,9 @@ export class Game {
   // ---------------------------------------------------------------- time
   tick(dt) {
     if (this.over) return;
+    if (this.paused) return; // Everything stops, including what only looks alive: flicker, breathing and effects.
     this.realTime += dt;
     this.fx = this.fx.filter((f) => this.realTime - f.born < f.life);
-    if (this.paused) return;
     this.time += dt * this.ruleset.timeScale;
     for (const level of Object.values(this.levels)) {
       for (const o of level.objects) {

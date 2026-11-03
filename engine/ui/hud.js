@@ -9,6 +9,9 @@ function setHtml(el, html) { if (el._html !== html) { el._html = html; el.innerH
 
 const NEAR_REACH = 2.1; // How far, in cells along the view, things can be picked up or worked.
 
+/** Commands that change the world or the party, refused while paused. Looking at gear and skills stays allowed. */
+const PAUSE_LOCKED = new Set(['turn', 'step', 'rest', 'dorest', 'menu', 'sub', 'do', 'quick', 'quicksub', 'quickset', 'slot', 'pack', 'consume']);
+
 const glyph = (body) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
 /** Pictures for quick actions that have no item to show. */
 const GLYPHS = {
@@ -56,7 +59,7 @@ export class Hud {
       <div id="side" class="panelbg">
         <div id="status"></div>
         <div id="tools">
-          <button data-act="pause" data-hint="Pause the game. You can still give orders. (Space)">Pause</button>
+          <button data-act="pause" data-hint="Pause the game. You can look at gear and skills, but not move or act. (Space)">Pause</button>
           <button data-act="rest" data-hint="Take a Short or Long Rest.">Rest</button>
           <button data-act="save" data-hint="Save the game in this browser. (K)">Save</button>
           <button data-act="load" data-hint="Load your saved game. (L)">Load</button>
@@ -72,6 +75,8 @@ export class Hud {
           <button data-act="step:1" data-hint="Sidestep right (D)">&#8594;</button>
         </div>
       </div>`;
+    this.pauseButton = this.stage.querySelector('[data-act="pause"]');
+    this.lockable = [...this.stage.querySelectorAll('#pad button, [data-act="rest"]')];
     const wrap = this.stage.querySelector('#viewwrap');
     wrap.prepend(this.app.canvas);
     this.els = Object.fromEntries(['party', 'viewwrap', 'floaters', 'banner', 'log', 'status', 'actions'].map((id) => [id, this.stage.querySelector(`#${id}`)]));
@@ -99,7 +104,12 @@ export class Hud {
     this.renderActions();
     this.renderLog();
     this.renderInventory();
-    this.els.paused.hidden = !g.paused;
+    // The overlay would cover the inventory, which is exactly what can still be used while paused.
+    this.els.paused.hidden = !g.paused || this.inventory != null;
+    this.stage.classList.toggle('paused', g.paused);
+    const pauseLabel = g.paused ? 'Resume' : 'Pause';
+    if (this.pauseButton.textContent !== pauseLabel) this.pauseButton.textContent = pauseLabel;
+    for (const el of this.lockable) el.disabled = g.paused;
     this.els.hint.hidden = !this.hint;
     if (this.hint) setHtml(this.els.hint, this.hint);
     this.handEl.hidden = !g.hand;
@@ -120,7 +130,7 @@ export class Hud {
         return `<button class="slot" data-act="slot:${i}:${slot}" data-hint="${esc(info ? `<b>${info.name}</b>. ${info.description}` : `${label}: empty. Click with an item to equip it.`)}">${it ? `<img src="${this.itemImg(it)}" alt=""><span class="q">${it.qty > 1 ? it.qty : ''}</span>` : ''}</button>`;
       };
       return `<div class="card${s.dead ? ' dead' : ''}" data-card="${i}">
-        <div class="portrait" data-act="inv:${i}" data-hint="Open ${esc(s.name)}'s gear and stats. (${i + 1})">
+        <div class="portrait" data-act="inv:${i}" data-hint="Open ${esc(s.name)}'s gear and stats. (${i + 1}; Shift+${i + 1} for skills and spells)">
           <img src="${this.img(m.portrait ?? s.portrait)}" alt=""><div class="cool" style="height:${Math.round(s.cooldown * 10) * 10}%"></div>${s.tag ? `<div class="tag">${esc(s.tag)}</div>` : ''}
         </div>
         <div><div class="cname">${esc(s.name)}</div>${bars}<div class="hands">${hand('mainHand', 'Main hand')}${hand('offHand', 'Off hand')}</div></div>
@@ -136,7 +146,7 @@ export class Hud {
       b.className = 'burst';
       b.textContent = fx.amount;
       card.append(b);
-      setTimeout(() => { b.remove(); }, 900);
+      b.addEventListener('animationend', () => b.remove()); // Not a timer, so it holds while paused.
       this.els.party._html = null; // The burst is transient; let the next update rebuild freely.
     }
   }
@@ -173,10 +183,10 @@ export class Hud {
         const act = a.empty ? `abilities:${i}` : a.submenu ? `quicksub:${i}:${a.submenu}` : `quick:${i}:${a.id}`;
         const named = a.kind ? ' named' : '';
         const picture = a.item ? `<img src="${this.itemImg(a.item)}" alt="">` : GLYPHS[a.glyph] ?? '';
-        return `<button class="quick${named}${a.empty ? ' empty' : ''}" data-act="${esc(act)}" ${a.enabled ? '' : 'disabled'} data-hint="${esc(`<b>${a.label}</b>. ${a.hint ?? ''}`)}">${picture}${named ? `<span>${esc(a.label)}</span>` : ''}</button>`;
+        return `<button class="quick${named}${a.empty ? ' empty' : ''}" data-act="${esc(act)}" ${a.enabled && !g.paused ? '' : 'disabled'} data-hint="${esc(`<b>${a.label}</b>. ${a.hint ?? ''}`)}">${picture}${named ? `<span>${esc(a.label)}</span>` : ''}</button>`;
       }).join('');
       return `<div class="who">
-        <button class="whohead" data-act="menu:${i}" ${s.dead || s.down ? 'disabled' : ''} data-hint="All actions for ${esc(s.name)}. (Shift+${i + 1})"><b>${esc(s.name)}</b><small>${state}</small></button>
+        <button class="whohead" data-act="menu:${i}" ${s.dead || s.down || g.paused ? 'disabled' : ''} data-hint="All actions for ${esc(s.name)}."><b>${esc(s.name)}</b><small>${state}</small></button>
         <div class="quicks">${icons}</div></div>`;
     }).join('');
     setHtml(this.els.actions, rows);
@@ -211,7 +221,7 @@ export class Hud {
     const weight = g.ruleset.carriedWeight(m);
     setHtml(inv, `${top}<div><h2>Equipped</h2><div class="doll">${doll}</div></div>
       <div><h2>Pack (${Math.round(weight)} lb.)</h2><div class="pack">${pack}</div>
-      <button class="mouth" data-act="consume:${i}" data-hint="Hold a potion or food over this and click to consume it.">Drink / eat what you're holding</button></div>
+      <button class="mouth" data-act="consume:${i}" ${g.paused ? 'disabled' : ''} data-hint="Hold a potion or food over this and click to consume it.">Drink / eat what you're holding</button></div>
       <div class="sheet">${sheet}</div>${close}`);
   }
 
@@ -239,7 +249,7 @@ export class Hud {
     el.style.left = `${f.at.x * 100}%`;
     el.style.top = `${f.at.y * 100}%`;
     this.els.floaters.append(el);
-    setTimeout(() => el.remove(), 1000);
+    el.addEventListener('animationend', () => el.remove());
   }
 
   // ---------------------------------------------------------------- input
@@ -259,8 +269,13 @@ export class Hud {
   command(act) {
     const g = this.game;
     const [verb, a, b] = act.split(':');
+    if (g.paused && PAUSE_LOCKED.has(verb)) return;
     switch (verb) {
-      case 'pause': g.paused = !g.paused; break;
+      case 'pause':
+        g.paused = !g.paused;
+        if (g.paused) this.menu = null; // Its actions couldn't be used anyway.
+        this.hint = null;
+        break;
       case 'turn': g.turn(Number(a)); break;
       case 'step': g.step(Number(a)); break;
       case 'rest': this.menu = this.menu?.rest ? null : { rest: true }; break;
@@ -279,7 +294,13 @@ export class Hud {
       case 'sub': this.menu.sub = act.slice(4); this.hint = null; break;
       case 'quick': g.ruleset.doAction(g, g.party.members[Number(a)], act.split(':').slice(2).join(':')); break;
       case 'quicksub': this.menu = { member: Number(a), sub: act.split(':').slice(2).join(':'), root: act.split(':').slice(2).join(':') }; this.hint = null; break;
-      case 'abilities': this.inventory = Number(a); this.invMode = 'abilities'; this.hint = null; break;
+      case 'items':
+      case 'abilities':
+        // The same key again closes the page it opened.
+        this.inventory = this.inventory === Number(a) && this.invMode === verb ? null : Number(a);
+        this.invMode = verb;
+        this.hint = null;
+        break;
       case 'invmode': this.invMode = a; this.hint = null; break;
       case 'quickset': {
         const m = g.party.members[Number(a)];
@@ -305,7 +326,7 @@ export class Hud {
 
   clickView(e) {
     const g = this.game;
-    if (g.over) return;
+    if (g.over || g.paused) return;
     this.app.audio.unlock();
     const r = this.app.canvas.getBoundingClientRect();
     const u = (e.clientX - r.left) / r.width, v = (e.clientY - r.top) / r.height;
