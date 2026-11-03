@@ -32,7 +32,7 @@ try {
     if (m.id) { pending.get(m.id)?.(m); pending.delete(m.id); }
     if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.exception?.description ?? m.params.exceptionDetails.text);
     if (m.method === 'Runtime.consoleAPICalled' && (m.params.type === 'error' || m.params.type === 'warning')) errors.push(m.params.args.map((a) => a.value ?? a.description).join(' '));
-    if (m.method === 'Network.responseReceived' && m.params.response.status >= 400) errors.push(`${m.params.response.status} ${m.params.response.url}`);
+    if (m.method === 'Network.responseReceived' && m.params.response.status >= 400 && !m.params.response.url.includes('/assets/audio/')) errors.push(`${m.params.response.status} ${m.params.response.url}`);
   };
   const send = (method, params = {}) => new Promise((r) => { const n = ++id; pending.set(n, r); ws.send(JSON.stringify({ id: n, method, params })); });
   await send('Runtime.enable'); await send('Page.enable'); await send('Network.enable');

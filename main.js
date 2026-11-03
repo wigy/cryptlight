@@ -20,6 +20,7 @@ class App {
     this.assets = assets;
     this.ruleset = new Srd5Ruleset(srd, module.items);
     this.audio = new Audio8();
+    this.audio.load('assets/audio');
     this.canvas = document.createElement('canvas');
     this.canvas.id = 'view';
     this.view = new View3D(this.canvas, (n) => this.assetUrl(n));
@@ -130,6 +131,7 @@ class App {
     // For debugging from the console and for tools/browser-check.mjs.
     window.__game = g;
     window.__view = this.view;
+    window.__audio = this.audio;
   }
   continueGame() {
     const json = localStorage.getItem(SAVE_KEY);

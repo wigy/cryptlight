@@ -1,2 +1,4 @@
 .cache/
 node_modules/
+# Licensed recordings that may not be redistributed as sound effects: see "Sound" in the README.
+assets/audio/

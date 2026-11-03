@@ -11,6 +11,7 @@
     "test:browser": "node tools/browser-check.mjs .cache/shots test/browser/ui-flow.mjs",
     "extract": "node tools/extract-srd.mjs",
     "art:generate": "node tools/generate-art.mjs",
-    "art:process": "node tools/process-art.mjs"
+    "art:process": "node tools/process-art.mjs",
+    "sfx:process": "node tools/process-sfx.mjs"
   }
 }

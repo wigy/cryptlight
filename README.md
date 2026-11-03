@@ -76,6 +76,20 @@ npm run art:generate -- --force --only rat,cultist   # regenerate some (uses pai
 npm run art:process                                  # key, tile and resize into assets/game
 ```
 
+## Sound
+
+The game synthesizes its sound effects unless it finds recordings in `assets/audio`. That folder isn't in this
+repository, so a fresh clone plays the synthesized sounds.
+
+The recordings listed in `tools/sfx-manifest.mjs` come from the free [Sonniss GameAudioGDC](https://sonniss.com/gameaudiogdc)
+bundles. [Their license](https://sonniss.com/gdc-bundle-license/) allows them in finished games but not supplying
+them as sound effects, even after processing, and not training AI on them. So they aren't covered by the MIT
+License and must stay out of this repository. Add a build's `assets/audio` when publishing it as a finished game.
+
+```
+npm run sfx:process -- <folder of source recordings>   # trim, level and encode into assets/audio
+```
+
 ## Credits and license
 
 The project is released under the [MIT License](LICENSE), except that material from the SRD, in `data/srd/`
