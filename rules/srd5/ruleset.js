@@ -259,6 +259,9 @@ export class Srd5Ruleset {
     const need = ({ bonus }) => (bonus ? bonusReady : ready);
     const clean = (a) => ({ ...a, label: a.label.replace(/ >$/, '') });
     const skills = this.classActions(game, m, ready, bonusReady).map((a) => ({ ...clean(a), kind: 'skill', glyph: 'skill' }));
+    // Always listed so it can sit in a slot ahead of need; lit only while an ally is dying.
+    const dying = game.party.members.some((o) => o !== m && o.hp <= 0 && !o.dead && !o.death.stable);
+    skills.push({ id: 'menu:ally:stabilize', label: 'Stabilize', enabled: ready && dying, hint: 'DC 10 Wisdom (Medicine) check on a dying ally.', submenu: 'ally:stabilize', kind: 'skill', glyph: 'skill' });
     const armored = lacksArmorTraining(m, this.srd);
     const spells = this.castMenu(game, m, need).filter((a) => !a.back).map((a) => ({ ...clean(a), enabled: a.enabled && !armored, kind: 'spell', glyph: 'cast' }));
     return [...skills, ...spells];

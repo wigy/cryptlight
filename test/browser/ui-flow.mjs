@@ -96,18 +96,18 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await wait(100);
   assert.ok(await ev(`!!document.querySelector('.who')`), 'Back returns to the boxes');
   assert.equal(await ev(`document.querySelector('[data-act="quicksub:0:cast"]')`), null);
-  await clickEl('.whohead[data-act="menu:0"]');
-  await wait(100);
-  await shot('14-actions');
+  // The panel hugs the boxes, and the title no longer does anything.
+  const gap = await ev(`document.querySelector('#actions').getBoundingClientRect().bottom - document.querySelector('.who:last-child').getBoundingClientRect().bottom`);
+  assert.ok(gap <= 8, `action panel fits its boxes tightly, gap ${gap}`);
+  assert.equal(await ev(`document.querySelector('.whohead').hasAttribute('data-act')`), false, 'titles are not clickable');
   const before = await state(`g.party.members[0].actionReadyAt`);
-  await clickEl('.act[data-act="do:attack:main"]');
+  await clickEl('[data-act="quick:0:attack:main"]');
   await wait(200);
   assert.ok((await state(`g.party.members[0].actionReadyAt`)) > before, 'attacking spends the Action');
   assert.equal(await ev(`document.querySelector('.who') !== null`), true, 'menu closes after acting');
 
   // Cast through the submenus.
-  await clickEl('.whohead[data-act="menu:3"]');
-  await clickEl('.act[data-act="sub:cast"]');
+  await clickEl('[data-act="quicksub:3:cast"]');
   await wait(100);
   await shot('15-spells');
   await clickEl('.act[data-act="do:cast:fire-bolt"]');
@@ -123,7 +123,7 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   assert.equal(await state(`g.time`), t0);
   assert.equal(await state(`g.realTime`), r0, 'animations run on realTime, which stops too');
   // Moving and acting are off, by icon and by key.
-  await until(`[...document.querySelectorAll('#pad button, .quick, .whohead, [data-act="rest"]')].every((b) => b.disabled)`);
+  await until(`[...document.querySelectorAll('#pad button, .quick, [data-act="rest"]')].every((b) => b.disabled)`);
   await key('KeyW'); await key('KeyQ'); await wait(100);
   assert.equal(await state(`[g.party.x, g.party.y, g.party.dir].join()`), pos0, 'keys do not move the party');
   await click(VIEW.x + VIEW.w / 2, VIEW.y + VIEW.h / 2); await wait(100);

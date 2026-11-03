@@ -172,8 +172,7 @@ export class Hud {
         const act = a.back ? 'menu:up' : a.submenu ? `sub:${a.submenu}` : `do:${a.id}`;
         return `<button class="act" data-act="${esc(act)}" ${a.enabled ? '' : 'disabled'} data-hint="${esc(a.hint ? `<b>${a.label}</b>. ${a.hint}` : '')}">${esc(a.label)}</button>`;
       }).join('');
-      const close = this.menu.sub ? '' : '<button class="act" data-act="menu:close">&lt; Back</button>';
-      setHtml(this.els.actions, `<h3>${esc(m.name)}</h3><div class="actlist">${close}${rows}</div>`);
+      setHtml(this.els.actions, `<h3>${esc(m.name)}</h3><div class="actlist">${rows}</div>`);
       return;
     }
     const rows = g.party.members.map((m, i) => {
@@ -186,7 +185,7 @@ export class Hud {
         return `<button class="quick${named}${a.empty ? ' empty' : ''}" data-act="${esc(act)}" ${a.enabled && !g.paused ? '' : 'disabled'} data-hint="${esc(`<b>${a.label}</b>. ${a.hint ?? ''}`)}">${picture}${named ? `<span>${esc(a.label)}</span>` : ''}</button>`;
       }).join('');
       return `<div class="who">
-        <button class="whohead" data-act="menu:${i}" ${s.dead || s.down || g.paused ? 'disabled' : ''} data-hint="All actions for ${esc(s.name)}."><b>${esc(s.name)}</b><small>${state}</small></button>
+        <div class="whohead"><b>${esc(s.name)}</b><small>${state}</small></div>
         <div class="quicks">${icons}</div></div>`;
     }).join('');
     setHtml(this.els.actions, rows);
@@ -288,7 +287,6 @@ export class Hud {
         if (a === 'close') this.menu = null;
         else if (a === 'up' && this.menu.root === this.menu.sub) this.menu = null; // Opened straight from an icon.
         else if (a === 'up') this.menu.sub = this.menu.sub?.startsWith('ally:') && this.menu.sub.startsWith('ally:cast-') ? 'cast' : null;
-        else this.menu = { member: Number(a), sub: null };
         this.hint = null;
         break;
       case 'sub': this.menu.sub = act.slice(4); this.hint = null; break;

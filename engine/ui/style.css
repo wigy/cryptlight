@@ -56,10 +56,10 @@ button:disabled { opacity: .45; cursor: default; }
 #status small { color: var(--dim); font-size: 13px; }
 #tools { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
 #tools button { padding: 7px 0; font-size: 13px; }
-#actions { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 4px; overflow: hidden; background: #0007; padding: 6px; border: 1px solid var(--line); border-radius: 4px; }
+#actions { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 4px; overflow: hidden; background: #0007; padding: 6px; border: 1px solid var(--line); border-radius: 4px; }
 #actions h3 { margin: 0 0 2px; font-size: 15px; color: var(--gold); font-weight: normal; }
 .who { display: flex; flex-direction: column; gap: 5px; padding: 5px; background: #0006; border: 1px solid var(--line); border-radius: 3px; }
-.whohead { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 8px; }
+.whohead { display: flex; justify-content: space-between; align-items: baseline; padding: 1px 3px; }
 .whohead b { font-size: 16px; color: var(--gold); font-weight: normal; }
 .whohead small { font-size: 13px; color: var(--dim); }
 .quicks { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
@@ -72,7 +72,7 @@ button:disabled { opacity: .45; cursor: default; }
 .act { text-align: left; padding: 6px 10px; font-size: 15px; }
 .act.sub::after { content: ''; }
 .actlist { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; min-height: 0; }
-#pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; height: 148px; }
+#pad { margin-top: auto; flex: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; height: 148px; }
 #pad button { font-size: 30px; line-height: 1; }
 
 /* Inventory */

@@ -398,3 +398,14 @@ test('a barbarian keeps Rage in its quick slot while raging', async () => {
   r.doAction(g, m, 'end-rage');
   assert.equal(r.memberQuickActions(g, m)[2].id, 'rage');
 });
+
+test('Stabilize can be slotted and lights up only while an ally is dying', async () => {
+  const { game: g, ruleset: r } = await newGame();
+  const [a, b] = g.party.members;
+  assert.ok(r.toggleQuick(g, a, 'menu:ally:stabilize'));
+  const slot = () => r.memberQuickActions(g, a)[2];
+  assert.equal(slot().enabled, false);
+  b.hp = 0;
+  assert.equal(slot().enabled, true);
+  assert.equal(slot().submenu, 'ally:stabilize');
+});
