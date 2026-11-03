@@ -13,7 +13,6 @@ export class Audio8 {
   constructor() { this.enabled = true; this.ctx = null; }
   /** Browsers only allow audio after a user gesture. */
   unlock() { if (!this.ctx && window.AudioContext) this.ctx = new AudioContext(); if (this.ctx?.state === 'suspended') this.ctx.resume(); }
-  toggle() { this.enabled = !this.enabled; }
   play(name) {
     const s = SOUNDS[name];
     if (!s || !this.enabled || !this.ctx) return;
