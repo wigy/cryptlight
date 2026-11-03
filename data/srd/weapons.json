@@ -1,0 +1,734 @@
+[
+ {
+  "id": "club",
+  "name": "Club",
+  "kind": "weapon",
+  "training": "simple",
+  "style": "melee",
+  "damage": {
+   "dice": "1d4",
+   "type": "bludgeoning"
+  },
+  "mastery": "slow",
+  "weight": 2,
+  "cost": "1 SP",
+  "props": {
+   "light": true
+  }
+ },
+ {
+  "id": "dagger",
+  "name": "Dagger",
+  "kind": "weapon",
+  "training": "simple",
+  "style": "melee",
+  "damage": {
+   "dice": "1d4",
+   "type": "piercing"
+  },
+  "mastery": "nick",
+  "weight": 1,
+  "cost": "2 GP",
+  "props": {
+   "finesse": true,
+   "light": true,
+   "thrown": {
+    "range": 20,
+    "long": 60
+   }
+  }
+ },
+ {
+  "id": "greatclub",
+  "name": "Greatclub",
+  "kind": "weapon",
+  "training": "simple",
+  "style": "melee",
+  "damage": {
+   "dice": "1d8",
+   "type": "bludgeoning"
+  },
+  "mastery": "push",
+  "weight": 10,
+  "cost": "2 SP",
+  "props": {
+   "twoHanded": true
+  }
+ },
+ {
+  "id": "handaxe",
+  "name": "Handaxe",
+  "kind": "weapon",
+  "training": "simple",
+  "style": "melee",
+  "damage": {
+   "dice": "1d6",
+   "type": "slashing"
+  },
+  "mastery": "vex",
+  "weight": 2,
+  "cost": "5 GP",
+  "props": {
+   "light": true,
+   "thrown": {
+    "range": 20,
+    "long": 60
+   }
+  }
+ },
+ {
+  "id": "javelin",
+  "name": "Javelin",
+  "kind": "weapon",
+  "training": "simple",
+  "style": "melee",
+  "damage": {
+   "dice": "1d6",
+   "type": "piercing"
+  },
+  "mastery": "slow",
+  "weight": 2,
+  "cost": "5 SP",
+  "props": {
+   "thrown": {
+    "range": 30,
+    "long": 120
+   }
+  }
+ },
+ {
+  "id": "light-hammer",
+  "name": "Light Hammer",
+  "kind": "weapon",
+  "training": "simple",
+  "style": "melee",
+  "damage": {
+   "dice": "1d4",
+   "type": "bludgeoning"
+  },
+  "mastery": "nick",
+  "weight": 2,
+  "cost": "2 GP",
+  "props": {
+   "light": true,
+   "thrown": {
+    "range": 20,
+    "long": 60
+   }
+  }
+ },
+ {
+  "id": "mace",
+  "name": "Mace",
+  "kind": "weapon",
+  "training": "simple",
+  "style": "melee",
+  "damage": {
+   "dice": "1d6",
+   "type": "bludgeoning"
+  },
+  "mastery": "sap",
+  "weight": 4,
+  "cost": "5 GP",
+  "props": {}
+ },
+ {
+  "id": "quarterstaff",
+  "name": "Quarterstaff",
+  "kind": "weapon",
+  "training": "simple",
+  "style": "melee",
+  "damage": {
+   "dice": "1d6",
+   "type": "bludgeoning"
+  },
+  "mastery": "topple",
+  "weight": 4,
+  "cost": "2 SP",
+  "props": {
+   "versatile": "1d8"
+  }
+ },
+ {
+  "id": "sickle",
+  "name": "Sickle",
+  "kind": "weapon",
+  "training": "simple",
+  "style": "melee",
+  "damage": {
+   "dice": "1d4",
+   "type": "slashing"
+  },
+  "mastery": "nick",
+  "weight": 2,
+  "cost": "1 GP",
+  "props": {
+   "light": true
+  }
+ },
+ {
+  "id": "spear",
+  "name": "Spear",
+  "kind": "weapon",
+  "training": "simple",
+  "style": "melee",
+  "damage": {
+   "dice": "1d6",
+   "type": "piercing"
+  },
+  "mastery": "sap",
+  "weight": 3,
+  "cost": "1 GP",
+  "props": {
+   "versatile": "1d8",
+   "thrown": {
+    "range": 20,
+    "long": 60
+   }
+  }
+ },
+ {
+  "id": "dart",
+  "name": "Dart",
+  "kind": "weapon",
+  "training": "simple",
+  "style": "ranged",
+  "damage": {
+   "dice": "1d4",
+   "type": "piercing"
+  },
+  "mastery": "vex",
+  "weight": 0.25,
+  "cost": "5 CP",
+  "props": {
+   "finesse": true,
+   "thrown": {
+    "range": 20,
+    "long": 60
+   }
+  }
+ },
+ {
+  "id": "light-crossbow",
+  "name": "Light Crossbow",
+  "kind": "weapon",
+  "training": "simple",
+  "style": "ranged",
+  "damage": {
+   "dice": "1d8",
+   "type": "piercing"
+  },
+  "mastery": "slow",
+  "weight": 5,
+  "cost": "25 GP",
+  "props": {
+   "loading": true,
+   "twoHanded": true,
+   "ammunition": {
+    "range": 80,
+    "long": 320,
+    "type": "bolt"
+   }
+  }
+ },
+ {
+  "id": "shortbow",
+  "name": "Shortbow",
+  "kind": "weapon",
+  "training": "simple",
+  "style": "ranged",
+  "damage": {
+   "dice": "1d6",
+   "type": "piercing"
+  },
+  "mastery": "vex",
+  "weight": 2,
+  "cost": "25 GP",
+  "props": {
+   "twoHanded": true,
+   "ammunition": {
+    "range": 80,
+    "long": 320,
+    "type": "arrow"
+   }
+  }
+ },
+ {
+  "id": "sling",
+  "name": "Sling",
+  "kind": "weapon",
+  "training": "simple",
+  "style": "ranged",
+  "damage": {
+   "dice": "1d4",
+   "type": "bludgeoning"
+  },
+  "mastery": "slow",
+  "weight": 0,
+  "cost": "1 SP",
+  "props": {
+   "ammunition": {
+    "range": 30,
+    "long": 120,
+    "type": "bullet"
+   }
+  }
+ },
+ {
+  "id": "battleaxe",
+  "name": "Battleaxe",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d8",
+   "type": "slashing"
+  },
+  "mastery": "topple",
+  "weight": 4,
+  "cost": "10 GP",
+  "props": {
+   "versatile": "1d10"
+  }
+ },
+ {
+  "id": "flail",
+  "name": "Flail",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d8",
+   "type": "bludgeoning"
+  },
+  "mastery": "sap",
+  "weight": 2,
+  "cost": "10 GP",
+  "props": {}
+ },
+ {
+  "id": "glaive",
+  "name": "Glaive",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d10",
+   "type": "slashing"
+  },
+  "mastery": "graze",
+  "weight": 6,
+  "cost": "20 GP",
+  "props": {
+   "heavy": true,
+   "reach": true,
+   "twoHanded": true
+  }
+ },
+ {
+  "id": "greataxe",
+  "name": "Greataxe",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d12",
+   "type": "slashing"
+  },
+  "mastery": "cleave",
+  "weight": 7,
+  "cost": "30 GP",
+  "props": {
+   "heavy": true,
+   "twoHanded": true
+  }
+ },
+ {
+  "id": "greatsword",
+  "name": "Greatsword",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "2d6",
+   "type": "slashing"
+  },
+  "mastery": "graze",
+  "weight": 6,
+  "cost": "50 GP",
+  "props": {
+   "heavy": true,
+   "twoHanded": true
+  }
+ },
+ {
+  "id": "halberd",
+  "name": "Halberd",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d10",
+   "type": "slashing"
+  },
+  "mastery": "cleave",
+  "weight": 6,
+  "cost": "20 GP",
+  "props": {
+   "heavy": true,
+   "reach": true,
+   "twoHanded": true
+  }
+ },
+ {
+  "id": "lance",
+  "name": "Lance",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d10",
+   "type": "piercing"
+  },
+  "mastery": "topple",
+  "weight": 6,
+  "cost": "10 GP",
+  "props": {
+   "heavy": true,
+   "reach": true,
+   "twoHanded": true
+  }
+ },
+ {
+  "id": "longsword",
+  "name": "Longsword",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d8",
+   "type": "slashing"
+  },
+  "mastery": "sap",
+  "weight": 3,
+  "cost": "15 GP",
+  "props": {
+   "versatile": "1d10"
+  }
+ },
+ {
+  "id": "maul",
+  "name": "Maul",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "2d6",
+   "type": "bludgeoning"
+  },
+  "mastery": "topple",
+  "weight": 10,
+  "cost": "10 GP",
+  "props": {
+   "heavy": true,
+   "twoHanded": true
+  }
+ },
+ {
+  "id": "morningstar",
+  "name": "Morningstar",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d8",
+   "type": "piercing"
+  },
+  "mastery": "sap",
+  "weight": 4,
+  "cost": "15 GP",
+  "props": {}
+ },
+ {
+  "id": "pike",
+  "name": "Pike",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d10",
+   "type": "piercing"
+  },
+  "mastery": "push",
+  "weight": 18,
+  "cost": "5 GP",
+  "props": {
+   "heavy": true,
+   "reach": true,
+   "twoHanded": true
+  }
+ },
+ {
+  "id": "rapier",
+  "name": "Rapier",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d8",
+   "type": "piercing"
+  },
+  "mastery": "vex",
+  "weight": 2,
+  "cost": "25 GP",
+  "props": {
+   "finesse": true
+  }
+ },
+ {
+  "id": "scimitar",
+  "name": "Scimitar",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d6",
+   "type": "slashing"
+  },
+  "mastery": "nick",
+  "weight": 3,
+  "cost": "25 GP",
+  "props": {
+   "finesse": true,
+   "light": true
+  }
+ },
+ {
+  "id": "shortsword",
+  "name": "Shortsword",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d6",
+   "type": "piercing"
+  },
+  "mastery": "vex",
+  "weight": 2,
+  "cost": "10 GP",
+  "props": {
+   "finesse": true,
+   "light": true
+  }
+ },
+ {
+  "id": "trident",
+  "name": "Trident",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d8",
+   "type": "piercing"
+  },
+  "mastery": "topple",
+  "weight": 4,
+  "cost": "5 GP",
+  "props": {
+   "versatile": "1d10",
+   "thrown": {
+    "range": 20,
+    "long": 60
+   }
+  }
+ },
+ {
+  "id": "warhammer",
+  "name": "Warhammer",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d8",
+   "type": "bludgeoning"
+  },
+  "mastery": "push",
+  "weight": 5,
+  "cost": "15 GP",
+  "props": {
+   "versatile": "1d10"
+  }
+ },
+ {
+  "id": "war-pick",
+  "name": "War Pick",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d8",
+   "type": "piercing"
+  },
+  "mastery": "sap",
+  "weight": 2,
+  "cost": "5 GP",
+  "props": {
+   "versatile": "1d10"
+  }
+ },
+ {
+  "id": "whip",
+  "name": "Whip",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "melee",
+  "damage": {
+   "dice": "1d4",
+   "type": "slashing"
+  },
+  "mastery": "slow",
+  "weight": 3,
+  "cost": "2 GP",
+  "props": {
+   "finesse": true,
+   "reach": true
+  }
+ },
+ {
+  "id": "blowgun",
+  "name": "Blowgun",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "ranged",
+  "damage": {
+   "dice": "1",
+   "type": "piercing"
+  },
+  "mastery": "vex",
+  "weight": 1,
+  "cost": "10 GP",
+  "props": {
+   "loading": true,
+   "ammunition": {
+    "range": 25,
+    "long": 100,
+    "type": "needle"
+   }
+  }
+ },
+ {
+  "id": "hand-crossbow",
+  "name": "Hand Crossbow",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "ranged",
+  "damage": {
+   "dice": "1d6",
+   "type": "piercing"
+  },
+  "mastery": "vex",
+  "weight": 3,
+  "cost": "75 GP",
+  "props": {
+   "light": true,
+   "loading": true,
+   "ammunition": {
+    "range": 30,
+    "long": 120,
+    "type": "bolt"
+   }
+  }
+ },
+ {
+  "id": "heavy-crossbow",
+  "name": "Heavy Crossbow",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "ranged",
+  "damage": {
+   "dice": "1d10",
+   "type": "piercing"
+  },
+  "mastery": "push",
+  "weight": 18,
+  "cost": "50 GP",
+  "props": {
+   "heavy": true,
+   "loading": true,
+   "twoHanded": true,
+   "ammunition": {
+    "range": 100,
+    "long": 400,
+    "type": "bolt"
+   }
+  }
+ },
+ {
+  "id": "longbow",
+  "name": "Longbow",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "ranged",
+  "damage": {
+   "dice": "1d8",
+   "type": "piercing"
+  },
+  "mastery": "slow",
+  "weight": 2,
+  "cost": "50 GP",
+  "props": {
+   "heavy": true,
+   "twoHanded": true,
+   "ammunition": {
+    "range": 150,
+    "long": 600,
+    "type": "arrow"
+   }
+  }
+ },
+ {
+  "id": "musket",
+  "name": "Musket",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "ranged",
+  "damage": {
+   "dice": "1d12",
+   "type": "piercing"
+  },
+  "mastery": "slow",
+  "weight": 10,
+  "cost": "500 GP",
+  "props": {
+   "loading": true,
+   "twoHanded": true,
+   "ammunition": {
+    "range": 40,
+    "long": 120,
+    "type": "bullet"
+   }
+  }
+ },
+ {
+  "id": "pistol",
+  "name": "Pistol",
+  "kind": "weapon",
+  "training": "martial",
+  "style": "ranged",
+  "damage": {
+   "dice": "1d10",
+   "type": "piercing"
+  },
+  "mastery": "vex",
+  "weight": 3,
+  "cost": "250 GP",
+  "props": {
+   "loading": true,
+   "ammunition": {
+    "range": 30,
+    "long": 90,
+    "type": "bullet"
+   }
+  }
+ }
+]

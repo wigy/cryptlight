@@ -1,0 +1,127 @@
+{
+  "id": "thornwick",
+  "name": "The Well at Thornwick",
+  "summary": "A first-level adventure for four characters.",
+  "titleImage": "title",
+  "ruleset": "srd5",
+  "start": { "level": "warren", "x": 11, "y": 20, "dir": 0 },
+  "intro": [
+    "THE WELL AT THORNWICK",
+    "The village well runs foul, and things climb out at night.",
+    "Someone has stolen the Wellstone that kept it pure.",
+    "Your rope ends here, in the dark. Find the stone."
+  ],
+  "items": {
+    "iron-key": { "name": "Iron Key", "kind": "gear", "weight": 0.1, "icon": "key", "description": "A heavy key with a goblin's tooth tied to it." },
+    "wellstone": { "name": "The Wellstone", "kind": "gear", "weight": 2, "icon": "amulet", "description": "A smooth blue stone, cool and always damp. It belongs in the font by the crypt stairs." },
+    "thornwick-fang": { "name": "Thornwick Fang", "base": "shortsword", "bonus": 1, "description": "A +1 Shortsword, once the pride of the village militia." }
+  },
+  "levels": {
+    "warren": {
+      "name": "The Goblin Warren",
+      "textures": { "wall": "wall-warren", "floor": "floor-warren", "ceiling": "ceiling" },
+      "grid": [
+        "###############################",
+        "###.......#####################",
+        "###.w...n.#####.......#########",
+        "###...b...#####.......#########",
+        "###.......P.....g.....L########",
+        "###.....c.###.#.......#########",
+        "#############.#.g.n...#########",
+        "#############.#################",
+        "#####.i.#####.#######j#########",
+        "#####...#####.#######p#########",
+        "######S#H####.#######.#########",
+        "#T.K.....................######",
+        "###########.######.############",
+        "###########.######.############",
+        "########.......###.......######",
+        "########.r...r.###.w...m.######",
+        "########...r...###...m...######",
+        "########.......###.e.....######",
+        "###########d###################",
+        "#########..k..#################",
+        "#########.....#################",
+        "#########.....#################",
+        "###########Y###################"
+      ],
+      "legend": {
+        "Y": { "type": "wall", "kind": "plaque", "text": "Carved by the village: 'Keep the stone in the font, and the font keeps the well.'" },
+        "k": [
+          { "type": "item", "proto": "potion-of-healing" },
+          { "type": "zone", "once": true, "onEnter": [{ "do": "message", "text": "Pick up with the mouse. Click a door to work it. Press 1-4 for a character's gear.", "color": 15 }] }
+        ],
+        "d": { "type": "door", "style": "wood" },
+        "r": { "type": "monster", "proto": "giant-rat", "behaviour": "sleep" },
+        "w": { "type": "monster", "proto": "goblin-warrior" },
+        "m": { "type": "monster", "proto": "goblin-minion" },
+        "n": { "type": "monster", "proto": "goblin-minion" },
+        "e": { "type": "feature", "sprite": "chest", "blocks": false, "text": "The chest holds goblin loot.", "emptyText": "The chest is empty.",
+               "items": [{ "proto": "gold", "qty": 24 }, { "proto": "arrows", "qty": 12 }, { "proto": "torch", "qty": 2 }] },
+        "H": { "type": "wall", "kind": "plaque", "text": "Goblin scrawl: 'BOSS SAY NO TOUCH LOOSE STONE.'" },
+        "S": { "type": "door", "style": "wood", "secret": true, "detectDc": 13, "revealText": "One stone here is loose: a hidden door!", "foundName": "a hidden door" },
+        "i": [{ "type": "item", "proto": "thornwick-fang" }, { "type": "item", "proto": "potion-of-healing", "qty": 2 }],
+        "j": { "type": "item", "proto": "gold", "qty": 10 },
+        "p": { "type": "pit", "hidden": true, "detectDc": 15, "foundName": "a pit under false flagstones", "revealText": "The floor ahead sounds hollow: a pit!", "text": "The floor swings away beneath you!",
+               "onEnter": [{ "do": "rule", "name": "fall", "dice": "1d6" }], "to": { "level": "crypt", "x": 28, "y": 12, "dir": 2 } },
+        "g": { "type": "monster", "proto": "goblin-warrior" },
+        "L": { "type": "wall", "kind": "lever", "text": "Chains rattle somewhere to the west.", "onUse": [{ "do": "toggleDoor", "door": "boss-gate" }] },
+        "P": { "id": "boss-gate", "type": "door", "style": "portcullis", "noHandle": true, "text": "The portcullis won't budge. There must be a mechanism." },
+        "b": { "type": "monster", "proto": "goblin-boss", "name": "Skarn" },
+        "c": { "type": "feature", "sprite": "chest", "blocks": false, "text": "Skarn's hoard!", "emptyText": "The chest is empty.",
+               "items": [{ "proto": "iron-key" }, { "proto": "gold", "qty": 60 }, { "proto": "potion-of-healing" }] },
+        "K": { "type": "door", "style": "iron", "lock": { "key": "iron-key", "dc": 20 } },
+        "T": { "type": "stairs", "direction": "down", "to": { "level": "crypt", "x": 1, "y": 2, "dir": 1 }, "text": "Worn steps lead down into a much older place." }
+      }
+    },
+    "crypt": {
+      "name": "The Drowned Crypt",
+      "textures": { "wall": "wall-crypt", "floor": "floor-crypt", "ceiling": "ceiling" },
+      "grid": [
+        "####A##########################",
+        "#T.....########################",
+        "#y.....#########s....s..#######",
+        "#......d...f...d........d....##",
+        "#......#.......#....s...#.z..L#",
+        "###############.........#....##",
+        "################.......##.zq.##",
+        "##########################.####",
+        "######################M###d####",
+        "###.........######.........####",
+        "###.....u...######.v.....v.####",
+        "###..a..B...X.............#####",
+        "###.....u...######...h.....#..#",
+        "###.........###############V.t#",
+        "###############################"
+      ],
+      "legend": {
+        "y": { "type": "zone", "once": true, "onEnter": [
+          { "do": "message", "text": "You have broken the goblins' hold on the warren. The old crypt lies open.", "color": 9 },
+          { "do": "rule", "name": "awardXp", "amount": 200 }] },
+        "A": { "type": "wall", "kind": "alcove", "wants": "wellstone", "text": "A dry stone font is set in the wall.",
+               "onWanted": [{ "do": "win", "text": "Clear water wells up and floods the font. The foulness drains away, and far above you, Thornwick's well runs sweet again." }] },
+        "T": { "type": "stairs", "direction": "up", "to": { "level": "warren", "x": 2, "y": 11, "dir": 1 } },
+        "d": { "type": "door", "style": "wood" },
+        "f": { "type": "plate", "hidden": true, "detectDc": 15, "foundName": "a pressure plate", "revealText": "A pressure plate! Cold soot marks the walls beside it.",
+               "onEnter": [{ "do": "message", "text": "A stone face in the wall exhales flame!", "color": 11 }, { "do": "rule", "name": "trap", "all": true, "dice": "2d10", "save": "dex", "dc": 15, "half": true, "type": "fire" }] },
+        "s": { "type": "monster", "proto": "skeleton" },
+        "z": { "type": "monster", "proto": "zombie", "behaviour": "sleep" },
+        "q": { "type": "monster", "proto": "skeleton" },
+        "L": { "type": "wall", "kind": "lever", "once": true, "usedText": "The lever is rusted in place now.", "text": "Something heavy grinds into place to the west.",
+               "onUse": [{ "do": "setFlag", "flag": "lever-a" }, { "do": "ifAll", "flags": ["lever-a", "lever-b"], "then": [{ "do": "openDoor", "door": "ritual-door" }, { "do": "message", "text": "A great door groans open!", "color": 9 }] }] },
+        "M": { "type": "wall", "kind": "lever", "once": true, "usedText": "The lever is rusted in place now.", "text": "Something heavy grinds into place to the west.",
+               "onUse": [{ "do": "setFlag", "flag": "lever-b" }, { "do": "ifAll", "flags": ["lever-a", "lever-b"], "then": [{ "do": "openDoor", "door": "ritual-door" }, { "do": "message", "text": "A great door groans open!", "color": 9 }] }] },
+        "v": { "type": "monster", "proto": "cultist" },
+        "h": { "type": "monster", "proto": "shadow" },
+        "X": { "id": "ritual-door", "type": "door", "style": "iron", "noHandle": true, "text": "This door has no handle. Two sets of chains run off into the walls." },
+        "a": { "type": "feature", "sprite": "altar", "blocks": true, "emptyText": "The altar is stained and cold." },
+        "B": { "type": "monster", "proto": "cultist-fanatic", "name": "Vesper", "onDeath": [
+          { "do": "placeItem", "proto": "wellstone", "x": 7, "y": 11, "level": "crypt" },
+          { "do": "message", "text": "The Wellstone tumbles from Vesper's hand. Return it to the font by the stairs!", "color": 9 }] },
+        "u": { "type": "monster", "proto": "cultist" },
+        "V": { "type": "stairs", "direction": "up", "to": { "level": "warren", "x": 21, "y": 10, "dir": 2 }, "text": "You climb a rotten ladder back up." },
+        "t": { "type": "item", "proto": "potion-of-healing" }
+      }
+    }
+  }
+}

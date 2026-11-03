@@ -1,0 +1,310 @@
+// The interface: party cards, action panel, inventory and screens, as HTML over the WebGL view.
+// Everything is rules-agnostic; content comes from the ruleset's memberStatus / memberActions / memberSheet.
+import { COLORS } from '../colors.js';
+import { DIRS } from '../world.js';
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+/** Replaces an element's content only when it actually changed, so hover and clicks survive updates. */
+function setHtml(el, html) { if (el._html !== html) { el._html = html; el.innerHTML = html; } }
+
+const NEAR_REACH = 2.1; // How far, in cells along the view, things can be picked up or worked.
+
+export class Hud {
+  constructor(stage, app) {
+    this.stage = stage;
+    this.app = app;
+    this.game = null;
+    this.menu = null;     // {member, sub} while a character's action list is open; {rest:true} for rests.
+    this.inventory = null;
+    this.hint = null;
+    this.shownHits = new Map();
+    this.handEl = document.getElementById('hand');
+    stage.addEventListener('pointerdown', (e) => this.onPointer(e));
+    // Tracked by movement rather than enter/leave, because panels re-render under a still pointer.
+    stage.addEventListener('mousemove', (e) => this.onHover(e));
+    stage.addEventListener('mouseleave', () => { this.hint = null; });
+    stage.addEventListener('contextmenu', (e) => e.preventDefault());
+    window.addEventListener('pointermove', (e) => { this.handEl.style.left = `${e.clientX}px`; this.handEl.style.top = `${e.clientY}px`; });
+  }
+
+  img(name) { return this.app.assetUrl(name) ?? ''; }
+  itemImg(item) { return this.img(`icon-${this.game.ruleset.itemInfo(item).icon}`); }
+
+  // ---------------------------------------------------------------- play layout
+  mountGame(game) {
+    this.game = game;
+    this.menu = null;
+    this.inventory = null;
+    this.hint = null;
+    this.shownHits = new Map();
+    this.stage.innerHTML = `
+      <div id="party" class="panelbg"></div>
+      <div id="viewwrap"><div id="floaters"></div><div id="banner"></div></div>
+      <div id="log" class="panelbg"></div>
+      <div id="side" class="panelbg">
+        <div id="status"></div>
+        <div id="tools">
+          <button data-act="pause" data-hint="Pause the game. You can still give orders. (Space)">Pause</button>
+          <button data-act="rest" data-hint="Take a Short or Long Rest.">Rest</button>
+          <button data-act="save" data-hint="Save the game in this browser. (K)">Save</button>
+          <button data-act="load" data-hint="Load your saved game. (L)">Load</button>
+          <button data-act="mute" data-hint="Toggle sound.">Sound</button>
+        </div>
+        <div id="actions"></div>
+        <div id="pad">
+          <button data-act="turn:-1" data-hint="Turn left (Q)">&#8634;</button>
+          <button data-act="step:0" data-hint="Forward (W)">&#8593;</button>
+          <button data-act="turn:1" data-hint="Turn right (E)">&#8635;</button>
+          <button data-act="step:3" data-hint="Sidestep left (A)">&#8592;</button>
+          <button data-act="step:2" data-hint="Back (S)">&#8595;</button>
+          <button data-act="step:1" data-hint="Sidestep right (D)">&#8594;</button>
+        </div>
+      </div>`;
+    const wrap = this.stage.querySelector('#viewwrap');
+    wrap.prepend(this.app.canvas);
+    this.els = Object.fromEntries(['party', 'viewwrap', 'floaters', 'banner', 'log', 'status', 'actions'].map((id) => [id, this.stage.querySelector(`#${id}`)]));
+    this.els.inv = document.createElement('div');
+    this.els.inv.id = 'inv';
+    this.els.inv.hidden = true;
+    wrap.append(this.els.inv);
+    this.els.paused = document.createElement('div');
+    this.els.paused.id = 'paused';
+    this.els.paused.textContent = 'PAUSED';
+    wrap.append(this.els.paused);
+    this.els.hint = document.createElement('div');
+    this.els.hint.id = 'hint';
+    this.stage.append(this.els.hint);
+    this.els.end = document.createElement('div');
+    this.stage.append(this.els.end);
+  }
+
+  // ---------------------------------------------------------------- per-frame update
+  update() {
+    const g = this.game;
+    if (!g) return;
+    this.renderParty();
+    this.renderStatus();
+    this.renderActions();
+    this.renderLog();
+    this.renderInventory();
+    this.els.paused.hidden = !g.paused;
+    this.els.hint.hidden = !this.hint;
+    if (this.hint) setHtml(this.els.hint, this.hint);
+    this.handEl.hidden = !g.hand;
+    if (g.hand) { const src = this.itemImg(g.hand); if (this.handEl.getAttribute('src') !== src) this.handEl.setAttribute('src', src); }
+    setHtml(this.els.banner, g.hand ? esc(g.ruleset.itemInfo(g.hand).name) : '');
+    for (const f of this.app.view.takeFloaters()) this.addFloater(f);
+    if (g.over && !this.ended) this.showEnd();
+  }
+
+  renderParty() {
+    const g = this.game;
+    const html = g.party.members.map((m, i) => {
+      const s = g.ruleset.memberStatus(g, m);
+      const bars = s.bars.map((b) => `<div class="bar" data-hint="${esc(b.label)}: ${b.value}/${b.max}"><i style="width:${Math.round(100 * Math.min(1, b.value / Math.max(1, b.max)))}%;background:${COLORS[b.color]}"></i><span>${b.value}/${b.max}</span></div>`).join('');
+      const hand = (slot, label) => {
+        const it = m.equipment[slot];
+        const info = it && g.ruleset.itemInfo(it);
+        return `<button class="slot" data-act="slot:${i}:${slot}" data-hint="${esc(info ? `<b>${info.name}</b>. ${info.description}` : `${label}: empty. Click with an item to equip it.`)}">${it ? `<img src="${this.itemImg(it)}" alt=""><span class="q">${it.qty > 1 ? it.qty : ''}</span>` : ''}</button>`;
+      };
+      return `<div class="card${s.dead ? ' dead' : ''}" data-card="${i}">
+        <div class="portrait" data-act="inv:${i}" data-hint="Open ${esc(s.name)}'s gear and stats. (${i + 1})">
+          <img src="${this.img(m.portrait ?? s.portrait)}" alt=""><div class="cool" style="height:${Math.round(s.cooldown * 10) * 10}%"></div>${s.tag ? `<div class="tag">${esc(s.tag)}</div>` : ''}
+        </div>
+        <div><div class="cname">${esc(s.name)}</div>${bars}<div class="hands">${hand('mainHand', 'Main hand')}${hand('offHand', 'Off hand')}</div></div>
+      </div>`;
+    }).join('');
+    setHtml(this.els.party, html);
+    for (const [m, fx] of g.memberFx) {
+      if (this.shownHits.get(m) === fx.at) continue;
+      this.shownHits.set(m, fx.at);
+      const card = this.els.party.querySelector(`[data-card="${g.party.members.indexOf(m)}"]`);
+      if (!card) continue;
+      const b = document.createElement('div');
+      b.className = 'burst';
+      b.textContent = fx.amount;
+      card.append(b);
+      setTimeout(() => { b.remove(); }, 900);
+      this.els.party._html = null; // The burst is transient; let the next update rebuild freely.
+    }
+  }
+
+  renderStatus() {
+    const g = this.game;
+    const secs = Math.floor(g.time);
+    const clock = `${Math.floor(secs / 3600)}h ${String(Math.floor(secs / 60) % 60).padStart(2, '0')}m`;
+    setHtml(this.els.status, `<span>${esc(g.level.name)}</span><small>${clock}</small>`);
+  }
+
+  renderActions() {
+    const g = this.game;
+    if (this.menu?.rest) {
+      const opts = g.ruleset.restOptions(g);
+      setHtml(this.els.actions, `<h3>Rest</h3><div class="actlist"><button class="act" data-act="menu:close">&lt; Back</button>${opts.map((o) => `<button class="act" data-act="dorest:${o.id}" data-hint="${esc(o.hint)}">${esc(o.label)}</button>`).join('')}</div>`);
+      return;
+    }
+    if (this.menu) {
+      const m = g.party.members[this.menu.member];
+      const list = g.ruleset.memberActions(g, m, this.menu.sub);
+      const rows = list.map((a) => {
+        const act = a.back ? 'menu:up' : a.submenu ? `sub:${a.submenu}` : `do:${a.id}`;
+        return `<button class="act" data-act="${esc(act)}" ${a.enabled ? '' : 'disabled'} data-hint="${esc(a.hint ? `<b>${a.label}</b>. ${a.hint}` : '')}">${esc(a.label)}</button>`;
+      }).join('');
+      const close = this.menu.sub ? '' : '<button class="act" data-act="menu:close">&lt; Back</button>';
+      setHtml(this.els.actions, `<h3>${esc(m.name)}</h3><div class="actlist">${close}${rows}</div>`);
+      return;
+    }
+    const rows = g.party.members.map((m, i) => {
+      const s = g.ruleset.memberStatus(g, m);
+      const main = m.equipment.mainHand;
+      const state = s.dead ? 'Dead' : s.down ? 'Down' : s.ready ? 'Ready' : `Recovering`;
+      return `<button class="who" data-act="menu:${i}" ${s.dead || s.down ? 'disabled' : ''} data-hint="Choose an action for ${esc(s.name)}. (Shift+${i + 1})">
+        ${main ? `<img src="${this.itemImg(main)}" alt="">` : '<span></span>'}
+        <span><b>${esc(s.name)}</b><small>${state}</small></span></button>`;
+    }).join('');
+    setHtml(this.els.actions, rows);
+  }
+
+  renderLog() {
+    const lines = this.game.logLines.slice(-6);
+    setHtml(this.els.log, lines.map((l) => `<div style="color:${COLORS[l.color] ?? COLORS[5]}">${esc(l.text)}</div>`).join(''));
+  }
+
+  renderInventory() {
+    const g = this.game;
+    const inv = this.els.inv;
+    inv.hidden = this.inventory == null;
+    if (this.inventory == null) return;
+    const i = this.inventory;
+    const m = g.party.members[i];
+    const slot = (act, it, label) => {
+      const info = it && g.ruleset.itemInfo(it);
+      return `<button class="slot" data-act="${act}" data-hint="${esc(info ? `<b>${info.name}</b>. ${info.description}` : `${label}: empty.`)}">${it ? `<img src="${this.itemImg(it)}" alt=""><span class="q">${it.qty > 1 ? it.qty : ''}</span>` : ''}</button>`;
+    };
+    const doll = g.ruleset.slots.map((s) => `<div class="dollslot">${slot(`slot:${i}:${s.id}`, m.equipment[s.id], s.label)}<span>${esc(s.label)}</span></div>`).join('');
+    const pack = m.pack.map((it, n) => slot(`pack:${i}:${n}`, it, 'Pack')).join('');
+    const sheet = g.ruleset.memberSheet(g, m).map((l) => (typeof l === 'string' ? esc(l) : `<span style="color:${COLORS[l.color]}">${esc(l.text)}</span>`)).join('\n');
+    const weight = g.ruleset.carriedWeight(m);
+    setHtml(inv, `<div><h2>Equipped</h2><div class="doll">${doll}</div></div>
+      <div><h2>Pack (${Math.round(weight)} lb.)</h2><div class="pack">${pack}</div>
+      <button class="mouth" data-act="consume:${i}" data-hint="Hold a potion or food over this and click to consume it.">Drink / eat what you're holding</button></div>
+      <div class="sheet">${sheet}</div>
+      <button class="close" data-act="inv:close">Close</button>`);
+  }
+
+  addFloater(f) {
+    const el = document.createElement('div');
+    el.className = 'floater';
+    el.textContent = f.text;
+    el.style.left = `${f.at.x * 100}%`;
+    el.style.top = `${f.at.y * 100}%`;
+    this.els.floaters.append(el);
+    setTimeout(() => el.remove(), 1000);
+  }
+
+  // ---------------------------------------------------------------- input
+  onHover(e) {
+    this.hint = e.target.closest?.('[data-hint]')?.dataset.hint || null;
+  }
+
+  onPointer(e) {
+    if (e.target === this.app.canvas) { this.clickView(e); return; }
+    const el = e.target.closest?.('[data-act]');
+    if (!el || el.disabled) return;
+    this.app.audio.unlock();
+    this.command(el.dataset.act);
+  }
+
+  /** Runs a HUD command. Also the entry point for keyboard shortcuts. */
+  command(act) {
+    const g = this.game;
+    const [verb, a, b] = act.split(':');
+    switch (verb) {
+      case 'pause': g.paused = !g.paused; break;
+      case 'turn': g.turn(Number(a)); break;
+      case 'step': g.step(Number(a)); break;
+      case 'rest': this.menu = this.menu?.rest ? null : { rest: true }; break;
+      case 'dorest': if (g.ruleset.rest(g, a)) this.menu = null; break;
+      case 'save': this.app.save(); break;
+      case 'load': this.app.load(); break;
+      case 'mute': this.app.audio.toggle(); break;
+      case 'inv': this.inventory = a === 'close' || this.inventory === Number(a) ? null : Number(a); this.hint = null; break;
+      case 'menu':
+        if (a === 'close') this.menu = null;
+        else if (a === 'up') this.menu.sub = this.menu.sub?.startsWith('ally:') && this.menu.sub.startsWith('ally:cast-') ? 'cast' : null;
+        else this.menu = { member: Number(a), sub: null };
+        this.hint = null;
+        break;
+      case 'sub': this.menu.sub = act.slice(4); this.hint = null; break;
+      case 'do': {
+        const m = g.party.members[this.menu.member];
+        g.ruleset.doAction(g, m, act.slice(3));
+        this.menu = null;
+        this.hint = null;
+        break;
+      }
+      case 'slot': g.swapSlot(g.party.members[Number(a)], b); break;
+      case 'pack': g.swapPack(g.party.members[Number(a)], Number(b)); break;
+      case 'consume': g.consumeHand(g.party.members[Number(a)]); break;
+      default: break;
+    }
+  }
+
+  clickView(e) {
+    const g = this.game;
+    if (g.over) return;
+    this.app.audio.unlock();
+    const r = this.app.canvas.getBoundingClientRect();
+    const u = (e.clientX - r.left) / r.width, v = (e.clientY - r.top) / r.height;
+    const hit = this.app.view.pick(g, u, v);
+    if (g.hand) { this.clickWithHand(hit); return; }
+    switch (hit.type) {
+      case 'monster':
+        g.party.focus = hit.ref.uid;
+        g.log(`Target: ${hit.ref.name}.`, 15);
+        break;
+      case 'item':
+        if (hit.dist < NEAR_REACH) g.pickUp(hit.ref); else g.log('That is too far away.');
+        break;
+      case 'feature': case 'door':
+        if (hit.dist < NEAR_REACH) g.useObject(hit.ref); else g.log('That is too far away.');
+        break;
+      case 'wall':
+        if (hit.ref?.type === 'wall' && hit.dist < NEAR_REACH) g.useObject(hit.ref);
+        else if (hit.ref?.type === 'stairs' && hit.dist < NEAR_REACH) g.useStairs(hit.ref);
+        break;
+      default: break;
+    }
+  }
+
+  /** Clicking the view while holding something: fixtures take it, the near floor takes it, otherwise it's thrown. */
+  clickWithHand(hit) {
+    const g = this.game;
+    const near = hit.dist < NEAR_REACH;
+    if (near && hit.type === 'wall' && hit.ref?.kind === 'alcove') { g.useObject(hit.ref); return; }
+    if (near && hit.type === 'door') { g.useObject(hit.ref); return; }
+    if (near && hit.type === 'feature') { g.useObject(hit.ref); return; }
+    if (hit.type === 'floor' && near) {
+      const f = DIRS[g.party.dir];
+      const ahead = hit.x === g.party.x + f.x && hit.y === g.party.y + f.y;
+      if ((hit.x === g.party.x && hit.y === g.party.y) || ahead) { g.putDown(ahead); return; }
+    }
+    g.ruleset.throwHeld(g);
+  }
+
+  showEnd() {
+    this.ended = true;
+    const g = this.game;
+    const won = g.over === 'won';
+    const lines = g.ruleset.summary?.(g) ?? [];
+    this.els.end.className = 'screen';
+    this.els.end.style.backgroundImage = `url(${this.img(g.module.titleImage)})`;
+    this.els.end.innerHTML = `<div class="shade"></div><div class="body">
+      <h1>${won ? 'Victory' : 'The Party Has Fallen'}</h1>
+      <p class="endtext">${esc(won ? g.winText : 'The dark keeps its secrets. Thornwick waits for braver souls.')}</p>
+      <p class="endtext">${lines.map(esc).join('<br>')}</p>
+      <div class="menu"><button id="endmenu">Main menu</button></div></div>
+      <div class="legal">${esc(g.ruleset.attribution)}</div>`;
+    this.els.end.querySelector('#endmenu').addEventListener('click', () => { this.ended = false; this.app.showTitle(); });
+  }
+}

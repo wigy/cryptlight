@@ -1,0 +1,709 @@
+[
+ {
+  "id": "ink-pen",
+  "name": "Ink Pen",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "2 CP"
+ },
+ {
+  "id": "acid",
+  "name": "Acid",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "25 GP"
+ },
+ {
+  "id": "jug",
+  "name": "Jug",
+  "kind": "gear",
+  "weight": 4,
+  "cost": "2 CP"
+ },
+ {
+  "id": "alchemists-fire",
+  "name": "Alchemist’s Fire",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "50 GP"
+ },
+ {
+  "id": "ladder",
+  "name": "Ladder",
+  "kind": "gear",
+  "weight": 25,
+  "cost": "1 SP"
+ },
+ {
+  "id": "lamp",
+  "name": "Lamp",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "5 SP"
+ },
+ {
+  "id": "antitoxin",
+  "name": "Antitoxin",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "50 GP"
+ },
+ {
+  "id": "lantern-bullseye",
+  "name": "Lantern, Bullseye",
+  "kind": "gear",
+  "weight": 2,
+  "cost": "10 GP"
+ },
+ {
+  "id": "lantern-hooded",
+  "name": "Lantern, Hooded",
+  "kind": "gear",
+  "weight": 2,
+  "cost": "5 GP"
+ },
+ {
+  "id": "backpack",
+  "name": "Backpack",
+  "kind": "gear",
+  "weight": 5,
+  "cost": "2 GP"
+ },
+ {
+  "id": "lock",
+  "name": "Lock",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "10 GP"
+ },
+ {
+  "id": "ball-bearings",
+  "name": "Ball Bearings",
+  "kind": "gear",
+  "weight": 2,
+  "cost": "1 GP"
+ },
+ {
+  "id": "magnifying-glass",
+  "name": "Magnifying Glass",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "100 GP"
+ },
+ {
+  "id": "barrel",
+  "name": "Barrel",
+  "kind": "gear",
+  "weight": 70,
+  "cost": "2 GP"
+ },
+ {
+  "id": "manacles",
+  "name": "Manacles",
+  "kind": "gear",
+  "weight": 6,
+  "cost": "2 GP"
+ },
+ {
+  "id": "basket",
+  "name": "Basket",
+  "kind": "gear",
+  "weight": 2,
+  "cost": "4 SP"
+ },
+ {
+  "id": "map",
+  "name": "Map",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "1 GP"
+ },
+ {
+  "id": "bedroll",
+  "name": "Bedroll",
+  "kind": "gear",
+  "weight": 7,
+  "cost": "1 GP"
+ },
+ {
+  "id": "mirror",
+  "name": "Mirror",
+  "kind": "gear",
+  "weight": 0.5,
+  "cost": "5 GP"
+ },
+ {
+  "id": "bell",
+  "name": "Bell",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "1 GP"
+ },
+ {
+  "id": "net",
+  "name": "Net",
+  "kind": "gear",
+  "weight": 3,
+  "cost": "1 GP"
+ },
+ {
+  "id": "blanket",
+  "name": "Blanket",
+  "kind": "gear",
+  "weight": 3,
+  "cost": "5 SP"
+ },
+ {
+  "id": "oil",
+  "name": "Oil",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "1 SP"
+ },
+ {
+  "id": "block-and-tackle",
+  "name": "Block and Tackle",
+  "kind": "gear",
+  "weight": 5,
+  "cost": "1 GP"
+ },
+ {
+  "id": "paper",
+  "name": "Paper",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "2 SP"
+ },
+ {
+  "id": "book",
+  "name": "Book",
+  "kind": "gear",
+  "weight": 5,
+  "cost": "25 GP"
+ },
+ {
+  "id": "parchment",
+  "name": "Parchment",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "1 SP"
+ },
+ {
+  "id": "bottle-glass",
+  "name": "Bottle, Glass",
+  "kind": "gear",
+  "weight": 2,
+  "cost": "2 GP"
+ },
+ {
+  "id": "perfume",
+  "name": "Perfume",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "5 GP"
+ },
+ {
+  "id": "bucket",
+  "name": "Bucket",
+  "kind": "gear",
+  "weight": 2,
+  "cost": "5 CP"
+ },
+ {
+  "id": "poison-basic",
+  "name": "Poison, Basic",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "100 GP"
+ },
+ {
+  "id": "burglars-pack",
+  "name": "Burglar’s Pack",
+  "kind": "gear",
+  "weight": 42,
+  "cost": "16 GP"
+ },
+ {
+  "id": "pole",
+  "name": "Pole",
+  "kind": "gear",
+  "weight": 7,
+  "cost": "5 CP"
+ },
+ {
+  "id": "caltrops",
+  "name": "Caltrops",
+  "kind": "gear",
+  "weight": 2,
+  "cost": "1 GP"
+ },
+ {
+  "id": "pot-iron",
+  "name": "Pot, Iron",
+  "kind": "gear",
+  "weight": 10,
+  "cost": "2 GP"
+ },
+ {
+  "id": "candle",
+  "name": "Candle",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "1 CP"
+ },
+ {
+  "id": "potion-of-healing",
+  "name": "Potion of Healing",
+  "kind": "gear",
+  "weight": 0.5,
+  "cost": "50 GP"
+ },
+ {
+  "id": "case-crossbow-bolt",
+  "name": "Case, Crossbow Bolt",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "1 GP"
+ },
+ {
+  "id": "pouch",
+  "name": "Pouch",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "5 SP"
+ },
+ {
+  "id": "case-map-or-scroll",
+  "name": "Case, Map or Scroll",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "1 GP"
+ },
+ {
+  "id": "priests-pack",
+  "name": "Priest’s Pack",
+  "kind": "gear",
+  "weight": 29,
+  "cost": "33 GP"
+ },
+ {
+  "id": "chain",
+  "name": "Chain",
+  "kind": "gear",
+  "weight": 10,
+  "cost": "5 GP"
+ },
+ {
+  "id": "quiver",
+  "name": "Quiver",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "1 GP"
+ },
+ {
+  "id": "chest",
+  "name": "Chest",
+  "kind": "gear",
+  "weight": 25,
+  "cost": "5 GP"
+ },
+ {
+  "id": "ram-portable",
+  "name": "Ram, Portable",
+  "kind": "gear",
+  "weight": 35,
+  "cost": "4 GP"
+ },
+ {
+  "id": "climbers-kit",
+  "name": "Climber’s Kit",
+  "kind": "gear",
+  "weight": 12,
+  "cost": "25 GP"
+ },
+ {
+  "id": "rations",
+  "name": "Rations",
+  "kind": "gear",
+  "weight": 2,
+  "cost": "5 SP"
+ },
+ {
+  "id": "clothes-fine",
+  "name": "Clothes, Fine",
+  "kind": "gear",
+  "weight": 6,
+  "cost": "15 GP"
+ },
+ {
+  "id": "robe",
+  "name": "Robe",
+  "kind": "gear",
+  "weight": 4,
+  "cost": "1 GP"
+ },
+ {
+  "id": "clothes-travelers",
+  "name": "Clothes, Traveler’s",
+  "kind": "gear",
+  "weight": 4,
+  "cost": "2 GP"
+ },
+ {
+  "id": "rope",
+  "name": "Rope",
+  "kind": "gear",
+  "weight": 5,
+  "cost": "1 GP"
+ },
+ {
+  "id": "component-pouch",
+  "name": "Component Pouch",
+  "kind": "gear",
+  "weight": 2,
+  "cost": "25 GP"
+ },
+ {
+  "id": "sack",
+  "name": "Sack",
+  "kind": "gear",
+  "weight": 0.5,
+  "cost": "1 CP"
+ },
+ {
+  "id": "costume",
+  "name": "Costume",
+  "kind": "gear",
+  "weight": 4,
+  "cost": "5 GP"
+ },
+ {
+  "id": "scholars-pack",
+  "name": "Scholar’s Pack",
+  "kind": "gear",
+  "weight": 22,
+  "cost": "40 GP"
+ },
+ {
+  "id": "crowbar",
+  "name": "Crowbar",
+  "kind": "gear",
+  "weight": 5,
+  "cost": "2 GP"
+ },
+ {
+  "id": "shovel",
+  "name": "Shovel",
+  "kind": "gear",
+  "weight": 5,
+  "cost": "2 GP"
+ },
+ {
+  "id": "diplomats-pack",
+  "name": "Diplomat’s Pack",
+  "kind": "gear",
+  "weight": 39,
+  "cost": "39 GP"
+ },
+ {
+  "id": "signal-whistle",
+  "name": "Signal Whistle",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "5 CP"
+ },
+ {
+  "id": "spell-scroll-cantrip",
+  "name": "Spell Scroll (Cantrip)",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "30 GP"
+ },
+ {
+  "id": "dungeoneers-pack",
+  "name": "Dungeoneer’s Pack",
+  "kind": "gear",
+  "weight": 55,
+  "cost": "12 GP"
+ },
+ {
+  "id": "spikes-iron",
+  "name": "Spikes, Iron",
+  "kind": "gear",
+  "weight": 5,
+  "cost": "1 GP"
+ },
+ {
+  "id": "explorers-pack",
+  "name": "Explorer’s Pack",
+  "kind": "gear",
+  "weight": 55,
+  "cost": "10 GP"
+ },
+ {
+  "id": "spyglass",
+  "name": "Spyglass",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "1,000 GP"
+ },
+ {
+  "id": "flask",
+  "name": "Flask",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "2 CP"
+ },
+ {
+  "id": "string",
+  "name": "String",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "1 SP"
+ },
+ {
+  "id": "grappling-hook",
+  "name": "Grappling Hook",
+  "kind": "gear",
+  "weight": 4,
+  "cost": "2 GP"
+ },
+ {
+  "id": "tent",
+  "name": "Tent",
+  "kind": "gear",
+  "weight": 20,
+  "cost": "2 GP"
+ },
+ {
+  "id": "healers-kit",
+  "name": "Healer’s Kit",
+  "kind": "gear",
+  "weight": 3,
+  "cost": "5 GP"
+ },
+ {
+  "id": "tinderbox",
+  "name": "Tinderbox",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "5 SP"
+ },
+ {
+  "id": "torch",
+  "name": "Torch",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "1 CP"
+ },
+ {
+  "id": "holy-water",
+  "name": "Holy Water",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "25 GP"
+ },
+ {
+  "id": "vial",
+  "name": "Vial",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "1 GP"
+ },
+ {
+  "id": "hunting-trap",
+  "name": "Hunting Trap",
+  "kind": "gear",
+  "weight": 25,
+  "cost": "5 GP"
+ },
+ {
+  "id": "ink",
+  "name": "Ink",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "10 GP"
+ },
+ {
+  "id": "crystal",
+  "name": "Crystal",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "10 GP"
+ },
+ {
+  "id": "orb",
+  "name": "Orb",
+  "kind": "gear",
+  "weight": 3,
+  "cost": "20 GP"
+ },
+ {
+  "id": "rod",
+  "name": "Rod",
+  "kind": "gear",
+  "weight": 2,
+  "cost": "10 GP"
+ },
+ {
+  "id": "staff-also-a-quarterstaff",
+  "name": "Staff (also a Quarterstaff)",
+  "kind": "gear",
+  "weight": 4,
+  "cost": "5 GP"
+ },
+ {
+  "id": "wand",
+  "name": "Wand",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "10 GP"
+ },
+ {
+  "id": "amulet-worn-or-held",
+  "name": "Amulet (worn or held)",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "5 GP"
+ },
+ {
+  "id": "emblem-borne-on-fabric-or-a-shield",
+  "name": "Emblem (borne on fabric or a Shield)",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "5 GP"
+ },
+ {
+  "id": "reliquary-held",
+  "name": "Reliquary (held)",
+  "kind": "gear",
+  "weight": 2,
+  "cost": "5 GP"
+ },
+ {
+  "id": "yew-wand",
+  "name": "Yew wand",
+  "kind": "gear",
+  "weight": 1,
+  "cost": "10 GP"
+ },
+ {
+  "id": "camel",
+  "name": "Camel",
+  "kind": "gear",
+  "weight": 450,
+  "cost": "50 GP"
+ },
+ {
+  "id": "horse-draft",
+  "name": "Horse, Draft",
+  "kind": "gear",
+  "weight": 540,
+  "cost": "50 GP"
+ },
+ {
+  "id": "horse-riding",
+  "name": "Horse, Riding",
+  "kind": "gear",
+  "weight": 480,
+  "cost": "75 GP"
+ },
+ {
+  "id": "mastiff",
+  "name": "Mastiff",
+  "kind": "gear",
+  "weight": 195,
+  "cost": "25 GP"
+ },
+ {
+  "id": "mule",
+  "name": "Mule",
+  "kind": "gear",
+  "weight": 420,
+  "cost": "8 GP"
+ },
+ {
+  "id": "pony",
+  "name": "Pony",
+  "kind": "gear",
+  "weight": 225,
+  "cost": "30 GP"
+ },
+ {
+  "id": "warhorse",
+  "name": "Warhorse",
+  "kind": "gear",
+  "weight": 540,
+  "cost": "400 GP"
+ },
+ {
+  "id": "carriage",
+  "name": "Carriage",
+  "kind": "gear",
+  "weight": 600,
+  "cost": "100 GP"
+ },
+ {
+  "id": "cart",
+  "name": "Cart",
+  "kind": "gear",
+  "weight": 200,
+  "cost": "15 GP"
+ },
+ {
+  "id": "chariot",
+  "name": "Chariot",
+  "kind": "gear",
+  "weight": 100,
+  "cost": "250 GP"
+ },
+ {
+  "id": "feed-per-day",
+  "name": "Feed per day",
+  "kind": "gear",
+  "weight": 10,
+  "cost": "5 CP"
+ },
+ {
+  "id": "exotic",
+  "name": "Exotic",
+  "kind": "gear",
+  "weight": 40,
+  "cost": "60 GP"
+ },
+ {
+  "id": "military",
+  "name": "Military",
+  "kind": "gear",
+  "weight": 30,
+  "cost": "20 GP"
+ },
+ {
+  "id": "riding",
+  "name": "Riding",
+  "kind": "gear",
+  "weight": 25,
+  "cost": "10 GP"
+ },
+ {
+  "id": "sled",
+  "name": "Sled",
+  "kind": "gear",
+  "weight": 300,
+  "cost": "20 GP"
+ },
+ {
+  "id": "stabling-per-day",
+  "name": "Stabling per day",
+  "kind": "gear",
+  "weight": 0,
+  "cost": "5 SP"
+ },
+ {
+  "id": "wagon",
+  "name": "Wagon",
+  "kind": "gear",
+  "weight": 400,
+  "cost": "35 GP"
+ }
+]

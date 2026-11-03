@@ -1,0 +1,15 @@
+{
+  "name": "cryptlight",
+  "version": "0.1.0",
+  "description": "A general-purpose real-time, first-person, grid-based dungeon crawler engine in the style of classic Atari ST games. 5E compatible ruleset.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node tools/serve.mjs",
+    "test": "node --test \"test/*.test.js\"",
+    "test:browser": "node tools/browser-check.mjs .cache/shots test/browser/ui-flow.mjs",
+    "extract": "node tools/extract-srd.mjs",
+    "art:generate": "node tools/generate-art.mjs",
+    "art:process": "node tools/process-art.mjs"
+  }
+}
