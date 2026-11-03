@@ -233,6 +233,9 @@ export class View3D {
     this.forward = [fx, fy];
     const w = this.canvas.width, h = this.canvas.height;
     const proj = perspective(FOV_Y, w / h, 0.03, 40);
+    // Map coordinates are left-handed (x east, y south, z up) but lookAt assumes right-handed, which would
+    // mirror the picture. Flipping clip-space x puts east on the right when facing north.
+    proj[0] = -proj[0];
     const view = lookAt(this.cam.x, this.cam.y, EYE, this.cam.x + fx, this.cam.y + fy, EYE, 0, 0, 1);
     this.viewProj = multiply(proj, view);
     this.proj = proj;

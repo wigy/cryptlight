@@ -19,9 +19,9 @@ item, click the near floor to set it down, or further away to throw it.
 
 | Keys | |
 |---|---|
-| W S / arrows | Forward, back |
-| A D | Sidestep |
-| Q E / left right | Turn |
+| W S / up down | Forward, back |
+| A D / left right | Sidestep left, right |
+| Q E / PgUp PgDn | Turn left, right |
 | 1-4 | A character's gear and stats |
 | Shift+1-4 | A character's actions |
 | Space | Pause (you can still give orders) |
