@@ -49,6 +49,7 @@ export class Hud {
           <button data-act="save" data-hint="Save the game in this browser. (K)">Save</button>
           <button data-act="load" data-hint="Load your saved game. (L)">Load</button>
           <button data-act="mute" data-hint="Toggle sound.">Sound</button>
+          <button data-act="exit" data-hint="Leave this game and return to the main menu.">Exit</button>
         </div>
         <div id="actions"></div>
         <div id="pad">
@@ -143,6 +144,13 @@ export class Hud {
       setHtml(this.els.actions, `<h3>Rest</h3><div class="actlist"><button class="act" data-act="menu:close">&lt; Back</button>${opts.map((o) => `<button class="act" data-act="dorest:${o.id}" data-hint="${esc(o.hint)}">${esc(o.label)}</button>`).join('')}</div>`);
       return;
     }
+    if (this.menu?.exit) {
+      setHtml(this.els.actions, `<h3>Exit to main menu?</h3><div class="actlist">
+        <button class="act" data-act="menu:close">&lt; Back</button>
+        <button class="act" data-act="doexit:save" data-hint="Save over your saved game, then return to the main menu.">Save and exit</button>
+        <button class="act" data-act="doexit:discard" data-hint="Return to the main menu. Progress since your last save is lost.">Exit without saving</button></div>`);
+      return;
+    }
     if (this.menu) {
       const m = g.party.members[this.menu.member];
       const list = g.ruleset.memberActions(g, m, this.menu.sub);
@@ -228,6 +236,11 @@ export class Hud {
       case 'save': this.app.save(); break;
       case 'load': this.app.load(); break;
       case 'mute': this.app.audio.toggle(); break;
+      case 'exit': this.menu = this.menu?.exit ? null : { exit: true }; this.hint = null; break;
+      case 'doexit':
+        if (a === 'save') this.app.save();
+        this.app.showTitle();
+        break;
       case 'inv': this.inventory = a === 'close' || this.inventory === Number(a) ? null : Number(a); this.hint = null; break;
       case 'menu':
         if (a === 'close') this.menu = null;

@@ -48,7 +48,7 @@ button:disabled { opacity: .45; cursor: default; }
 #side { position: absolute; left: 896px; top: 0; width: 384px; height: 800px; padding: 8px; border-left: 2px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
 #status { display: flex; justify-content: space-between; align-items: baseline; font-size: 16px; color: var(--gold); padding: 2px 4px; }
 #status small { color: var(--dim); font-size: 13px; }
-#tools { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+#tools { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
 #tools button { padding: 7px 0; font-size: 13px; }
 #actions { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 4px; overflow: hidden; background: #0007; padding: 6px; border: 1px solid var(--line); border-radius: 4px; }
 #actions h3 { margin: 0 0 2px; font-size: 15px; color: var(--gold); font-weight: normal; }

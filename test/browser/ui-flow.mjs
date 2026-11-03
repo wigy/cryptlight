@@ -139,6 +139,33 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await go('crypt', 9, 11, 3); await wait(500); await shot('26-vesper');
   await go('warren', 3, 11, 3); await ev(`window.__game.doorAt(3,11).target = 1`); await wait(1400); await key('KeyW'); await wait(500); await shot('27-stairs');
 
+  // Exit asks first, can be backed out of, and only keeps progress when told to save.
+  await go('warren', 11, 20, 0); await wait(450);
+  await clickEl('[data-act="exit"]');
+  await wait(100);
+  await shot('28-exit');
+  await clickEl('.act[data-act="menu:close"]');
+  await wait(100);
+  assert.equal(await ev(`document.querySelector('[data-act^="doexit"]')`), null, 'Back closes the exit prompt');
+  assert.ok(await state(`g.party.x === 11`), 'Back stays in the game');
+  await clickEl('[data-act="exit"]');
+  await wait(100);
+  await clickEl('.act[data-act="doexit:save"]');
+  await wait(100);
+  assert.equal(await ev(`document.querySelector('#go') !== null`), true, 'Save and exit reaches the main menu');
+  await clickEl('#cont');
+  await wait(300);
+  assert.equal(await state(`g.party.x`), 11, 'Save and exit kept the position');
+  await key('KeyA'); await wait(450);
+  assert.equal(await state(`g.party.x`), 10);
+  await clickEl('[data-act="exit"]');
+  await wait(100);
+  await clickEl('.act[data-act="doexit:discard"]');
+  await wait(100);
+  await clickEl('#cont');
+  await wait(300);
+  assert.equal(await state(`g.party.x`), 11, 'Exit without saving dropped the step');
+
   // Winning shows the end screen with the attribution.
   await ev(`window.__game.win('Clear water wells up.')`);
   await wait(400);
