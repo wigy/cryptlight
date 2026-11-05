@@ -3,10 +3,28 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { SPELL_FX, DEFAULT_SPELLS, MAGIC_INITIATE } from '../rules/srd5/spells.js';
-import { CLASS_TABLE, DEFAULT_MASTERIES, STANDARD_ARRAY, STARTING_GEAR, BACKGROUNDS, SPECIES } from '../rules/srd5/data.js';
+import { CLASS_TABLE, NOT_IN_GAME, DEFAULT_MASTERIES, STANDARD_ARRAY, STARTING_GEAR, BACKGROUNDS, SPECIES } from '../rules/srd5/data.js';
 import { newGame, srdChapters, loadModule } from './helpers.mjs';
 
 const load = (n) => JSON.parse(readFileSync(new URL(`../data/srd/${n}.json`, import.meta.url)));
+
+test('every class and species has its features, and NOT_IN_GAME names real ones', () => {
+  const features = load('class-features'), traits = load('species-traits');
+  assert.deepEqual(Object.keys(features).sort(), Object.keys(CLASS_TABLE).sort());
+  assert.deepEqual(Object.keys(traits).sort(), Object.keys(SPECIES).sort());
+  assert.equal(features.barbarian.find((f) => f.level === 2 && f.name === 'Reckless Attack')?.level, 2);
+  assert.ok(!features.barbarian.some((f) => f.name === 'Frenzy'), 'subclass features are left out');
+  for (const [id, list] of Object.entries(features)) {
+    assert.deepEqual([...list].sort((a, b) => a.level - b.level), list, `${id} is in level order`);
+    for (const level of [1, 2, 3]) assert.ok(list.some((f) => f.level === level), `${id} has a level ${level} feature`);
+    for (const f of list) assert.ok(f.summary, `${id} ${f.name} says what it does`);
+    for (const name of NOT_IN_GAME.classes[id] ?? []) assert.ok(list.some((f) => f.name === name), `${id} has ${name}`);
+  }
+  for (const [id, list] of Object.entries(traits)) {
+    for (const t of list) assert.ok(t.summary, `${id} ${t.name} says what it does`);
+    for (const name of NOT_IN_GAME.species[id] ?? []) assert.ok(list.some((t) => t.name === name), `${id} has ${name}`);
+  }
+});
 
 test('all stat blocks are complete', () => {
   const monsters = load('monsters');

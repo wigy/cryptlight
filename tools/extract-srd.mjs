@@ -365,6 +365,61 @@ function parseClasses() {
   return out;
 }
 
+/** The opening sentences of wrapped text, enough to say what a feature does. */
+function summary(lines) {
+  let out = '';
+  for (const sentence of joinLines(lines).split(/(?<=[.!?]) (?=[A-Z])/)) {
+    out += `${out ? ' ' : ''}${sentence}`;
+    if (out.length >= 160) break;
+  }
+  return out;
+}
+
+/** Features per class from its "Level N: Name" headings. Subclasses follow, and restart at level 3, which ends the list. */
+function parseClassFeatures(chapter) {
+  const lines = chapter.split('\n');
+  const out = {};
+  const others = Object.keys(CLASSES).map((c) => `${c} Class Features`);
+  for (const name of Object.keys(CLASSES)) {
+    const list = [];
+    let body = null;
+    for (let i = lines.indexOf(`${name} Class Features`) + 1; i < lines.length; i++) {
+      const h = lines[i].match(/^Level (\d+): (.+)$/);
+      if (others.includes(lines[i]) || lines[i].startsWith(`${name} Subclass: `) || (h && num(h[1]) < (list.at(-1)?.level ?? 0))) break;
+      if (h) { body = []; list.push({ level: num(h[1]), name: h[2].trim(), body }); }
+      else if (!lines[i].trim()) body = null; // A blank line ends the paragraph; tables and sidebars come after it.
+      else body?.push(lines[i].trim());
+    }
+    out[slug(name)] = list.map((f) => ({ level: f.level, name: f.name, summary: summary(f.body) }));
+  }
+  return out;
+}
+
+const SPECIES_NAMES = ['Dragonborn', 'Dwarf', 'Elf', 'Gnome', 'Goliath', 'Halfling', 'Human', 'Orc', 'Tiefling'];
+/** Traits per species. A trait opens with a Title Case name, after a finished sentence, so a wrapped "Long Rest. ..." isn't one. */
+function parseSpeciesTraits(chapter) {
+  const lines = chapter.split('\n');
+  const out = {};
+  for (const name of SPECIES_NAMES) {
+    const list = [];
+    let body = null;
+    let i = lines.findIndex((l, n) => l.trim() === name && lines[n + 1]?.startsWith('Creature Type'));
+    while (!lines[i].startsWith(`As a${name === 'Elf' || name === 'Orc' ? 'n' : ''} ${name}`)) i++;
+    for (i += 1; i < lines.length; i++) {
+      const l = lines[i].trim();
+      if (l === 'Feats' || (SPECIES_NAMES.includes(l) && lines[i + 1]?.startsWith('Creature Type'))) break;
+      const prev = lines[i - 1].trim();
+      const m = (!prev || /[.:]$/.test(prev)) && l.match(ENTRY);
+      // The options of a choice, like "Rock Gnome." or "Fire's Burn (Fire Giant).", belong to the trait they're under.
+      if (m && !/\(|\bGnome$/.test(m[1])) { body = [m[2]]; list.push({ name: m[1], body }); }
+      else if (!l) body = null; // A blank line ends the paragraph; tables and sidebars come after it.
+      else body?.push(l);
+    }
+    out[slug(name)] = list.map((t) => ({ name: t.name, summary: summary(t.body) }));
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------- raw chapters
 const CHAPTERS = { 'playing-the-game': [5, 18], 'character-creation': [19, 27], classes: [28, 82], 'character-origins': [83, 87], equipment: [88, 103], 'spell-rules': [104, 106], 'rules-glossary': [176, 191], 'gameplay-toolbox': [192, 203], 'magic-item-rules': [204, 208], 'monster-rules': [254, 257] };
 
@@ -414,6 +469,8 @@ write('conditions', parseGlossaryConditions(glossary));
 const chapters = {};
 for (const [k, [a, b]] of Object.entries(CHAPTERS)) chapters[k] = columns(a, b).join('\n').replace(/\n{3,}/g, '\n\n');
 write('chapters', chapters);
+write('class-features', parseClassFeatures(chapters.classes));
+write('species-traits', parseSpeciesTraits(chapters['character-origins']));
 write('attribution', { text: ATTRIBUTION, source: URL, license: 'CC-BY-4.0' });
 
 const index = statBlockIndex();

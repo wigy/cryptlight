@@ -93,6 +93,17 @@ button:disabled { opacity: .45; cursor: default; }
 .ability i { font-style: normal; color: var(--gold); }
 .ability.on { border-color: var(--gold); background: linear-gradient(#54431f, #33280f); }
 .noability { color: var(--dim); font-size: 15px; }
+.features { grid-column: 1 / 3; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.features h3 { margin: 10px 0 4px; font-size: 15px; font-weight: normal; color: var(--dim); }
+.featgroup:first-of-type h3 { margin-top: 0; }
+.featgroup ul { list-style: none; margin: 0; padding: 0; }
+.featgroup li { padding: 3px 8px; font-size: 15px; color: var(--ink); border-left: 2px solid var(--line); margin-bottom: 3px; cursor: help; }
+.featgroup li small { display: block; font-size: 12px; color: var(--dim); }
+.featgroup li.missing { color: var(--dim); }
+.featgroup p { margin: 0 0 6px; font-size: 14px; color: var(--ink); }
+.featgroup p.note { margin: 6px 0 0; font-size: 13px; color: var(--dim); }
+.featgroup.next { margin-top: 12px; padding: 8px 10px; border: 1px dashed var(--line); }
+.featgroup.next h3 { margin-top: 0; color: var(--gold); }
 #inv h2 { margin: 0 0 8px; font-size: 18px; color: var(--gold); font-weight: normal; }
 .doll { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .dollslot { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 6px; font-size: 13px; color: var(--dim); }

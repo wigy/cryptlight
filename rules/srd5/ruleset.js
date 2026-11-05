@@ -1,10 +1,10 @@
 // The ruleset adapter: everything the generic engine asks of "the rules" is answered here.
-import { ABILITY_NAMES, BACKGROUNDS, SPECIES, XP_TABLE } from './data.js';
+import { ABILITY_NAMES, BACKGROUNDS, CLASS_TABLE, NOT_IN_GAME, SPECIES, XP_TABLE } from './data.js';
 import {
   addCondition, addEffect, applyDamage, armorClass, attackModifiers, canAct, checkConcentration, d20, getEffect, grantTempHp, hasCondition, hasEffect,
   heal, isDown, isIncapacitated, lacksArmorTraining, mod, passivePerception, pb, removeCondition, removeEffect, roll, rollDice, savingThrow, skillBonus, speedOf,
 } from './core.js';
-import { MAX_LEVEL, PACK_SIZE, SLOTS, createCharacter, longRest, makeItem, maybeLevelUp, newUid, shortRest, xpForNextLevel } from './characters.js';
+import { MAX_LEVEL, PACK_SIZE, SLOTS, createCharacter, hitPointGain, longRest, makeItem, maybeLevelUp, newUid, shortRest, spellsAtLevel, xpForNextLevel } from './characters.js';
 import { ROUND, attackBlessings, attackRollText, characterAttack, damageRollText, monsterAttack, multiattackPlan, rangeOf, reachOf, unarmedStrike } from './combat.js';
 import { SPELL_FX } from './spells.js';
 
@@ -175,6 +175,47 @@ export class Srd5Ruleset {
     const states = [...m.conditions.map((c) => c.id), ...m.effects.map((e) => e.id)];
     if (states.length) lines.push({ text: states.join(', '), color: CYAN });
     return lines;
+  }
+
+  /**
+   * The inventory's Features screen: what the character's species and class give it, level by level, and what comes next.
+   * Past the level cap the next level's features are listed for interest, with a note instead of a per-feature mark.
+   */
+  memberFeatures(game, m) {
+    const srd = this.srd;
+    const list = (entries, missing) => entries.map((f) => ({ name: f.name, text: f.summary, missing: missing.includes(f.name) }));
+    const features = srd.classFeatures[m.classId];
+    const missing = NOT_IN_GAME.classes[m.classId] ?? [];
+    const atLevel = (level) => features.filter((f) => f.level === level);
+    const groups = [];
+    for (let level = 1; level <= m.level; level++) groups.push({ title: `Level ${level}`, items: list(atLevel(level), missing) });
+    const next = m.level + 1;
+    if (features.some((f) => f.level === next)) {
+      const reachable = m.level < MAX_LEVEL;
+      groups.push({
+        title: reachable ? `Next: level ${next} at ${xpForNextLevel(m)} XP` : `Next: level ${next}`,
+        next: true,
+        gains: reachable ? this.nextLevelGains(m) : [],
+        note: reachable ? null : `Characters stop at level ${MAX_LEVEL} in this game for now, so this can't be reached yet.`,
+        items: list(atLevel(next), reachable ? missing : []),
+      });
+    }
+    return [
+      { title: `Species: ${SPECIES[m.speciesId].name}`, groups: [{ items: list(srd.speciesTraits[m.speciesId], NOT_IN_GAME.species[m.speciesId] ?? []) }] },
+      { title: `Class: ${srd.classes[m.classId].name}`, groups },
+    ];
+  }
+
+  /** The numbers that change at the next level, as short phrases. */
+  nextLevelGains(m) {
+    const gains = [`+${hitPointGain(m)} HP`];
+    const table = CLASS_TABLE[m.classId];
+    if (!table.slots) return gains;
+    const slots = table.slots[m.level];
+    if (slots !== m.slots.max) gains.push(`spell slots ${m.slots.max} to ${slots}`);
+    const spells = spellsAtLevel(m, m.level + 1).filter((id) => !m.prepared.includes(id)).map((id) => this.srd.spells[id].name);
+    if (spells.length) gains.push(`new spell${spells.length > 1 ? 's' : ''}: ${spells.join(', ')}`);
+    return gains;
   }
 
   carriedWeight(m) {

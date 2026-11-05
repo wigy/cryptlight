@@ -1,0 +1,152 @@
+{
+ "dragonborn": [
+  {
+   "name": "Draconic Ancestry",
+   "summary": "Your lineage stems from a dragon progenitor. Choose the kind of dragon from the Draconic Ancestors table. Your choice affects your Breath Weapon and Damage Resistance traits as well as your appearance."
+  },
+  {
+   "name": "Breath Weapon",
+   "summary": "When you take the Attack action on your turn, you can replace one of your attacks with an exhalation of magical energy in either a 15-foot Cone or a 30-foot Line that is 5 feet wide (choose the shape each time)."
+  },
+  {
+   "name": "Damage Resistance",
+   "summary": "You have Resistance to the damage type determined by your Draconic Ancestry trait."
+  },
+  {
+   "name": "Darkvision",
+   "summary": "You have Darkvision with a range of 60 feet."
+  },
+  {
+   "name": "Draconic Flight",
+   "summary": "When you reach character level 5, you can channel draconic magic to give yourself temporary flight. As a Bonus Action, you sprout spectral wings on your back that last for 10 minutes or until you retract the wings (no action required) or have the Incapacitated condition."
+  }
+ ],
+ "dwarf": [
+  {
+   "name": "Darkvision",
+   "summary": "You have Darkvision with a range of 120 feet."
+  },
+  {
+   "name": "Dwarven Resilience",
+   "summary": "You have Resistance to Poison damage. You also have Advantage on saving throws you make to avoid or end the Poisoned condition."
+  },
+  {
+   "name": "Dwarven Toughness",
+   "summary": "Your Hit Point maximum increases by 1, and it increases by 1 again whenever you gain a level."
+  },
+  {
+   "name": "Stonecunning",
+   "summary": "As a Bonus Action, you gain Tremorsense with a range of 60 feet for 10 minutes. You must be on a stone surface or touching a stone surface to use this Tremorsense."
+  }
+ ],
+ "elf": [
+  {
+   "name": "Darkvision",
+   "summary": "You have Darkvision with a range of 60 feet."
+  },
+  {
+   "name": "Elven Lineage",
+   "summary": "You are part of a lineage that grants you supernatural abilities. Choose a lineage from the Elven Lineages table. You gain the level 1 benefit of that lineage. When you reach character levels 3 and 5, you learn a higher-level spell, as shown on the table."
+  },
+  {
+   "name": "Fey Ancestry",
+   "summary": "You have Advantage on saving throws you make to avoid or end the Charmed condition."
+  },
+  {
+   "name": "Keen Senses",
+   "summary": "You have proficiency in the Insight, Perception, or Survival skill."
+  },
+  {
+   "name": "Trance",
+   "summary": "You don’t need to sleep, and magic can’t put you to sleep. You can finish a Long Rest in 4 hours if you spend those hours in a trancelike meditation, during which you retain consciousness."
+  }
+ ],
+ "gnome": [
+  {
+   "name": "Darkvision",
+   "summary": "You have Darkvision with a range of 60 feet."
+  },
+  {
+   "name": "Gnomish Cunning",
+   "summary": "You have Advantage on Intelligence, Wisdom, and Charisma saving throws."
+  },
+  {
+   "name": "Gnomish Lineage",
+   "summary": "You are part of a lineage that grants you supernatural abilities. Choose one of the following options; whichever one you choose, Intelligence, Wisdom, or Charisma is your spellcasting ability for the spells you cast with this trait (choose the ability when you select the lineage): Forest Gnome."
+  }
+ ],
+ "goliath": [
+  {
+   "name": "Giant Ancestry",
+   "summary": "You are descended from Giants. Choose one of the following benefits—a supernatural boon from your ancestry; you can use the chosen benefit a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest: Cloud’s Jaunt (Cloud Giant)."
+  },
+  {
+   "name": "Large Form",
+   "summary": "Starting at character level 5, you can change your size to Large as a Bonus Action if you’re in a big enough space. This transformation lasts for 10 minutes or until you end it (no action required)."
+  },
+  {
+   "name": "Powerful Build",
+   "summary": "You have Advantage on any ability check you make to end the Grappled condition. You also count as one size larger when determining your carrying capacity."
+  }
+ ],
+ "halfling": [
+  {
+   "name": "Brave",
+   "summary": "You have Advantage on saving throws you make to avoid or end the Frightened condition."
+  },
+  {
+   "name": "Halfling Nimbleness",
+   "summary": "You can move through the space of any creature that is a size larger than you, but you can’t stop in the same space."
+  },
+  {
+   "name": "Luck",
+   "summary": "When you roll a 1 on the d20 of a D20 Test, you can reroll the die, and you must use the new roll."
+  },
+  {
+   "name": "Naturally Stealthy",
+   "summary": "You can take the Hide action even when you are obscured only by a creature that is at least one size larger than you."
+  }
+ ],
+ "human": [
+  {
+   "name": "Resourceful",
+   "summary": "You gain Heroic Inspiration whenever you finish a Long Rest."
+  },
+  {
+   "name": "Skillful",
+   "summary": "You gain proficiency in one skill of your choice."
+  },
+  {
+   "name": "Versatile",
+   "summary": "You gain an Origin feat of your choice (see “Feats”). Skilled is recommended."
+  }
+ ],
+ "orc": [
+  {
+   "name": "Adrenaline Rush",
+   "summary": "You can take the Dash action as a Bonus Action. When you do so, you gain a number of Temporary Hit Points equal to your Proficiency Bonus. You can use this trait a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Short or Long Rest."
+  },
+  {
+   "name": "Darkvision",
+   "summary": "You have Darkvision with a range of 120 feet."
+  },
+  {
+   "name": "Relentless Endurance",
+   "summary": "When you are reduced to 0 Hit Points but not killed outright, you can drop to 1 Hit Point instead. Once you use this trait, you can’t do so again until you finish a Long Rest."
+  }
+ ],
+ "tiefling": [
+  {
+   "name": "Darkvision",
+   "summary": "You have Darkvision with a range of 60 feet."
+  },
+  {
+   "name": "Fiendish Legacy",
+   "summary": "You are the recipient of a legacy that grants you supernatural abilities. Choose a legacy from the Fiendish Legacies table. You gain the level 1 benefit of the chosen legacy."
+  },
+  {
+   "name": "Otherworldly Presence",
+   "summary": "You know the Thaumaturgy cantrip. When you cast it with this trait, the spell uses the same spellcasting ability you use for your Fiendish Legacy trait."
+  }
+ ]
+}

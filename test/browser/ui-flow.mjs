@@ -45,6 +45,12 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await clickEl('[data-card="2"] .portrait');
   await wait(150);
   await shot('12-inventory');
+  // The Features tab, reached by clicking: it has no key.
+  await clickEl('[data-act="invmode:features"]');
+  await wait(150);
+  await shot('12b-features');
+  assert.match(await ev(`document.querySelector('.features').textContent`), /Species: Human.*Class: Cleric.*Level 1.*Next: level 2 at 300 XP/s);
+  await clickEl('[data-act="invmode:items"]');
   const free = await state(`g.party.members[2].pack.indexOf(null)`);
   const rect = await ev(`(() => { const b = document.querySelectorAll('.pack .slot')[${free}].getBoundingClientRect(); return { x: b.x + 20, y: b.y + 20 }; })()`);
   await click(rect.x, rect.y);

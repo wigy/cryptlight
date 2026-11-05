@@ -253,6 +253,43 @@ test('every monster is drawn with a sprite that has an attack pose', async () =>
   }
 });
 
+test('the Features screen lists species and class features by level, and what comes next', async () => {
+  const { game, ruleset } = await newGame();
+  const [brunna] = game.party.members; // Dwarf Fighter.
+  const names = (g) => g.items.map((f) => f.name);
+  let [species, cls] = ruleset.memberFeatures(game, brunna);
+  assert.equal(species.title, 'Species: Dwarf');
+  assert.deepEqual(names(species.groups[0]), ['Darkvision', 'Dwarven Resilience', 'Dwarven Toughness', 'Stonecunning']);
+  assert.ok(species.groups[0].items.find((f) => f.name === 'Stonecunning').missing);
+  assert.equal(cls.title, 'Class: Fighter');
+  assert.deepEqual(cls.groups.map((g) => g.title), ['Level 1', 'Next: level 2 at 300 XP']);
+  assert.deepEqual(names(cls.groups[0]), ['Fighting Style', 'Second Wind', 'Weapon Mastery']);
+  assert.deepEqual(names(cls.groups[1]), ['Action Surge', 'Tactical Mind']);
+  assert.equal(cls.groups[1].items[0].missing, false);
+  assert.equal(cls.groups[1].items[1].missing, true);
+  assert.equal(cls.groups[1].note, null);
+  assert.ok(cls.groups[0].items[1].text.length > 20, 'features say what they do');
+
+  // What the screen promises for the next level is what levelling gives.
+  const hp = brunna.maxHp;
+  const promised = Number(cls.groups[1].gains[0].match(/\d+/)[0]);
+  brunna.xp = 300;
+  assert.equal(maybeLevelUp(brunna), true);
+  assert.equal(brunna.maxHp, hp + promised);
+
+  // At the level cap level 3 is listed but flagged as out of reach.
+  [, cls] = ruleset.memberFeatures(game, brunna);
+  assert.deepEqual(cls.groups.map((g) => g.title), ['Level 1', 'Level 2', 'Next: level 3']);
+  assert.deepEqual(names(cls.groups[2]), ['Fighter Subclass']);
+  assert.match(cls.groups[2].note, /stop at level 2/);
+
+  // A caster's next level names its slots and spells.
+  const maren = game.party.members[2]; // Cleric.
+  const gains = ruleset.memberFeatures(game, maren)[1].groups.at(-1).gains.join(', ');
+  assert.match(gains, /spell slots 2 to 3/);
+  assert.match(gains, /new spell: /);
+});
+
 test('Pack Tactics grants advantage only with an ally adjacent', async () => {
   const { game, srd } = await newGame();
   const [fighter] = game.party.members;

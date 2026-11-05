@@ -66,6 +66,7 @@ Pass an object with these to `new Game(module, ruleset)`. `rules/srd5/ruleset.js
 | `restOptions`, `rest`, `canRest`, `carriedWeight`, `throwHeld`, `attribution`, `summary` | Used by the HUD and end screen |
 | `memberQuickActions(game, m)` | Optional. The icon row on a member's action box: `memberActions` entries plus `item` or `glyph` for the picture (`glyph` shows the asset `icon-<glyph>`), `kind` to show the label, `empty` for an unassigned slot |
 | `memberAbilities(game, m)`, `toggleQuick(game, m, id)` | Optional. The inventory's Skills & Spells list (`kind` is `skill` or `spell`) and picking two for quick access |
+| `memberFeatures(game, m)` | Optional. The inventory's Features tab: sections of `{ title, groups }`, each group `{ title?, items: [{ name, text, missing }], next?, gains?, note? }` |
 | `onNewGame`, `moveBlocked`, `partyStepSeconds`, `onPartyWillMove`, `markUnaware` | Optional hooks |
 
 `level.explored` records the automap, one number per cell (0 unseen, 1 seen, 2 visited). `Game.updateExplored` fills it in from `light(game).radius` and line of sight, and it's saved with the level.

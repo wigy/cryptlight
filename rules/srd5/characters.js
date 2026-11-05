@@ -114,19 +114,24 @@ function resetResources(c) {
 
 export const xpForNextLevel = (c) => XP_TABLE[c.level] ?? Infinity;
 
-/** Grants a level if earned, at the fixed Hit Die average (SRD: average rounded up). Returns true if levelled. */
+/** Hit Points from the next level, at the fixed Hit Die average (SRD: average rounded up). */
+export const hitPointGain = (c) => Math.max(1, Math.floor(c.hitDie / 2) + 1 + mod(c, 'con') + (SPECIES[c.speciesId].hpPerLevel ?? 0));
+
+/** The recommended spells a character of this class has prepared at a level. */
+export const spellsAtLevel = (c, level) => DEFAULT_SPELLS[c.classId].prepared.slice(0, CLASS_TABLE[c.classId].prepared[level - 1]);
+
+/** Grants a level if earned. Returns true if levelled. */
 export function maybeLevelUp(c) {
   if (c.dead || c.level >= MAX_LEVEL || c.xp < xpForNextLevel(c)) return false;
   c.level += 1;
-  const gain = Math.max(1, Math.floor(c.hitDie / 2) + 1 + mod(c, 'con') + (SPECIES[c.speciesId].hpPerLevel ?? 0));
+  const gain = hitPointGain(c);
   c.maxHp += gain;
   if (c.hp > 0) c.hp += gain;
   c.hitDice += 1;
   const t = CLASS_TABLE[c.classId];
   if (t.slots) {
     c.slots.max = t.slots[c.level - 1];
-    const known = DEFAULT_SPELLS[c.classId].prepared.slice(0, t.prepared[c.level - 1]);
-    for (const id of known) if (!c.prepared.includes(id)) c.prepared.push(id);
+    for (const id of spellsAtLevel(c, c.level)) if (!c.prepared.includes(id)) c.prepared.push(id);
   }
   resetResources(c);
   return true;

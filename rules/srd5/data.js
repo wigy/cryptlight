@@ -49,6 +49,34 @@ export const SPECIES = {
   tiefling: { name: 'Tiefling', speed: 30, darkvision: 60, size: 'Medium', resist: ['fire'], notes: 'Fire resistance' },
 };
 
+/** SRD features and traits a character has on paper but the game doesn't apply yet, so the Features screen can say so. */
+export const NOT_IN_GAME = {
+  classes: {
+    barbarian: ['Danger Sense'],
+    bard: ['Expertise', 'Jack of All Trades'],
+    druid: ['Druidic', 'Wild Shape', 'Wild Companion'],
+    fighter: ['Tactical Mind'],
+    monk: ['Unarmored Movement', 'Uncanny Metabolism'],
+    paladin: ['Fighting Style'],
+    ranger: ['Favored Enemy', 'Deft Explorer', 'Fighting Style'],
+    rogue: ['Thieves’ Cant', 'Cunning Action'],
+    sorcerer: ['Font of Magic', 'Metamagic'],
+    warlock: ['Eldritch Invocations', 'Magical Cunning'],
+    wizard: ['Ritual Adept', 'Scholar'],
+  },
+  species: {
+    dragonborn: ['Draconic Flight'],
+    dwarf: ['Stonecunning'],
+    elf: ['Elven Lineage', 'Fey Ancestry', 'Trance'],
+    gnome: ['Gnomish Lineage'],
+    goliath: ['Giant Ancestry', 'Large Form', 'Powerful Build'],
+    halfling: ['Brave', 'Halfling Nimbleness', 'Naturally Stealthy'],
+    human: ['Resourceful', 'Skillful', 'Versatile'],
+    orc: ['Adrenaline Rush'],
+    tiefling: ['Otherworldly Presence'],
+  },
+};
+
 /** Backgrounds. `feat` drives behaviour; `abilities` are the three the background may raise. */
 export const BACKGROUNDS = {
   acolyte: { name: 'Acolyte', abilities: ['int', 'wis', 'cha'], skills: ['insight', 'religion'], feat: 'magic-initiate-cleric', items: ['holy-symbol'] },
@@ -107,8 +135,8 @@ const ITEM_USE = {
 const STACKABLE = new Set(['javelin', 'dagger', 'handaxe', 'dart', 'torch', 'rations', 'potion-of-healing']);
 
 export async function loadSrd(readJson) {
-  const [monsters, spells, magicItems, weapons, armor, gear, classes, conditions, attribution] = await Promise.all(
-    ['monsters', 'spells', 'magic-items', 'weapons', 'armor', 'gear', 'classes', 'conditions', 'attribution'].map(readJson),
+  const [monsters, spells, magicItems, weapons, armor, gear, classes, conditions, attribution, classFeatures, speciesTraits] = await Promise.all(
+    ['monsters', 'spells', 'magic-items', 'weapons', 'armor', 'gear', 'classes', 'conditions', 'attribution', 'class-features', 'species-traits'].map(readJson),
   );
   const byId = (list) => Object.fromEntries(list.map((x) => [x.id, x]));
   const items = {};
@@ -117,7 +145,7 @@ export async function loadSrd(readJson) {
   }
   for (const [id, use] of Object.entries(ITEM_USE)) if (items[id]) items[id] = { ...items[id], use };
   for (const id of STACKABLE) if (items[id]) items[id] = { ...items[id], stackable: true };
-  return { monsters: byId(monsters), spells: byId(spells), items, classes: byId(classes), conditions: byId(conditions), attribution };
+  return { monsters: byId(monsters), spells: byId(spells), items, classes: byId(classes), conditions: byId(conditions), attribution, classFeatures, speciesTraits };
 }
 
 export const abilityMod = (score) => Math.floor((score - 10) / 2);

@@ -210,10 +210,14 @@ export class Hud {
     const m = g.party.members[i];
     const sheet = g.ruleset.memberSheet(g, m).map((l) => (typeof l === 'string' ? esc(l) : `<span style="color:${COLORS[l.color]}">${esc(l.text)}</span>`)).join('\n');
     const tab = (mode, label) => `<button class="${this.invMode === mode ? 'on' : ''}" data-act="invmode:${mode}">${label}</button>`;
-    const top = `<div class="invtabs">${tab('items', 'Items')}${tab('abilities', 'Skills &amp; Spells')}</div>`;
+    const top = `<div class="invtabs">${tab('items', 'Items')}${tab('abilities', 'Skills &amp; Spells')}${g.ruleset.memberFeatures ? tab('features', 'Features') : ''}</div>`;
     const close = '<button class="close" data-act="inv:close">Close</button>';
     if (this.invMode === 'abilities') {
       setHtml(inv, `${top}${this.abilitiesHtml(i, m)}<div class="sheet">${sheet}</div>${close}`);
+      return;
+    }
+    if (this.invMode === 'features') {
+      setHtml(inv, `${top}${this.featuresHtml(m)}<div class="sheet">${sheet}</div>${close}`);
       return;
     }
     const slot = (act, it, label) => {
@@ -244,6 +248,13 @@ export class Hud {
     };
     const body = list.length ? `${section('Skills', 'skill')}${section('Spells', 'spell')}` : `<p class="noability">${esc(m.name)} has no skills or spells to choose yet.</p>`;
     return `<div class="abilities"><h2>Quick access (${picked.length}/2)</h2>${body}</div>`;
+  }
+
+  featuresHtml(m) {
+    const item = (f) => `<li class="${f.missing ? 'missing' : ''}" data-hint="${esc(`<b>${f.name}</b>. ${f.text}${f.missing ? ' <i>Not in the game yet.</i>' : ''}`)}">${esc(f.name)}${f.missing ? '<small>not in game yet</small>' : ''}</li>`;
+    const group = (g) => `<div class="featgroup${g.next ? ' next' : ''}">${g.title ? `<h3>${esc(g.title)}</h3>` : ''}${g.gains?.length ? `<p>${esc(g.gains.join(', '))}</p>` : ''}<ul>${g.items.map(item).join('')}</ul>${g.note ? `<p class="note">${esc(g.note)}</p>` : ''}</div>`;
+    const sections = this.game.ruleset.memberFeatures(this.game, m);
+    return `<div class="features">${sections.map((s) => `<section><h2>${esc(s.title)}</h2>${s.groups.map(group).join('')}</section>`).join('')}</div>`;
   }
 
   addFloater(f) {
