@@ -1,5 +1,6 @@
 // Rules behaviour, with fixed dice so each rule is exercised exactly.
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { addCondition, addEffect, applyDamage, armorClass, attackModifiers, d20, hasCondition, heal, roll, rollDice, savingThrow } from '../rules/srd5/core.js';
 import { characterAttack, monsterAttack, multiattackPlan, usesMartialArts } from '../rules/srd5/combat.js';
@@ -241,6 +242,15 @@ test('a melee attack on the party shows one slash and one claw sound, however ma
   ruleset.resolveMonsterAttack(game, target, scimitar, fighter, { feet: 30, ranged: true });
   assert.equal(game.fx.filter((f) => f.kind === 'slash').length, 0, 'no claws at range');
   assert.deepEqual(sounds, ['throw']);
+});
+
+test('every monster is drawn with a sprite that has an attack pose', async () => {
+  const { ruleset, srd } = await newGame();
+  const index = JSON.parse(readFileSync(new URL('../assets/game/index.json', import.meta.url)));
+  for (const [id, m] of Object.entries(srd.monsters)) {
+    const { sprite } = ruleset.monsterInfo({ ...m, proto: id });
+    assert.ok(index[`${sprite}-attack`], `${id} draws ${sprite}`);
+  }
 });
 
 test('Pack Tactics grants advantage only with an ally adjacent', async () => {

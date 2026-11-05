@@ -40,6 +40,9 @@ const EYE = 0.5;
 const FOV_Y = 62 * Math.PI / 180;
 // A monster's melee attack rakes across the view just in front of the eye, so it shows even from behind the party.
 const SLASH = { ahead: 0.4, side: 0.14, height: 0.36 };
+// How long a monster holds its attack pose, outlasting the slash, and how much taller it is drawn: the raised weapon
+// reaches the top of that picture, so at the same height the body would shrink.
+const ATTACK_POSE = { seconds: 0.6, scale: 1.12 };
 
 const hash = (x, y) => { let h = (x * 374761393 + y * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return h >>> 0; };
 const ease = (t) => t * t * (3 - 2 * t);
@@ -417,9 +420,11 @@ export class View3D {
     const x = v.x + toCamX / l * lunge * 0.14, y = v.y + toCamY / l * lunge * 0.14;
     const hitAge = game.realTime - (e.hitAt ?? -9);
     const flash = hitAge < 0.16 ? 0.75 * (1 - hitAge / 0.16) : 0;
+    // Sprites without an attack picture keep their usual one.
+    const pose = age < ATTACK_POSE.seconds && this.assetUrl(`${info.sprite}-attack`) ? `${info.sprite}-attack` : null;
     const height = 0.74 * info.scale;
     const breathe = 1 + 0.012 * Math.sin(game.realTime * 2.2 + hash(e.x, e.y) % 7);
-    this.billboard(draws, info.sprite, x, y, height * breathe, { flash, pick: { type: 'monster', ref: e } });
+    this.billboard(draws, pose ?? info.sprite, x, y, height * breathe * (pose ? ATTACK_POSE.scale : 1), { flash, pick: { type: 'monster', ref: e } });
     if (e.hitAt != null && e.hitShown !== e.hitAt) {
       e.hitShown = e.hitAt;
       this.floaters.push({ x, y, z: height * 0.8, text: String(e.hitAmount), born: game.realTime });

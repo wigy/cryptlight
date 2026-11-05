@@ -43,6 +43,21 @@ add('shade', 'sprite', '3:4', `A living shadow creature, a humanoid silhouette o
 add('spider', 'sprite', '1:1', `${SOLO} A giant hairy cave spider, front view coming at the viewer, many eyes glinting, fangs dripping. ${CUTOUT}`);
 add('centipede', 'sprite', '1:1', `${SOLO} A giant armored cave centipede rearing up toward the viewer, front view, snapping mandibles. ${CUTOUT}`);
 
+// --- creatures attacking, repainted from the sprites above so each stays recognisably the same creature
+// Asking to repaint the "same creature" alone made Gemini copy the reference's pose and change only the face.
+const ATTACK = `The reference image only shows what this character looks like: keep its colors, clothing, equipment and painting style, but do not copy its pose. Draw a completely new, dynamic full-body action pose with the limbs in clearly different positions, caught mid-attack on someone directly in front of it, body twisted into the blow and leaning toward the viewer. ${SOLO} ${CUTOUT}`;
+const attackPose = (id, aspect, pose) => add(`${id}-attack`, 'sprite', aspect, `${pose} ${ATTACK}`, { ref: id });
+attackPose('rat', '1:1', 'The giant rat leaps at the viewer with jaws wide open and front claws spread.');
+attackPose('goblin', '3:4', 'The goblin swings its scimitar high overhead with one arm, shield thrust forward, mouth open in a war cry.');
+attackPose('goblin-boss', '3:4', 'The goblin chieftain brings its scimitar down in a two-handed overhead chop, cloak flying behind it.');
+attackPose('skeleton', '3:4', 'The skeleton thrusts its rusty shortsword forward in a stabbing lunge, jaw hanging open.');
+attackPose('zombie', '3:4', 'The zombie lurches forward grabbing with both clawed hands, mouth gaping wide to bite. The whole body down to both bare feet fits in the frame with a wide empty margin below the feet and on every side.');
+attackPose('cultist', '3:4', 'The cultist faces the viewer with the hood toward us and the face in shadow, one arm raised high above the head holding the sickle ready to slash down, robes swirling. The whole figure down to the feet fits in the frame with a wide empty margin on every side.');
+attackPose('cultist-boss', '3:4', 'The necromancer stabs forward with the dark glowing blade, the blue stone flaring in the other hand.');
+attackPose('shade', '3:4', 'The shadow creature lashes out with one long clawed hand stretched toward the viewer. Its smoke stays close to its body, all of it black and grey, and the whole creature fits in the frame with a wide empty margin on every side, nothing touching the edges.');
+attackPose('spider', '1:1', 'The spider rears up with its front legs raised high and its dripping fangs spread wide, about to strike.');
+attackPose('centipede', '1:1', 'The centipede has uncoiled and lashes straight at the viewer in a long diagonal strike across the frame, head huge and close, mandibles spread wide open, legs splayed out.');
+
 // --- effects
 add('slash', 'sprite', '1:1', `${SOLO} Three parallel curved claw slash marks raking diagonally through empty space from upper right to lower left, like a monster's claws tearing the air, tapering to sharp points at both ends, pale bone-white hot core fading to deep blood red edges, with a few flecks of blood. Only the three slash marks: no creature, no hand, no claws, no symbols. ${CUTOUT}`, { size: 512, loose: true });
 
