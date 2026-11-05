@@ -23,5 +23,6 @@ export const SFX = {
   fall: { from: 'GDC 2019, Articulated Sounds - Magic Elements vol.1', file: 'ground-impact-large-falling-rocks-various-04-c85d5f.wav', takes: [[0, 3.31]], level: -16 },
   // The first three steps of a 30 second walking loop.
   stairs: { from: 'GDC 2018, The Sound Pack Tree - Footstep Loops', file: '1879-footsteps-wooden-stairs-down-80-fpm-loop-e8bb9a.wav', takes: [[0.17, 2.05]], level: -26 },
+  claw: { from: 'GDC 2020, SmartSoundFX - Monsters', file: 'beast-01-threaten-short-06-9128ec.wav', takes: [[0, 0.98]], level: -18 },
   throw: { from: 'GDC 2016, SoundBits - Just Whoosh 3', file: 'swoosh-rope-whip-075-f99585.wav', takes: [[0, 0.36]], level: -22 },
 };

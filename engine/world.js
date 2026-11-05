@@ -111,6 +111,12 @@ export class Game {
   fxBoltFrom(entity, color) {
     this.fx.push({ kind: 'bolt', color, born: this.realTime, life: 0.28, fromX: entity.x + 0.5, fromY: entity.y + 0.5, toX: this.party.x + 0.5, toY: this.party.y + 0.5 });
   }
+  /** A melee attack on the party, once per attacker at any one moment: returns false if this one already showed. */
+  fxSlash(entity) {
+    if (this.fx.some((f) => f.kind === 'slash' && f.from === entity.uid && f.born === this.realTime)) return false;
+    this.fx.push({ kind: 'slash', from: entity.uid, born: this.realTime, life: 0.4, x: entity.x + 0.5, y: entity.y + 0.5 });
+    return true;
+  }
   fxHit(entity, amount) { entity.hitAt = this.realTime; entity.hitAmount = amount; }
   memberHit(member, amount) { this.memberFx.set(member, { at: this.realTime, amount }); }
   gameOver() { if (!this.over) { this.over = 'lost'; this.sound('down'); this.listeners.over?.('lost'); } }

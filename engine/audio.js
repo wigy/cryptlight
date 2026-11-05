@@ -8,6 +8,7 @@ const SOUNDS = {
   rage: { tone: 110, to: 70, dur: 0.4, gain: 0.25 }, level: { tone: 440, to: 1320, dur: 0.7, gain: 0.14, type: 'triangle' },
   pickup: { tone: 700, dur: 0.05, gain: 0.08 }, drop: { tone: 240, dur: 0.07, gain: 0.1 }, equip: { tone: 420, dur: 0.05, gain: 0.08 },
   fall: { tone: 500, to: 60, dur: 0.6, gain: 0.2 }, stairs: { noise: 0.25, gain: 0.08, freq: 400 }, throw: { noise: 0.1, gain: 0.06, freq: 2000 },
+  claw: { tone: 150, to: 60, dur: 0.22, gain: 0.2, type: 'sawtooth' },
 };
 
 // How a sample sits in the dungeon: reverb sent to the shared room, and random variation in pitch (as a playback rate

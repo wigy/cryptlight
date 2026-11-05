@@ -1,7 +1,7 @@
 // Rules behaviour, with fixed dice so each rule is exercised exactly.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addCondition, applyDamage, armorClass, attackModifiers, d20, hasCondition, heal, roll, savingThrow } from '../rules/srd5/core.js';
+import { addCondition, addEffect, applyDamage, armorClass, attackModifiers, d20, hasCondition, heal, roll, rollDice, savingThrow } from '../rules/srd5/core.js';
 import { characterAttack, monsterAttack, multiattackPlan, usesMartialArts } from '../rules/srd5/combat.js';
 import { createCharacter, longRest, makeItem, maybeLevelUp, shortRest } from '../rules/srd5/characters.js';
 import { fakeRng, newGame, tick } from './helpers.mjs';
@@ -187,6 +187,60 @@ test('monster attacks use parsed damage; advantage rider applies only with advan
   game.rng = R(19, 19, 3, 2);
   r = monsterAttack(game, target, scimitar, fighter, { feet: 5, ranged: false });
   assert.equal(r.dealt, 5 + 2);
+});
+
+test('rollDice reports the dice thrown, doubled on a crit, and the better set on a reroll', () => {
+  assert.deepEqual(rollDice(R(3, 4), '2d6+3'), { die: '2d6', values: [3, 4], flat: 3, total: 10 });
+  assert.equal(rollDice(R(1, 2, 3, 4), '2d6', { crit: true }).die, '4d6');
+  assert.deepEqual(rollDice(R(1, 5), '1d8', { reroll: true }).values, [5]);
+  assert.deepEqual(rollDice(R(), '5'), { die: null, values: [], flat: 5, total: 5 });
+});
+
+test('attacks write out the dice type and the result of every roll', async () => {
+  const { game, srd } = await newGame();
+  const { fighter, target } = duel(game);
+  fighter.hp = fighter.maxHp = 100;
+  fighter.abilities.str = 16; fighter.feat = null; fighter.fightingStyle = null;
+  fighter.equipment.armor = null; fighter.equipment.offHand = null;
+  const ac = armorClass(fighter, srd);
+  const scimitar = srd.monsters['goblin-warrior'].actions[0];
+  const bonus = scimitar.attack.bonus;
+  const claw = (...dice) => { game.rng = R(...dice); return monsterAttack(game, target, scimitar, fighter, { feet: 5, ranged: false }).dice; };
+  assert.equal(claw(19, 3), `d20(19) + ${bonus} = ${19 + bonus} vs AC ${ac}; 1d6(3) + 2 = 5`);
+  assert.equal(claw(1), `d20(1) + ${bonus} = ${1 + bonus} vs AC ${ac}`, 'a miss has only the attack roll');
+  assert.equal(claw(20, 3, 4), `d20(20) + ${bonus} = ${20 + bonus} vs AC ${ac}; 2d6(3,4) + 2 = 9`, 'a crit doubles the dice');
+  addEffect(target, { id: 'bane' });
+  assert.match(claw(2, 19, 3), new RegExp(`^d20\\(19\\) - 1d4\\(2\\) \\+ ${bonus} = ${19 - 2 + bonus} vs AC`), 'Bane shows its d4');
+
+  // Str +3, proficiency +2 against a character's Advantage, then every damage die with the modifier last.
+  target.hp = target.maxHp = 200; target.effects = [];
+  const sword = srd.items.greatsword;
+  addEffect(target, { id: 'guided' });
+  game.rng = R(4, 15, 2, 6);
+  const r = characterAttack({ game, attacker: fighter, target, weapon: sword, ranged: false, feet: 5, handsFree: true });
+  assert.equal(r.dice, `d20(4,15 high) + 5 = 20 vs AC ${target.ac}; 2d6(2,6) + 3 = 11`);
+  assert.equal(r.damage, 11);
+});
+
+test('a melee attack on the party shows one slash and one claw sound, however many attacks it makes', async () => {
+  const { game, ruleset, srd } = await newGame();
+  const { fighter, target } = duel(game);
+  const sounds = [];
+  game.listeners.sound = (n) => sounds.push(n);
+  fighter.hp = fighter.maxHp = 100;
+  const scimitar = srd.monsters['goblin-warrior'].actions[0];
+  game.rng = R(19, 3, 19, 3);
+  ruleset.resolveMonsterAttack(game, target, scimitar, fighter, { feet: 5, ranged: false });
+  ruleset.resolveMonsterAttack(game, target, scimitar, fighter, { feet: 5, ranged: false });
+  assert.equal(game.fx.filter((f) => f.kind === 'slash').length, 1);
+  assert.equal(sounds.filter((n) => n === 'claw').length, 1);
+  assert.match(game.logLines.at(-1).text, /^Goblin.* hits .* for 5\. d20\(19\)/);
+
+  game.fx = []; sounds.length = 0;
+  game.rng = R(19, 3);
+  ruleset.resolveMonsterAttack(game, target, scimitar, fighter, { feet: 30, ranged: true });
+  assert.equal(game.fx.filter((f) => f.kind === 'slash').length, 0, 'no claws at range');
+  assert.deepEqual(sounds, ['throw']);
 });
 
 test('Pack Tactics grants advantage only with an ally adjacent', async () => {

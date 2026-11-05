@@ -2,17 +2,23 @@
 // A "creature" is a plain serializable object: a character (kind:'pc') or a monster (kind:'monster').
 import { abilityMod, proficiencyBonus, SKILLS, SPECIES } from './data.js';
 
-/** Rolls dice notation such as "2d6+3" or "1d4-1" or "5". `crit` doubles the dice, not the modifier. */
-export function roll(rng, notation, { crit = false, reroll = false } = {}) {
+/**
+ * Rolls dice notation such as "2d6+3" or "1d4-1" or "5". `crit` doubles the dice, not the modifier.
+ * Returns the dice as thrown: `die` ("2d6" on that crit, null without dice), the `values` that count, `flat` and `total`.
+ */
+export function rollDice(rng, notation, { crit = false, reroll = false } = {}) {
   const m = String(notation).replace(/\s/g, '').match(/^(?:(\d+)d(\d+))?([+-]\d+|\d+)?$/);
   if (!m) throw new Error(`bad dice: ${notation}`);
   const count = (Number(m[1]) || 0) * (crit ? 2 : 1);
   const sides = Number(m[2]) || 0;
   const flat = Number(m[3]) || 0;
-  const once = () => { let t = 0; for (let i = 0; i < count; i++) t += rng.int(1, sides); return t; };
-  const a = once();
-  return (reroll ? Math.max(a, once()) : a) + flat;
+  const once = () => Array.from({ length: count }, () => rng.int(1, sides));
+  const sum = (list) => list.reduce((t, v) => t + v, 0);
+  let values = once();
+  if (reroll) { const again = once(); if (sum(again) > sum(values)) values = again; }
+  return { die: count ? `${count}d${sides}` : null, values, flat, total: sum(values) + flat };
 }
+export const roll = (rng, notation, opts) => rollDice(rng, notation, opts).total;
 
 export const mod = (c, ability) => abilityMod(c.abilities[ability] ?? 10);
 export const pb = (c) => (c.kind === 'pc' ? proficiencyBonus(c.level) : c.pb ?? 2);
@@ -91,17 +97,15 @@ export function speedOf(c, srd) {
 // ------------------------------------------------------------------- d20 tests
 /**
  * Rolls a D20 Test. Advantage and Disadvantage cancel when both apply (SRD).
- * Returns the raw die as `natural` and the adjusted result as `total`.
+ * Returns the raw die as `natural`, the adjusted result as `total`, and in `values` every die thrown.
  */
 export function d20(rng, c, { bonus = 0, advantage = false, disadvantage = false } = {}) {
   const lucky = c?.kind === 'pc' && SPECIES[c.speciesId]?.lucky;
   const one = () => { const r = rng.int(1, 20); return r === 1 && lucky ? rng.int(1, 20) : r; };
-  let natural = one();
-  if (advantage !== disadvantage) {
-    const other = one();
-    natural = advantage ? Math.max(natural, other) : Math.min(natural, other);
-  }
-  return { natural, total: natural + bonus - 2 * exhaustion(c ?? {}) };
+  const values = [one()];
+  if (advantage !== disadvantage) values.push(one());
+  const natural = advantage ? Math.max(...values) : Math.min(...values);
+  return { natural, values, keep: values.length > 1 ? (advantage ? 'high' : 'low') : null, total: natural + bonus - 2 * exhaustion(c ?? {}) };
 }
 
 export function savingThrow(rng, c, ability, dc, { advantage = false, disadvantage = false } = {}) {

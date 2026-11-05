@@ -38,6 +38,8 @@ const TURN_GLIDE = 0.18;
 const CAMERA_BACK = 0.36; // The eye sits behind the cell centre so the wall ahead fits the view.
 const EYE = 0.5;
 const FOV_Y = 62 * Math.PI / 180;
+// A monster's melee attack rakes across the view just in front of the eye, so it shows even from behind the party.
+const SLASH = { ahead: 0.4, side: 0.14, height: 0.36 };
 
 const hash = (x, y) => { let h = (x * 374761393 + y * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return h >>> 0; };
 const ease = (t) => t * t * (3 - 2 * t);
@@ -345,12 +347,24 @@ export class View3D {
       this.collectEntity(game, e, draws, dt);
     }
     for (const f of game.fx) {
+      if (f.kind === 'slash') this.collectSlash(game, f, draws);
       if (f.kind !== 'bolt') continue;
       const k = (game.realTime - f.born) / f.life;
       const x = f.fromX + (f.toX - f.fromX) * k, y = f.fromY + (f.toY - f.fromY) * k;
       this.billboard(draws, null, x, y, 0.22, { rec: this.glow, emissive: 1, tint: colorRgb(f.color), z: 0.38 });
     }
     return draws;
+  }
+
+  /** Toward the side the attacker is on, opening fast and then fading. */
+  collectSlash(game, f, draws) {
+    const k = (game.realTime - f.born) / f.life;
+    const [fx, fy] = this.forward;
+    const across = (f.x - this.cam.x) * -fy + (f.y - this.cam.y) * fx;
+    const side = Math.abs(across) < 0.5 ? 0 : Math.sign(across) * SLASH.side;
+    const x = this.cam.x + fx * SLASH.ahead - fy * side, y = this.cam.y + fy * SLASH.ahead + fx * side;
+    const glow = k < 0.2 ? 1 : 1 - (k - 0.2) / 0.8;
+    this.billboard(draws, 'slash', x, y, SLASH.height * (0.85 + 0.15 * Math.min(1, k * 4)), { emissive: 1, tint: [glow, glow, glow], z: EYE });
   }
 
   collectDoor(o, draws) {

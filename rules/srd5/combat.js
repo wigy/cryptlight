@@ -1,8 +1,38 @@
 // Attack resolution for characters and monsters, including weapon mastery and class damage riders.
-import { applyDamage, addCondition, addEffect, armorClass, attackModifiers, canAct, checkConcentration, d20, getEffect, hasEffect, isDown, mod, pb, removeEffect, roll } from './core.js';
+import { applyDamage, addCondition, addEffect, armorClass, attackModifiers, canAct, checkConcentration, d20, getEffect, hasEffect, isDown, mod, pb, removeEffect, rollDice } from './core.js';
 import { CLASS_TABLE } from './data.js';
 
 export const ROUND = 6; // Game seconds in a round.
+
+const signed = (n) => (n < 0 ? ` - ${-n}` : n > 0 ? ` + ${n}` : '');
+const sumOf = (list) => list.reduce((t, v) => t + v, 0);
+
+/** Bless and Bane roll a d4 onto the attack: adds it to the list and returns what it does to the bonus. */
+export function attackBlessings(rng, c, mods) {
+  let bonus = 0;
+  for (const [id, sign] of [['bless', 1], ['bane', -1]]) {
+    if (!hasEffect(c, id)) continue;
+    const d = rollDice(rng, '1d4');
+    mods.push({ ...d, sign });
+    bonus += sign * d.total;
+  }
+  return bonus;
+}
+
+/** An attack roll as the log shows it: "d20(14) + 1d4(3) + 4 = 21 vs AC 15". With two dice, "d20(5,14 high)". */
+export function attackRollText(r, mods, ac) {
+  const dice = `d20(${r.values.join(',')}${r.keep ? ` ${r.keep}` : ''})${mods.map((d) => `${d.sign < 0 ? ' - ' : ' + '}${d.die}(${d.values.join(',')})`).join('')}`;
+  const flat = r.total - r.natural - sumOf(mods.map((d) => d.sign * d.total));
+  return `${dice}${signed(flat)}${mods.length || flat ? ` = ${r.total}` : ''} vs AC ${ac}`;
+}
+
+/** Damage dice as the log shows them: "2d6(3,5) + 1d6(4) + 2 = 14". Empty when no dice were rolled. */
+export function damageRollText(thrown, total) {
+  const dice = thrown.filter((d) => d.die);
+  if (!dice.length) return '';
+  const flat = total - sumOf(dice.flatMap((d) => d.values));
+  return `${dice.map((d) => `${d.die}(${d.values.join(',')})`).join(' + ')}${signed(flat)}${dice.length > 1 || flat ? ` = ${total}` : ''}`;
+}
 
 export function isProficient(c, weapon) {
   if (c.kind !== 'pc') return true;
@@ -44,7 +74,7 @@ const spend = (c, key, time) => { (c.oncePerTurn ??= {})[key] = time; };
 /**
  * A character's weapon attack.
  * @param ctx {{ game, attacker, target, weapon, item, ranged, feet, longRange, enemyAdjacent, isExtra?:boolean, noMod?:boolean, handsFree?:boolean }}
- * @returns {{hit, crit, damage, natural, total, ac, killed}}
+ * @returns {{hit, crit, damage, natural, total, ac, killed, dice}} `dice` is the rolls written out for the log.
  */
 export function characterAttack(ctx) {
   const { game, attacker: a, target: t, weapon, ranged } = ctx;
@@ -56,8 +86,8 @@ export function characterAttack(ctx) {
   const abilityBonus = mod(a, ability);
   let bonus = abilityBonus + (isProficient(a, weapon) ? pb(a) : 0) + (weapon.bonus ?? 0);
   if (a.fightingStyle === 'archery' && ranged && weapon.style === 'ranged') bonus += 2;
-  if (hasEffect(a, 'bless')) bonus += roll(rng, '1d4');
-  if (hasEffect(a, 'bane')) bonus -= roll(rng, '1d4');
+  const toHit = [];
+  bonus += attackBlessings(rng, a, toHit);
 
   const m = attackModifiers(a, t, { ranged, feet: ctx.feet, longRange: ctx.longRange, enemyAdjacent: ctx.enemyAdjacent });
   if (weapon.props.heavy && ((weapon.style === 'melee' && a.abilities.str < 13) || (weapon.style === 'ranged' && a.abilities.dex < 13))) m.disadvantage = true;
@@ -71,7 +101,7 @@ export function characterAttack(ctx) {
   const mastery = a.weaponMasteries?.includes(weapon.id) ? weapon.mastery : null;
   const crit = r.natural === 20 || (m.autoCrit && r.natural !== 1);
   const hit = r.natural !== 1 && (r.natural === 20 || r.total >= ac);
-  const out = { hit, crit: hit && crit, natural: r.natural, total: r.total, ac, damage: 0, killed: false, advantage: m.advantage && !m.disadvantage };
+  const out = { hit, crit: hit && crit, natural: r.natural, total: r.total, ac, damage: 0, killed: false, advantage: m.advantage && !m.disadvantage, dice: attackRollText(r, toHit, ac) };
 
   if (!hit) {
     if (mastery === 'graze' && !ctx.isExtra && abilityBonus > 0) {
@@ -91,7 +121,9 @@ export function characterAttack(ctx) {
   }
   const savage = a.feat === 'savage-attacker' && !weapon.unarmed && available(a, 'savage', time);
   if (savage) spend(a, 'savage', time);
-  let total = roll(rng, dice, { crit: out.crit, reroll: savage });
+  const thrown = [rollDice(rng, dice, { crit: out.crit, reroll: savage })];
+  const rollExtra = (notation) => { const d = rollDice(rng, notation, { crit: out.crit }); thrown.push(d); return d.total; };
+  let total = thrown[0].total;
   // Great Weapon Fighting counts 1s and 2s as 3s; averaged here as +1 rather than tracking each die.
   if (a.fightingStyle === 'great-weapon' && weapon.style === 'melee' && (weapon.props.twoHanded || weapon.props.versatile)) total += 1;
   const addAbility = !ctx.isExtra || abilityBonus < 0 || a.fightingStyle === 'two-weapon';
@@ -106,23 +138,26 @@ export function characterAttack(ctx) {
   if (a.classId === 'rogue' && (weapon.props.finesse || weapon.style === 'ranged') && !m.disadvantage && available(a, 'sneak', time)) {
     const allyAdjacent = game.party.members.some((o) => o !== a && canAct(o) && game.feet(o, t) <= 5);
     if (m.advantage || allyAdjacent) {
-      extra += roll(rng, CLASS_TABLE.rogue.sneak, { crit: out.crit });
+      extra += rollExtra(CLASS_TABLE.rogue.sneak);
       spend(a, 'sneak', time);
       out.sneak = true;
     }
   }
   const mark = getEffect(a, 'marking');
-  if (mark && mark.target === t.uid) extra += roll(rng, mark.dice, { crit: out.crit });
-  if (hasEffect(a, 'divine-favor')) extra += roll(rng, '1d4', { crit: out.crit });
+  if (mark && mark.target === t.uid) extra += rollExtra(mark.dice);
+  if (hasEffect(a, 'divine-favor')) extra += rollExtra('1d4');
   const smite = getEffect(a, 'smite');
   if (smite && weapon.style === 'melee') {
-    extra += roll(rng, smite.dice, { crit: out.crit });
-    if (t.type === 'undead' || t.type === 'fiend') extra += roll(rng, '1d8', { crit: out.crit });
+    extra += rollExtra(smite.dice);
+    if (t.type === 'undead' || t.type === 'fiend') extra += rollExtra('1d8');
     removeEffect(a, 'smite');
     out.smite = true;
   }
 
-  const res = applyDamage(rng, t, Math.max(1, total) + extra, weapon.damage.type, { crit: out.crit, time });
+  const rolled = Math.max(1, total) + extra;
+  const damageText = damageRollText(thrown, rolled);
+  if (damageText) out.dice += `; ${damageText}`;
+  const res = applyDamage(rng, t, rolled, weapon.damage.type, { crit: out.crit, time });
   out.damage = res.dealt; out.killed = res.killed; out.saved = res.saved;
   if (!res.killed && !isDown(t) && mastery && !ctx.isExtra) applyMastery(game, a, t, weapon, mastery, out, abilityBonus);
   return out;
@@ -192,8 +227,8 @@ export function monsterAttack(game, m, entry, target, { feet, ranged, longRange,
   }
   if (game.ruleset.cannotSee?.(game, target)) am.advantage = true;
   let bonus = entry.attack.bonus;
-  if (hasEffect(m, 'bane')) bonus -= roll(rng, '1d4');
-  if (hasEffect(m, 'bless')) bonus += roll(rng, '1d4');
+  const toHit = [];
+  bonus += attackBlessings(rng, m, toHit);
   const r = d20(rng, m, { bonus, advantage: am.advantage, disadvantage: am.disadvantage });
   removeEffect(m, 'sapped'); removeEffect(m, 'mocked');
   const hadAdvantage = am.advantage && !am.disadvantage;
@@ -202,16 +237,24 @@ export function monsterAttack(game, m, entry, target, { feet, ranged, longRange,
   let hit = r.natural !== 1 && (r.natural === 20 || r.total >= ac);
   // The Shield spell is a Reaction taken after being hit.
   if (hit && r.natural !== 20 && game.ruleset.tryShieldReaction?.(game, target, r.total)) { ac = armorClass(target, srd); hit = r.total >= ac; }
-  const out = { hit, crit: hit && crit, natural: r.natural, total: r.total, ac, dealt: 0, killed: false, droppedToZero: false };
+  const out = { hit, crit: hit && crit, natural: r.natural, total: r.total, ac, dealt: 0, killed: false, droppedToZero: false, dice: attackRollText(r, toHit, ac) };
   if (!hit) return out;
+  const thrown = [];
+  let rolled = 0;
   for (const d of entry.damage ?? []) {
     if (d.onAdvantage && !hadAdvantage) continue;
-    const res = applyDamage(rng, target, Math.max(0, roll(rng, d.dice, { crit: out.crit })), d.type, { crit: out.crit, time: game.time });
+    const die = rollDice(rng, d.dice, { crit: out.crit });
+    thrown.push(die);
+    const amount = Math.max(0, die.total);
+    rolled += amount;
+    const res = applyDamage(rng, target, amount, d.type, { crit: out.crit, time: game.time });
     out.dealt += res.dealt;
     out.killed ||= res.killed;
     out.droppedToZero ||= res.droppedToZero;
     out.saved ??= res.saved;
     if (checkConcentration(rng, target, res.dealt)) out.lostConcentration = true;
   }
+  const damageText = damageRollText(thrown, rolled);
+  if (damageText) out.dice += `; ${damageText}`;
   return out;
 }

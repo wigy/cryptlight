@@ -2,10 +2,10 @@
 import { ABILITY_NAMES, BACKGROUNDS, SPECIES, XP_TABLE } from './data.js';
 import {
   addCondition, addEffect, applyDamage, armorClass, attackModifiers, canAct, checkConcentration, d20, getEffect, grantTempHp, hasCondition, hasEffect,
-  heal, isDown, isIncapacitated, lacksArmorTraining, mod, passivePerception, pb, removeCondition, removeEffect, roll, savingThrow, skillBonus, speedOf,
+  heal, isDown, isIncapacitated, lacksArmorTraining, mod, passivePerception, pb, removeCondition, removeEffect, roll, rollDice, savingThrow, skillBonus, speedOf,
 } from './core.js';
 import { MAX_LEVEL, PACK_SIZE, SLOTS, createCharacter, longRest, makeItem, maybeLevelUp, newUid, shortRest, xpForNextLevel } from './characters.js';
-import { ROUND, characterAttack, monsterAttack, multiattackPlan, rangeOf, reachOf, unarmedStrike } from './combat.js';
+import { ROUND, attackBlessings, attackRollText, characterAttack, damageRollText, monsterAttack, multiattackPlan, rangeOf, reachOf, unarmedStrike } from './combat.js';
 import { SPELL_FX } from './spells.js';
 
 // Message and effect colours: indices into the engine's named palette (engine/colors.js).
@@ -547,12 +547,12 @@ export class Srd5Ruleset {
 
   reportAttack(game, a, t, weapon, r) {
     if (!r.hit && !r.graze) {
-      game.log(`${a.name} misses ${t.name}.`);
+      game.log(`${a.name} misses ${t.name}. ${r.dice}`);
       game.sound('miss');
       return;
     }
     const tags = [r.crit && 'CRIT', r.sneak && 'sneak', r.smite && 'smite', r.graze && 'graze', r.mastery].filter(Boolean);
-    game.log(`${a.name} hits ${t.name} for ${r.damage}${tags.length ? ` (${tags.join(', ')})` : ''}.`, r.crit ? YELLOW : WHITE);
+    game.log(`${a.name} hits ${t.name} for ${r.damage}${tags.length ? ` (${tags.join(', ')})` : ''}. ${r.dice}`, r.crit ? YELLOW : WHITE);
     this.afterHarm(game, a, t, r);
   }
 
@@ -640,14 +640,17 @@ export class Srd5Ruleset {
         const enemyAdjacent = atRange && game.entities.some((o) => o.level === game.party.level && this.isHostile(o) && canAct(o) && game.feet(m, o) <= 5);
         const am = this.attackState(game, m, t, { ranged: atRange, feet, enemyAdjacent });
         if (hasEffect(m, 'innate-sorcery')) am.advantage = true;
-        const r = d20(game.rng, m, { bonus: this.spellAttackBonus(m) + (hasEffect(m, 'bless') ? roll(game.rng, '1d4') : 0), advantage: am.advantage, disadvantage: am.disadvantage });
+        const toHit = [];
+        const r = d20(game.rng, m, { bonus: this.spellAttackBonus(m) + attackBlessings(game.rng, m, toHit), advantage: am.advantage, disadvantage: am.disadvantage });
         const ac = armorClass(t, this.srd);
         const crit = r.natural === 20 || (am.autoCrit && r.natural !== 1);
         if (atRange) game.fxBolt(fx.color, t);
         removeEffect(m, 'mocked'); removeEffect(m, 'sapped');
-        if (r.natural === 1 || (!crit && r.total < ac)) { game.log(`${m.name}'s ${spell.name} misses ${t.name}.`); return true; }
-        game.log(`${m.name}'s ${spell.name} strikes ${t.name}${crit ? ' (CRIT)' : ''}.`, crit ? YELLOW : WHITE);
-        this.harm(game, m, t, roll(game.rng, dice, { crit }), type, { crit });
+        const toHitText = attackRollText(r, toHit, ac);
+        if (r.natural === 1 || (!crit && r.total < ac)) { game.log(`${m.name}'s ${spell.name} misses ${t.name}. ${toHitText}`); return true; }
+        const damage = rollDice(game.rng, dice, { crit });
+        game.log(`${m.name}'s ${spell.name} strikes ${t.name}${crit ? ' (CRIT)' : ''}. ${toHitText}; ${damageRollText([damage], damage.total)}`, crit ? YELLOW : WHITE);
+        this.harm(game, m, t, damage.total, type, { crit });
         if (fx.onHit) this.applyRider(game, m, t, fx.onHit);
         return true;
       }
@@ -1164,9 +1167,11 @@ export class Srd5Ruleset {
   resolveMonsterAttack(game, m, entry, t, ctx) {
     const r = monsterAttack(game, m, entry, t, ctx);
     m.attackAnim = game.realTime;
+    if (ctx.ranged) game.sound('throw');
+    else if (game.fxSlash(m)) game.sound('claw'); // Once however many attacks a Multiattack makes at this moment.
     const name = entry.name.replace(/ \(.*$/, '');
-    if (!r.hit) { game.log(`${m.name}'s ${name} misses ${t.name}.`); game.sound('miss'); return r; }
-    game.log(`${m.name}'s ${name} hits ${t.name} for ${r.dealt}${r.crit ? ' (CRIT)' : ''}.`, RED);
+    if (!r.hit) { game.log(`${m.name}'s ${name} misses ${t.name}. ${r.dice}`); game.sound('miss'); return r; }
+    game.log(`${m.name}'s ${name} hits ${t.name} for ${r.dealt}${r.crit ? ' (CRIT)' : ''}. ${r.dice}`, RED);
     game.memberHit(t, r.dealt);
     if (r.saved) game.log(`${t.name} refuses to fall!`, YELLOW);
     if (r.lostConcentration || (t.hp <= 0 && t.concentration)) this.endConcentration(game, t);

@@ -43,6 +43,9 @@ add('shade', 'sprite', '3:4', `A living shadow creature, a humanoid silhouette o
 add('spider', 'sprite', '1:1', `${SOLO} A giant hairy cave spider, front view coming at the viewer, many eyes glinting, fangs dripping. ${CUTOUT}`);
 add('centipede', 'sprite', '1:1', `${SOLO} A giant armored cave centipede rearing up toward the viewer, front view, snapping mandibles. ${CUTOUT}`);
 
+// --- effects
+add('slash', 'sprite', '1:1', `${SOLO} Three parallel curved claw slash marks raking diagonally through empty space from upper right to lower left, like a monster's claws tearing the air, tapering to sharp points at both ends, pale bone-white hot core fading to deep blood red edges, with a few flecks of blood. Only the three slash marks: no creature, no hand, no claws, no symbols. ${CUTOUT}`, { size: 512, loose: true });
+
 // --- dungeon features
 add('chest', 'sprite', '1:1', `${SOLO} A closed old wooden treasure chest bound in iron, front view seen from slightly above. ${CUTOUT}`);
 add('chest-open', 'sprite', '1:1', `${SOLO} An open empty old wooden treasure chest bound in iron, lid up, front view seen from slightly above. ${CUTOUT}`);
