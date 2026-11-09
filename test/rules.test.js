@@ -511,15 +511,19 @@ test('Stabilize can be slotted and lights up only while an ally is dying', async
   assert.equal(slot().submenu, 'ally:stabilize');
 });
 
-test('dwarves of every class have their own portrait, and other species share the class portrait', async () => {
+test('dwarves and elves of every class on offer have a matching portrait, and other species share the class portrait', async () => {
   const { game: g } = await newGame();
   const index = JSON.parse(readFileSync(new URL('../assets/game/index.json', import.meta.url)));
+  const offered = g.ruleset.creationSteps().find((s) => s.key === 'classId').options.map((o) => o.id);
   for (const classId of Object.keys(g.ruleset.srd.classes)) {
-    assert.ok(index[g.ruleset.portrait({ classId, speciesId: 'dwarf' })], `dwarf ${classId}`);
-    assert.equal(g.ruleset.portrait({ classId, speciesId: 'elf' }), `portrait-${classId}`);
+    for (const speciesId of ['dwarf', 'elf']) assert.ok(index[g.ruleset.portrait({ classId, speciesId })], `${speciesId} ${classId}`);
+    assert.equal(g.ruleset.portrait({ classId, speciesId: 'halfling' }), `portrait-${classId}`);
   }
-  assert.equal(g.ruleset.portrait({ classId: 'wizard', speciesId: 'dwarf' }), 'portrait-dwarf-wizard');
+  for (const classId of offered.filter((c) => c !== 'fighter')) assert.equal(g.ruleset.portrait({ classId, speciesId: 'dwarf' }), `portrait-dwarf-${classId}`);
+  for (const classId of offered.filter((c) => c !== 'wizard')) assert.equal(g.ruleset.portrait({ classId, speciesId: 'elf' }), `portrait-elf-${classId}`);
   assert.equal(g.ruleset.portrait({ classId: 'fighter', speciesId: 'dwarf' }), 'portrait-fighter');
+  assert.equal(g.ruleset.portrait({ classId: 'wizard', speciesId: 'elf' }), 'portrait-wizard');
+  assert.equal(g.ruleset.portrait({ classId: 'warlock', speciesId: 'elf' }), 'portrait-warlock', 'held back, so no elf portrait');
 });
 
 test('the creator leaves out the classes and species held back for now, but their rules still work', async () => {

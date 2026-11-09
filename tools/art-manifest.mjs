@@ -108,6 +108,18 @@ add('portrait-dwarf-sorcerer', 'image', '1:1', `A young male dwarf sorcerer with
 add('portrait-dwarf-warlock', 'image', '1:1', `A pale female dwarf warlock in dark leathers with an eerie violet glow from an occult pendant, unsettling smile. No flames or fire in front of the character. ${DWARF} ${PORTRAIT}`);
 add('portrait-dwarf-wizard', 'image', '1:1', `An elderly male dwarf wizard with a long silver beard and deep blue robes, faint magic light on his face. ${DWARF} ${PORTRAIT}`);
 
+// --- elf portraits, one per class on offer apart from the wizard, whose portrait is already an elf
+const ELF = 'Clearly an elf: slender, with long pointed ears, high cheekbones and fine ageless features. No flames or fire in front of the character.';
+add('portrait-elf-barbarian', 'image', '1:1', `A fierce female elf barbarian with wild dark red hair, war paint and a fur mantle. ${ELF} ${PORTRAIT}`);
+add('portrait-elf-bard', 'image', '1:1', `A charming male elf bard with long golden hair, a feathered cap and a lute strap over one shoulder, a knowing smile. ${ELF} ${PORTRAIT}`);
+add('portrait-elf-cleric', 'image', '1:1', `A determined female elf cleric with short white-blonde hair, a chain shirt and a silver holy symbol at her neck. ${ELF} ${PORTRAIT}`);
+add('portrait-elf-druid', 'image', '1:1', `A weathered male elf druid with leaf-woven brown hair, wooden torc and green-brown robes. ${ELF} ${PORTRAIT}`);
+add('portrait-elf-fighter', 'image', '1:1', `A battle-hardened male elf fighter with tied-back black hair, a scar across one brow and steel chain mail. ${ELF} ${PORTRAIT}`);
+add('portrait-elf-monk', 'image', '1:1', `A calm shaven-headed female elf monk in simple ochre wraps, focused gaze. ${ELF} ${PORTRAIT}`);
+add('portrait-elf-paladin', 'image', '1:1', `A noble male elf paladin with long silver hair, polished plate armor and a white tabard, resolute expression. ${ELF} ${PORTRAIT}`);
+add('portrait-elf-ranger', 'image', '1:1', `A lean, keen-eyed female elf ranger with auburn braids, a green hooded cloak and a bowstring across the chest. ${ELF} ${PORTRAIT}`);
+add('portrait-elf-rogue', 'image', '1:1', `A sly male elf rogue with dark tousled hair, a dark leather hood and a mischievous smile. ${ELF} ${PORTRAIT}`);
+
 // --- screens and interface
 add('title', 'image', '16:9', `${PAINT} A wide view of an old stone village well at night, its stones cracked, sickly green light glowing up from deep within, thorny brambles around it, a frightened village in the distance under a dark sky, with a coiled rope hanging down into the well. Plenty of dark empty sky in the upper part. No text, no border.`);
 add('panel', 'tile', '1:1', `Dark weathered bronze-and-leather surface for a fantasy game interface panel, subtle scratches and tooling, low contrast, very dark. ${TEXTURE}`);

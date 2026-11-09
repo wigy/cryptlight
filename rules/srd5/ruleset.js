@@ -28,6 +28,12 @@ const ICONS = [
   [/ration|food|berry/, 'food'], [/tools|kit/, 'tools'], [/gold|coin|silver/, 'coin'], [/amulet|symbol|holy/, 'amulet'], [/ring/, 'ring'], [/book|tome/, 'book'], [/arrows|bolts|bullets|needles|dart/, 'arrows'],
 ];
 
+// Classes with their own portrait for a species. The rest use the class portrait: the fighter's is already a dwarf, the wizard's an elf.
+const SPECIES_PORTRAITS = {
+  dwarf: ['barbarian', 'bard', 'cleric', 'druid', 'monk', 'paladin', 'ranger', 'rogue', 'sorcerer', 'warlock', 'wizard'],
+  elf: ['barbarian', 'bard', 'cleric', 'druid', 'fighter', 'monk', 'paladin', 'ranger', 'rogue'],
+};
+
 export class Srd5Ruleset {
   id = 'srd5';
   name = '5E compatible (SRD 5.2.1)';
@@ -75,9 +81,9 @@ export class Srd5Ruleset {
     ];
   }
   createMember(choices) { return createCharacter(this.srd, choices); }
-  /** Which portrait a character shows. Takes creation choices or a member. The plain fighter portrait is already a dwarf. */
+  /** Which portrait a character shows. Takes creation choices or a member. */
   portrait({ classId, speciesId }) {
-    return speciesId === 'dwarf' && classId !== 'fighter' ? `portrait-dwarf-${classId}` : `portrait-${classId}`;
+    return SPECIES_PORTRAITS[speciesId]?.includes(classId) ? `portrait-${speciesId}-${classId}` : `portrait-${classId}`;
   }
 
   /** Called once for a new game: someone with a free hand lights a torch. */
