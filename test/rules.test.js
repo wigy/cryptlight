@@ -553,6 +553,47 @@ test('every species and class on offer has a portrait of each sex, and character
   assert.equal(g.ruleset.createMember({ name: 'S', classId: 'bard', speciesId: 'gnome', sex: 'male', backgroundId: 'sage' }).sex, 'male');
 });
 
+test('someone behind steps up past a dead character in the front rank', async () => {
+  const { game: g } = await newGame();
+  const [a, b, c, d] = g.party.members;
+  a.dead = true; a.hp = 0;
+  g.ruleset.closeRanks(g);
+  assert.deepEqual(g.party.members, [c, b, a, d], 'from the same side');
+  assert.equal(g.logLines.at(-1).text, `${c.name} steps up to the front rank.`);
+  b.dead = true; b.hp = 0;
+  g.ruleset.closeRanks(g);
+  assert.deepEqual(g.party.members, [c, d, a, b]);
+  g.ruleset.closeRanks(g);
+  assert.deepEqual(g.party.members, [c, d, a, b], 'the dead stay at the back');
+});
+
+test('the ranks close only for the dead, and only with someone able to move', async () => {
+  const { game: g } = await newGame();
+  const [a, b, c, d] = g.party.members;
+  a.hp = 0;
+  g.ruleset.closeRanks(g);
+  assert.deepEqual(g.party.members, [a, b, c, d], 'unconscious stays put');
+  a.dead = true; c.hp = 0;
+  g.ruleset.closeRanks(g);
+  assert.deepEqual(g.party.members, [d, b, c, a], 'the other side when the one behind is down');
+  g.party.members[0].dead = true;
+  g.ruleset.closeRanks(g);
+  assert.deepEqual(g.party.members, [d, b, c, a], 'nobody left to step up');
+});
+
+test('stepping out of reach in a swap can draw an Opportunity Attack', async () => {
+  const { game: g } = await newGame();
+  g.teleport({ level: 'warren', x: 9, y: 21, dir: 0 });
+  const foe = g.spawnMonster('goblin-warrior', 9, 20, 'warren', { awake: true });
+  foe.sx = 0; foe.sy = 1;
+  const front = g.party.members[0];
+  assert.equal(g.feet(front, foe), 5);
+  assert.equal(foe.usedOA, -Infinity);
+  assert.equal(g.swapMembers(0, 2), true);
+  assert.equal(g.feet(front, foe), 10);
+  assert.equal(foe.usedOA, g.time, 'it swung at the one stepping back');
+});
+
 test('the creator leaves out the classes and species held back for now, but their rules still work', async () => {
   const { game: g } = await newGame();
   const offered = (key) => g.ruleset.creationSteps().find((s) => s.key === key).options.map((o) => o.id);

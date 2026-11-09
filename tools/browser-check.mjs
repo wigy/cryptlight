@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Drives the real game in headless Chrome over the DevTools protocol (no dependencies) and takes screenshots.
-// Usage: node tools/browser-check.mjs <outDir> <script.mjs>; the script's default export gets {eval, click, key, wait, shot, errors}.
+// Usage: node tools/browser-check.mjs <outDir> <script.mjs>; the script's default export gets {eval, click, drag, key, wait, shot, errors}.
 import { spawn } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -48,6 +48,13 @@ try {
     },
     click: async (x, y) => {
       for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x, y, button: type === 'mouseMoved' ? 'none' : 'left', buttons: type === 'mousePressed' ? 1 : 0, clickCount: 1, pointerType: 'mouse' });
+    },
+    drag: async (x1, y1, x2, y2, during) => {
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: x1, y: y1, button: 'none', buttons: 0 });
+      await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: x1, y: y1, button: 'left', buttons: 1, clickCount: 1 });
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: x2, y: y2, button: 'left', buttons: 1 });
+      await during?.();
+      await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: x2, y: y2, button: 'left', buttons: 0, clickCount: 1 });
     },
     key: async (code) => {
       // The browser's own handling of Escape, such as closing a dialog, needs the virtual key code.

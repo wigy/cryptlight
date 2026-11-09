@@ -271,6 +271,19 @@ export class Game {
     this.runObjectsAt(nx, ny, 'enter');
     return true;
   }
+  /** Two members trade places in the marching order, which is their order in the party. It takes as long as a step, and can draw Opportunity Attacks like one. */
+  swapMembers(i, j) {
+    const members = this.party.members;
+    if (this.over || this.paused || i === j || !members[i] || !members[j] || this.realTime < this.party.stepReadyAt) return false;
+    const blocked = this.ruleset.moveBlocked?.(this);
+    if (blocked) { this.log(blocked, 11); return false; }
+    const before = new Map(members.map((m) => [m, this.memberPos(m)]));
+    [members[i], members[j]] = [members[j], members[i]];
+    this.party.stepReadyAt = this.realTime + (this.ruleset.partyStepSeconds?.(this) ?? 0.3);
+    this.ruleset.onPartyWillMove?.(this, before, { swap: true });
+    this.sound('step');
+    return true;
+  }
   useStairs(s) {
     if (s.exit) { this.leave(s.text); return; }
     this.teleport(s.to);

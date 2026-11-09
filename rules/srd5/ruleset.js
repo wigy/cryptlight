@@ -1078,8 +1078,8 @@ export class Srd5Ruleset {
     return held ? `${held.name} is held fast!` : null;
   }
 
-  /** Opportunity Attacks when the party steps out of a monster's reach. */
-  onPartyWillMove(game, oldPositions) {
+  /** Opportunity Attacks when the party steps out of a monster's reach. In a swap, stepping back draws one even though someone else stays in reach. */
+  onPartyWillMove(game, oldPositions, { swap = false } = {}) {
     for (const m of game.entities) {
       if (m.level !== game.party.level || m.dead || !m.awake || !canAct(m)) continue;
       if (m.usedOA > game.time - ROUND) continue;
@@ -1088,12 +1088,24 @@ export class Srd5Ruleset {
       const reach = entry.attack.reach ?? 5;
       const inReach = game.party.members.filter((x) => !isDown(x) && oldPositions.get(x) && game.feetFromPos(oldPositions.get(x), m) <= reach);
       if (!inReach.length) continue;
-      const stillClose = inReach.filter((x) => game.feet(x, m) <= reach);
-      if (stillClose.length) continue;
+      const retreating = inReach.filter((x) => game.feet(x, m) > reach);
+      if (!retreating.length || (!swap && retreating.length < inReach.length)) continue;
       m.usedOA = game.time;
-      const t = game.rng.pick(inReach);
+      const t = game.rng.pick(retreating);
       game.log(`${m.name} strikes at the retreating ${t.name}!`, RED);
       this.resolveMonsterAttack(game, m, entry, t, { feet: reach, ranged: false });
+    }
+  }
+
+  /** Someone able to walk steps up past a dead character in the front rank, from the same side if possible. */
+  closeRanks(game) {
+    const members = game.party.members;
+    for (const i of [0, 1]) {
+      if (!members[i]?.dead) continue;
+      const j = [i + 2, 3 - i].find((k) => members[k] && !isDown(members[k]));
+      if (j === undefined) continue;
+      [members[i], members[j]] = [members[j], members[i]];
+      game.log(`${members[i].name} steps up to the front rank.`, YELLOW);
     }
   }
 
@@ -1106,6 +1118,7 @@ export class Srd5Ruleset {
     const time = game.time;
     for (const m of game.party.members) this.tickMember(game, m, dt);
     this.checkDefeat(game);
+    this.closeRanks(game);
     for (const m of game.entities) {
       if (m.dead || m.level !== game.party.level) continue;
       this.expire(game, m);

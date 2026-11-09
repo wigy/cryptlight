@@ -86,6 +86,8 @@ Pass an object with these to `new Game(module, ruleset)`. `rules/srd5/ruleset.js
 | `onAdventureStart(game)`, `onLeaveAdventure(game, members)` | Optional. The second gets copies of the members, to apply whatever going on vacation does to them, and returns how many game seconds it takes |
 | `moveBlocked`, `partyStepSeconds`, `onPartyWillMove`, `markUnaware` | Optional hooks |
 
+The marching order is the order of `party.members`: the first two are the front rank, on the left and right. `Game.swapMembers(i, j)` is a player's swap, with its time and consequences. A ruleset can reorder the list itself, as srd5's `closeRanks` does when someone dies, and the HUD's open panels follow.
+
 `level.explored` records the automap, one number per cell (0 unseen, 1 seen, 2 visited). `Game.updateExplored` fills it in from `light(game).radius` and line of sight, and it's saved with the level.
 
 All game state must stay plain JSON, because saving serializes it directly. Use `game.rng`, never `Math.random`, so runs stay reproducible.

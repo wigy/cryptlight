@@ -183,6 +183,26 @@ test('five-foot positions: front rank is next to the cell ahead, back rank is no
   assert.equal(g.feet(g.party.members[0], foe), 10);
 });
 
+test('swapping members changes their ranks, takes as long as a step and waits for the last one', () => {
+  const g = new Game(structuredClone(MODULE), new StubRules(), {});
+  g.start([0, 1, 2, 3].map((i) => ({ kind: 'pc', name: `P${i}`, equipment: {}, pack: [] })));
+  g.party.x = 1; g.party.y = 3; g.party.dir = 0;
+  const foe = g.spawnMonster('m', 1, 2, 'a');
+  foe.sy = 1; foe.sx = 0;
+  const [first, , third] = g.party.members;
+  assert.equal(g.feet(first, foe), 5);
+  assert.equal(g.feet(third, foe), 10);
+  assert.equal(g.swapMembers(0, 2), true);
+  assert.equal(g.party.members[0], third);
+  assert.equal(g.feet(first, foe), 10);
+  assert.equal(g.feet(third, foe), 5);
+  assert.equal(g.swapMembers(0, 2), false, 'still moving');
+  g.party.stepReadyAt = 0;
+  assert.equal(g.swapMembers(1, 1), false, 'not with themselves');
+  g.paused = true;
+  assert.equal(g.swapMembers(0, 2), false, 'not while paused');
+});
+
 test('creatures find a path, share a cell up to four, and never enter the party', () => {
   const g = fresh();
   g.party.x = 3; g.party.y = 5;

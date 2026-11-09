@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 
 const VIEW = { x: 2, y: 118, w: 892, h: 540 };
-export default async function ({ eval: ev, click, key, wait, shot }) {
+export default async function ({ eval: ev, click, drag, key, wait, shot }) {
   const state = (expr) => ev(`(() => { const g = window.__game; return ${expr}; })()`);
   const clickEl = async (sel) => {
     const r = await ev(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return null; const b = e.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; })()`);
@@ -45,6 +45,46 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   assert.equal(await state(`[g.party.x, g.party.y, g.party.level].join()`), '11,20,warren', 'an adventure begins at its starting point');
   assert.equal(await state(`g.floorItems.some((f) => f.item.proto === 'thornwick-fang')`), true, 'the first run has the unique reward');
   assert.equal(await state(`g.party.members[0].classId`), 'barbarian');
+  // Dragging a portrait onto another character swaps their places, and a click still opens the gear.
+  const cardAt = (i) => ev(`(() => { const b = document.querySelector('[data-card="${i}"] .portrait').getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; })()`);
+  const swapCards = async (i, j) => { const p = await cardAt(i), q = await cardAt(j); await drag(p.x, p.y, q.x, q.y); await wait(500); };
+  const order = `g.party.members.map((m) => m.name).join()`;
+  const start = await state(order);
+  await clickEl('[data-card="0"] .portrait');
+  await until(`!document.querySelector('#inv').hidden`);
+  await swapCards(0, 2);
+  assert.notEqual(await state(order), start, 'the drag swapped them');
+  assert.equal(await ev(`document.querySelector('#inv h3, #inv .sheet')?.textContent.includes(${JSON.stringify(start.split(',')[0])}) ?? false`), true, 'the open sheet stays with its character');
+  await shot('marching-order');
+  await swapCards(0, 2);
+  assert.equal(await state(order), start);
+  // The whole box follows the pointer, and can be picked up by its name.
+  const centreOf = (sel) => ev(`(() => { const b = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; })()`);
+  const nameAt = await centreOf('[data-card="0"] .cname'), target = await cardAt(1);
+  await drag(nameAt.x, nameAt.y, target.x, target.y + 8, async () => {
+    await wait(150);
+    assert.match(await ev(`document.querySelector('.dragghost')?.textContent ?? ''`), new RegExp(start.split(',')[0]), 'the box is in the air');
+    assert.ok(await ev(`document.querySelectorAll('.dragghost .slot').length`) >= 2, 'with its items');
+    assert.equal(await ev(`document.querySelector('[data-card="1"]').classList.contains('dragto')`), true, 'and the box under it is marked');
+    const g = await centreOf('.dragghost');
+    assert.ok(Math.abs(g.y - target.y) < 60 && Math.abs(g.x - target.x) < 150, 'under the pointer');
+    assert.equal(await ev(`document.querySelector('#hint').hidden`), true, 'no hint in the way');
+    await shot('dragging-card');
+  });
+  await wait(500);
+  const [n1, n2, n3, n4] = start.split(',');
+  assert.equal(await state(order), [n2, n1, n3, n4].join(), 'dropped on the other character');
+  assert.equal(await ev(`document.querySelector('.dragghost')`), null, 'and the copy is gone');
+  await swapCards(0, 1);
+  assert.equal(await state(order), start);
+  // The item slots don't pick up the box: Brunna's off hand is empty, so this does nothing at all.
+  const slotAt = await centreOf('[data-card="0"] [data-act="slot:0:offHand"]');
+  await drag(slotAt.x, slotAt.y, target.x, target.y);
+  await wait(500);
+  assert.equal(await state(order), start, 'an item slot is not a handle');
+  assert.equal(await ev(`document.querySelector('.dragghost')`), null);
+  await clickEl('[data-card="0"] .portrait');
+  await until(`document.querySelector('#inv').hidden`);
   assert.equal(await state(`g.party.members[0].equipment.mainHand.proto`), 'greataxe');
   await key('KeyK');
   await wait(100);
@@ -384,6 +424,24 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await wait(300);
   assert.ok(await ev(`!!document.querySelector('#vacation')`), 'the end of the adventure is an exit too');
   assert.ok(await ev(`!!document.querySelector('[data-adventure="thornwick"]')`), 'and it can be played again');
+  // The marching order can be changed between adventures, and is saved.
+  const names = `[...document.querySelectorAll('.member b')].map((b) => b.textContent).join()`;
+  const marching = await ev(names);
+  await clickEl('[data-member="0"]');
+  await wait(100);
+  assert.equal(await ev(`document.querySelector('[data-member="0"]').classList.contains('picked')`), true);
+  await shot('vacation-picked');
+  await clickEl('[data-member="2"]');
+  await wait(300);
+  const [p1, p2, p3, p4] = marching.split(',');
+  assert.equal(await ev(names), [p3, p2, p1, p4].join());
+  assert.equal(await ev(`fetch('api/save').then((r) => r.json()).then((s) => s.members.map((m) => m.name).join())`), [p3, p2, p1, p4].join(), 'saved');
+  await clickEl('[data-member="0"]');
+  await wait(100);
+  await clickEl('[data-member="2"]');
+  await wait(300);
+  assert.equal(await ev(names), marching);
+
   await clickEl('[data-license="thornwick"]');
   await until(`!!document.querySelector('#license-back')`);
   assert.match(await ev(`document.querySelector('.license-text').textContent`), /Adventure.*SRD 5\.2\.1.*Permission is hereby granted/s);
@@ -408,7 +466,8 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await wait(200);
   await shot('30b-party');
   assert.equal(await ev(`document.querySelectorAll('[data-hire]').length`), 1);
-  await clickEl('[data-hire="1"]');
+  // Pip died in the front rank, so Elowen stepped up and Pip's place is now at the back.
+  await clickEl('[data-hire="3"]');
   await wait(200);
   assert.match(await ev(`document.querySelector('#hire').textContent`), /at level 2.*Pip/s);
   await ev(`(() => { const s = document.querySelector('select[data-key="classId"]'); s.value = 'wizard'; s.dispatchEvent(new Event('change')); })()`);
@@ -421,11 +480,11 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await reloadToMenu();
   await clickEl('#cont');
   await wait(300);
-  assert.match(await ev(`document.querySelectorAll('.member')[1].textContent`), /Recruit.*Level 2 Wizard/s);
+  assert.match(await ev(`document.querySelectorAll('.member')[3].textContent`), /Recruit.*Level 2 Wizard/s);
   await clickEl('[data-adventure="thornwick"]');
   await wait(800);
-  assert.deepEqual(await state(`[g.party.members[1].name, g.party.members[1].level, g.party.members[1].xp, !!g.party.members[1].dead]`), ['Recruit', 2, 300, false]);
-  assert.equal(await state(`g.party.members[1].pack.some((it) => it?.uid === 'fang')`), true, 'the fallen character\'s gear follows the party');
+  assert.deepEqual(await state(`[g.party.members[3].name, g.party.members[3].level, g.party.members[3].xp, !!g.party.members[3].dead]`), ['Recruit', 2, 300, false]);
+  assert.equal(await state(`g.party.members[3].pack.some((it) => it?.uid === 'fang')`), true, 'the fallen character\'s gear follows the party');
   assert.equal(await state(`g.floorItems.some((f) => f.item.proto === 'thornwick-fang')`), false, 'and a unique reward is not there again');
   await go('warren', 9, 21, 2); await wait(450);
   await key('KeyW');

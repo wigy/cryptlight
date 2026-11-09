@@ -24,7 +24,13 @@ button:disabled { opacity: .45; cursor: default; }
 .portrait:hover { outline: 1px solid var(--gold); }
 .cool { position: absolute; left: 0; right: 0; bottom: 0; background: #000a; }
 .tag { position: absolute; left: 0; right: 0; bottom: 0; font: bold 10px sans-serif; text-align: center; background: #7a1c14dd; color: #fff; padding: 1px; }
-.cname { font-weight: bold; font-size: 15px; color: var(--gold); white-space: nowrap; overflow: hidden; }
+.cname { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; font-weight: bold; font-size: 15px; color: var(--gold); white-space: nowrap; overflow: hidden; }
+.cname small { font-weight: normal; font-size: 11px; color: var(--dim); }
+.card { cursor: grab; touch-action: none; }
+.card .portrait { cursor: pointer; }
+.card.dragfrom { opacity: .3; }
+.card.dragto { outline: 2px solid var(--gold); }
+.card.dragghost { position: absolute; z-index: 50; margin: 0; cursor: grabbing; pointer-events: none; background: #1a1610; border-color: var(--gold); box-shadow: 0 6px 24px #000; }
 .bar { position: relative; height: 12px; margin-top: 3px; background: #000; border: 1px solid #000; border-radius: 2px; overflow: hidden; }
 .bar i { display: block; height: 100%; }
 .bar span { position: absolute; inset: 0; font: 10px/11px sans-serif; text-align: center; color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000; }
@@ -136,7 +142,11 @@ dialog button { padding: 10px 18px; font-size: 17px; }
 .fallen { color: #e06a5a; text-align: center; font-size: 16px; }
 .roster { display: flex; gap: 14px; margin-bottom: 14px; }
 .member { display: flex; flex-direction: column; align-items: center; width: 130px; padding: 6px; font-size: 14px; background: #0009; border: 1px solid var(--line); border-radius: 4px; }
+.member { cursor: pointer; }
+.member.picked { border-color: var(--gold); box-shadow: 0 0 8px var(--gold); }
 .member.dead { filter: grayscale(1) brightness(.55); }
+.member small { margin-top: 2px; color: var(--dim); font-size: 12px; }
+.marching { margin: 0 0 8px; font-size: 14px; color: var(--dim); }
 .member img { width: 100%; height: 130px; object-fit: cover; object-position: 50% 20%; border-radius: 3px; margin-bottom: 4px; }
 .member b { color: var(--gold); font-size: 16px; }
 .member span { color: var(--dim); font-size: 13px; }

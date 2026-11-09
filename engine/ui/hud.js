@@ -8,6 +8,7 @@ export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '
 /** Replaces an element's content only when it actually changed, so hover and clicks survive updates. */
 function setHtml(el, html) { if (el._html !== html) { el._html = html; el.innerHTML = html; } }
 
+const DRAG_START_PX = 5; // Less movement than this is still a click.
 const NEAR_REACH = 2.1; // How far, in cells along the view, things can be picked up or worked.
 
 /** Commands that change the world or the party, refused while paused. Looking at gear and skills stays allowed. */
@@ -38,7 +39,10 @@ export class Hud {
     stage.addEventListener('mousemove', (e) => this.onHover(e));
     stage.addEventListener('mouseleave', () => { this.hint = null; });
     stage.addEventListener('contextmenu', (e) => e.preventDefault());
-    window.addEventListener('pointermove', (e) => { this.handEl.style.left = `${e.clientX}px`; this.handEl.style.top = `${e.clientY}px`; });
+    window.addEventListener('pointermove', (e) => { this.handEl.style.left = `${e.clientX}px`; this.handEl.style.top = `${e.clientY}px`; this.moveDrag(e); });
+    window.addEventListener('pointerup', (e) => this.endDrag(e));
+    window.addEventListener('pointercancel', () => this.cancelDrag());
+    stage.addEventListener('dragstart', (e) => e.preventDefault()); // A browser's own drag of a picture would cancel the pointer.
   }
 
   img(name) { return this.app.assetUrl(name) ?? ''; }
@@ -56,6 +60,8 @@ export class Hud {
     this.inventory = null;
     this.hint = null;
     this.shownHits = new Map();
+    this.order = null;
+    this.cancelDrag();
     this.stage.innerHTML = `
       <div id="party" class="panelbg"></div>
       <div id="viewwrap"><div id="floaters"></div><div id="banner"></div></div>
@@ -106,6 +112,7 @@ export class Hud {
   update() {
     const g = this.game;
     if (!g) return;
+    this.followOrder();
     this.renderParty();
     this.renderStatus();
     this.renderActions();
@@ -130,6 +137,66 @@ export class Hud {
     } else if (g.over && !this.ended) this.showEnd();
   }
 
+  /** Open panels hold a place in the party, so they follow their character when the marching order changes. */
+  followOrder() {
+    const members = this.game.party.members;
+    const moved = (i) => { const now = members.indexOf(this.order[i]); return now < 0 ? i : now; };
+    if (this.order) {
+      if (this.menu?.member != null) this.menu.member = moved(this.menu.member);
+      if (this.inventory != null) this.inventory = moved(this.inventory);
+    }
+    this.order = [...members];
+  }
+
+  /** The card under the pointer, as a place in the party. The dragged copy lets the pointer through to it. */
+  cardAt(e) {
+    const card = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('[data-card]');
+    return card ? Number(card.dataset.card) : null;
+  }
+  /** Pressing a card readies a drag, from anywhere but its item slots. Nothing moves until the pointer does, so a click stays a click. */
+  startDrag(e, card) {
+    const r = card.getBoundingClientRect();
+    this.drag = { from: Number(card.dataset.card), act: e.target.closest('.portrait')?.dataset.act ?? null, x: e.clientX, y: e.clientY, grabX: e.clientX - r.left, grabY: e.clientY - r.top, ghost: null, over: null };
+  }
+  /** A copy of the whole card follows the pointer, in the stage's own scaled coordinates. */
+  moveDrag(e) {
+    const d = this.drag;
+    if (!d) return;
+    if (!d.ghost) {
+      if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < DRAG_START_PX) return;
+      const card = this.els.party.querySelector(`[data-card="${d.from}"]`);
+      if (!card) return;
+      d.ghost = card.cloneNode(true);
+      d.ghost.removeAttribute('data-card');
+      d.ghost.querySelectorAll('.burst').forEach((b) => b.remove());
+      d.ghost.classList.add('dragghost');
+      d.ghost.style.width = `${card.offsetWidth}px`;
+      d.ghost.style.height = `${card.offsetHeight}px`;
+      this.stage.append(d.ghost);
+      this.hint = null;
+    }
+    const stage = this.stage.getBoundingClientRect(), scale = this.app.scale;
+    d.ghost.style.left = `${(e.clientX - stage.left - d.grabX) / scale}px`;
+    d.ghost.style.top = `${(e.clientY - stage.top - d.grabY) / scale}px`;
+    d.over = this.cardAt(e);
+  }
+  cancelDrag() {
+    this.drag?.ghost?.remove();
+    this.drag = null;
+  }
+  /** Letting a dragged card go on another character swaps them. Without any dragging, it was a click. */
+  endDrag(e) {
+    const d = this.drag;
+    if (!d) return;
+    const to = d.ghost ? this.cardAt(e) : null;
+    const dragged = !!d.ghost;
+    this.cancelDrag();
+    if (!this.game) return;
+    if (!dragged) { if (d.act) this.command(d.act); return; }
+    if (to != null && to !== d.from) this.game.swapMembers(d.from, to);
+    this.hint = null;
+  }
+
   renderParty() {
     const g = this.game;
     const html = g.party.members.map((m, i) => {
@@ -140,11 +207,12 @@ export class Hud {
         const info = it && g.ruleset.itemInfo(it);
         return `<button class="slot" data-act="slot:${i}:${slot}" data-hint="${esc(info ? `<b>${info.name}</b>. ${info.description}` : `${label}: empty. Click with an item to equip it.`)}">${it ? `<img src="${this.itemImg(it)}" alt=""><span class="q">${it.qty > 1 ? it.qty : ''}</span>` : ''}</button>`;
       };
-      return `<div class="card${s.dead ? ' dead' : ''}" data-card="${i}">
-        <div class="portrait" data-act="inv:${i}" data-hint="Open ${esc(s.name)}'s gear and stats. (${i + 1}; Shift+${i + 1} for skills and spells)">
+      const dragged = this.drag?.ghost ? (i === this.drag.from ? ' dragfrom' : i === this.drag.over ? ' dragto' : '') : '';
+      return `<div class="card${s.dead ? ' dead' : ''}${dragged}" data-card="${i}">
+        <div class="portrait" data-act="inv:${i}" data-hint="Open ${esc(s.name)}'s gear and stats. (${i + 1}; Shift+${i + 1} for skills and spells) Drag this box onto another character to swap places in the marching order.">
           <img src="${this.img(m.portrait ?? s.portrait)}" alt=""><div class="cool" style="height:${Math.round(s.cooldown * 10) * 10}%"></div>${s.tag ? `<div class="tag">${esc(s.tag)}</div>` : ''}
         </div>
-        <div><div class="cname">${esc(s.name)}</div>${bars}<div class="hands">${hand('mainHand', 'Main hand')}${hand('offHand', 'Off hand')}</div></div>
+        <div><div class="cname">${esc(s.name)}<small>${i < 2 ? 'Front' : 'Back'}</small></div>${bars}<div class="hands">${hand('mainHand', 'Main hand')}${hand('offHand', 'Off hand')}</div></div>
       </div>`;
     }).join('');
     setHtml(this.els.party, html);
@@ -275,11 +343,17 @@ export class Hud {
 
   // ---------------------------------------------------------------- input
   onHover(e) {
-    this.hint = e.target.closest?.('[data-hint]')?.dataset.hint || null;
+    this.hint = this.drag?.ghost ? null : e.target.closest?.('[data-hint]')?.dataset.hint || null;
   }
 
   onPointer(e) {
     if (e.target === this.app.canvas) { this.clickView(e); return; }
+    const card = e.target.closest?.('[data-card]');
+    if (card && !e.target.closest('.slot')) {
+      this.app.audio.unlock();
+      this.startDrag(e, card);
+      return;
+    }
     const el = e.target.closest?.('[data-act]');
     if (!el || el.disabled) return;
     this.app.audio.unlock();

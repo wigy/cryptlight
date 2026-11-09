@@ -207,17 +207,29 @@ class App {
   }
 
   /** Between adventures: shows the party and the adventures it can set out on. */
-  showVacation(save, message = 'Your party rests between adventures.') {
+  showVacation(save, message = 'Your party rests between adventures.', picked = null) {
     const levels = ({ min, max }) => (min === max ? `Recommended level ${min}` : `Recommended levels ${min}\u2013${max}`);
-    const roster = save.members.map((m) => `<div class="member${m.dead ? ' dead' : ''}"><img src="${this.assetUrl(this.ruleset.portrait(m))}" alt=""><b>${esc(m.name)}</b><span>${esc(this.ruleset.memberTitle(m))}</span></div>`).join('');
+    const roster = save.members.map((m, i) => `<div class="member${m.dead ? ' dead' : ''}${i === picked ? ' picked' : ''}" data-member="${i}"><img src="${this.assetUrl(this.ruleset.portrait(m))}" alt=""><b>${esc(m.name)}</b><span>${esc(this.ruleset.memberTitle(m))}</span><small>${i < 2 ? 'Front rank' : 'Back rank'}</small></div>`).join('');
     const adventures = this.modules.map((m) => `<div class="adventure"><h3>${esc(m.name)}</h3><div class="levels">${levels(m.recommendedLevels)}</div><p>${esc(m.summary)}</p>${outgrown(m, this.ruleset, save.members) ? '<button disabled>Your party has outgrown this</button>' : `<button data-adventure="${esc(m.id)}">Set Out</button>`}<button class="license-link" data-license="${esc(m.id)}">License and Attributions</button></div>`).join('');
     this.screen(`<div class="body" id="vacation"><h1>On Vacation</h1><h2>${esc(message)}</h2>
       <div class="roster">${roster}</div>
+      <p class="marching">Marching order: click two characters to swap their places.</p>
       <h2>Choose an adventure</h2>
       <div class="adventures">${adventures}</div>
       <div class="menu" style="flex-direction:row;width:auto"><button id="vacation-menu">Main menu</button><button id="view-party">View Party</button></div></div>
       <div class="legal">${this.ruleset.attribution}</div>`, this.titleImage);
     this.stage.querySelector('#vacation-menu').onclick = () => this.showTitle();
+    this.stage.querySelectorAll('[data-member]').forEach((el) => {
+      el.onclick = async () => {
+        const i = Number(el.dataset.member);
+        if (picked === null || picked === i) { this.showVacation(save, message, picked === i ? null : i); return; }
+        const swap = () => { [save.members[picked], save.members[i]] = [save.members[i], save.members[picked]]; };
+        swap();
+        const saved = await this.putSave(JSON.stringify(save));
+        if (!saved) swap(); // The screen keeps showing what's really in the save.
+        this.showVacation(save, saved ? message : 'The marching order could not be saved. Try again.');
+      };
+    });
     this.stage.querySelector('#view-party').onclick = () => this.showParty(save);
     this.stage.querySelectorAll('[data-license]').forEach((el) => {
       const m = this.modules.find((o) => o.id === el.dataset.license);
