@@ -490,6 +490,51 @@ export default async function ({ eval: ev, click, drag, key, wait, shot }) {
   await key('KeyW');
   await wait(400);
 
+  // The second adventure is on offer, with its own license.
+  await clickEl('[data-license="barrow"]');
+  await until(`!!document.querySelector('#license-back')`);
+  assert.match(await ev(`document.querySelector('.license-text').textContent`), /L\. Shaffrey.*Attribution-ShareAlike 3\.0/s);
+  await shot('32-barrow-license');
+  await clickEl('#license-back');
+  await wait(200);
+  await shot('33-two-adventures');
+  await clickEl('[data-adventure="barrow"]');
+  await wait(800);
+  assert.equal(await state(`g.party.level`), 'hillside');
+  await shot('34-barrow-hillside');
+  await ev(`window.__game.useObject(window.__game.objectById('rubble'))`);
+  assert.equal(await state(`g.objectById('rubble')`), null, 'the rubble can be dug out');
+  // Salt is scuffed by clicking the floor it lies on.
+  await go('upper', 6, 2, 0); await wait(450);
+  await shot('35-barrow-salt');
+  for (const v of [0.95, 0.9, 0.85, 0.8, 0.75, 0.7]) {
+    if (await state(`g.objectsAt(6, 1).find((o) => o.type === 'ward').broken`)) break;
+    await click(VIEW.x + VIEW.w / 2, VIEW.y + VIEW.h * v);
+    await wait(120);
+  }
+  assert.equal(await state(`!!g.objectsAt(6, 1).find((o) => o.type === 'ward').broken`), true, 'a click on the floor breaks the salt');
+  await go('upper', 3, 3, 2); await wait(450);
+  await shot('36-barrow-anders');
+  await go('upper', 6, 7, 2); await wait(450);
+  await shot('37-barrow-tomb');
+  await go('lower', 14, 3, 0); await wait(450);
+  await shot('38-barrow-chamber');
+  await go('lower', 14, 2, 3); await wait(450);
+  await shot('39-barrow-throne');
+  await go('lower', 12, 1, 0); await wait(450);
+  await shot('39b-barrow-ethelred');
+  await go('lower', 16, 1, 0); await wait(450);
+  await shot('39c-barrow-olaf');
+  await go('lower', 14, 9, 0); await wait(450);
+  await shot('40-barrow-traitors');
+  await go('lower', 14, 8, 3); await wait(450);
+  await shot('41-barrow-ghoul');
+  // Walking out of the mound without news of Anders is a plain exit.
+  await go('hillside', 2, 2, 3); await wait(450);
+  await key('KeyW');
+  await wait(400);
+  assert.ok(await ev(`!!document.querySelector('#vacation')`), 'back on vacation');
+
   // Once the party has outgrown it, it can't.
   await clickEl('[data-adventure="thornwick"]');
   await wait(800);

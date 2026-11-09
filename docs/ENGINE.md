@@ -47,21 +47,23 @@ placing an item honours this, including chests, so don't describe a unique item 
 
 | `type` | Fields |
 |---|---|
-| `monster` | `proto`, `behaviour` (`guard`, `sleep`), `name`, `onDeath` |
+| `monster` | `proto`, `behaviour` (`guard`, `sleep`, or `dormant`: waits until attacked or woken by a script), `name`, `tag`, `onDeath`, `onWake` |
 | `item` | `proto`, `qty` |
 | `door` | `style` (`wood`, `iron`, `portcullis`), `id`, `lock`, `noHandle`, `secret`, `detectDc`, `startOpen` |
-| `wall` | `kind` (`lever`, `plaque`, `alcove`), `text`, `onUse`, `once`, and for alcoves `wants`, `onWanted`, `onPlace`. It faces the first open side unless `face` is set. |
-| `stairs` | `to`, `direction` (`up`, `down`), `text`. With `"exit": true` and no `to`, it's an exit point that ends the adventure, and `text` is shown back on vacation. |
+| `wall` | `kind` (`lever`, `plaque`, `alcove`), `text`, `onUse`, `once`, and for alcoves `wants`, `onWanted`, `onPlace`, `art`, and `keepsFlag` with `keptText` to stop anything being taken back once a flag is set. It faces the first open side unless `face` is set. |
+| `ward` | A line on the floor. `holdsTag` stops monsters with that `tag`, `holdsItem` stops a party carrying that item. Clicking breaks it for good. `text`, `refuseText`, `breakText`, `onBreak`, `art` |
+| `stairs` | `to`, `direction` (`up`, `down`), `text`, and `needsFlag` with `blockedText` to bar the way until a flag is set. With `"exit": true` and no `to`, it's an exit point that ends the adventure, and `text` is shown back on vacation. |
 | `plate`, `zone` | `onEnter`, `once`, `hidden`, `detectDc` |
 | `pit` | `onEnter`, `to`, `hidden`, `detectDc` |
 | `feature` | `sprite`, `blocks`, `items`, `lock`, `text`, `emptyText`, `onUse` |
 
 Scripts (`onUse`, `onEnter`, `onDeath` and so on) are lists of actions:
-`message`, `sound`, `openDoor`, `closeDoor`, `toggleDoor`, `setFlag`, `if`, `ifAll`, `spawn`, `teleport`,
-`giveItem`, `placeItem`, `disarm`, `win`, and `rule`, which calls the ruleset by name.
+`message`, `sound`, `openDoor`, `closeDoor`, `toggleDoor`, `setFlag`, `if`, `ifAll`, `ifCollected`, `spawn`, `teleport`,
+`giveItem`, `placeItem`, `disarm`, `wake` (by `tag`), `removeObject`, `win`, and `rule`, which calls the ruleset by name.
+`spawn` uses the party's current level unless it gives `level`.
 
 In the srd5 ruleset, `rule` provides `trap` (`dice`, `save`, `dc`, `half`, `type`, `all`, `condition`, `rounds`),
-`fall` (`dice`) and `awardXp` (`amount`). Monster and item ids are those in `data/srd/`.
+`fall` (`dice`), `awardXp` (`amount`), `passTime` (`dice` in hours, `text`), `reward` (`proto`, `qty`, straight into a pack) and `dread` (`rounds`). Monster and item ids are those in `data/srd/`. An item with `"power": "wrath"` is bound to its target the way Wrath is.
 
 ## Writing a ruleset
 
@@ -84,7 +86,7 @@ Pass an object with these to `new Game(module, ruleset)`. `rules/srd5/ruleset.js
 | `memberTitle(m)`, `partyLevel(members)` | A short description of a member, shown on vacation, and the level compared with `recommendedLevels` |
 | `hireLevel(members)`, `hire(members, slot, choices)` | The level a replacement for a dead character starts at, and the party with them in place, holding the dead character's gear. `memberSheet` is called with no game on the party screen |
 | `onAdventureStart(game)`, `onLeaveAdventure(game, members)` | Optional. The second gets copies of the members, to apply whatever going on vacation does to them, and returns how many game seconds it takes |
-| `moveBlocked`, `partyStepSeconds`, `onPartyWillMove`, `markUnaware` | Optional hooks |
+| `moveBlocked`, `partyStepSeconds`, `onPartyWillMove`, `markUnaware`, `partyCarries` | Optional hooks |
 
 The marching order is the order of `party.members`: the first two are the front rank, on the left and right. `Game.swapMembers(i, j)` is a player's swap, with its time and consequences. A ruleset can reorder the list itself, as srd5's `closeRanks` does when someone dies, and the HUD's open panels follow.
 

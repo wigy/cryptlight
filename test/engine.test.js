@@ -203,6 +203,74 @@ test('swapping members changes their ranks, takes as long as a step and waits fo
   assert.equal(g.swapMembers(0, 2), false, 'not while paused');
 });
 
+test('a ward holds back what it names until it is broken, and scripts can wake by tag and remove objects', () => {
+  const module = structuredClone(MODULE);
+  const level = module.levels.a;
+  level.grid = ['#####', '#.W.#', '#.R.#', '#####'];
+  level.legend = {
+    W: { id: 'line', type: 'ward', holdsTag: 'spirit', holdsItem: 'crown', text: 'A line of salt.', refuseText: 'The crown will not pass.', breakText: 'Scuffed.', onBreak: [{ do: 'setFlag', flag: 'broken' }] },
+    R: { id: 'rock', type: 'feature', sprite: 'x', blocks: true },
+  };
+  const g = new Game(module, new StubRules(), {});
+  g.start([{ kind: 'pc', name: 'A', equipment: {}, pack: [] }]);
+  g.teleport({ level: 'a', x: 1, y: 1, dir: 1 });
+  const spirit = g.spawnMonster('m', 3, 1, 'a', { tag: 'spirit', onWake: [{ do: 'setFlag', flag: 'woke' }] });
+  const skeleton = g.spawnMonster('m', 3, 1, 'a');
+  assert.equal(g.canEnter(spirit, 2, 1), false, 'the tagged are held');
+  assert.equal(g.canEnter(skeleton, 2, 1), true, 'others are not');
+  g.hand = { proto: 'crown' };
+  assert.equal(g.step(0), false, 'nor can the party carry the item past');
+  assert.equal(g.logLines.at(-1).text, 'The crown will not pass.');
+  g.hand = null;
+  assert.equal(g.step(0), true, 'the party itself passes');
+  assert.equal(g.logLines.at(-1).text, 'A line of salt.');
+  assert.equal(g.useObject(g.objectById('line')), true);
+  assert.equal(g.flags.broken, true);
+  g.party.x = 1; // Nobody can enter the party's own cell.
+  assert.equal(g.canEnter(spirit, 2, 1), true);
+  assert.equal(g.useObject(g.objectById('line')), false, 'it only breaks once');
+  assert.equal(spirit.awake, undefined);
+  g.run([{ do: 'wake', tag: 'spirit' }]);
+  assert.equal(spirit.awake, true);
+  assert.equal(skeleton.awake, undefined, 'only that tag');
+  assert.equal(g.isPassable(2, 2), false);
+  g.run([{ do: 'removeObject', id: 'rock' }]);
+  assert.equal(g.isPassable(2, 2), true);
+  assert.equal(g.objectById('rock'), null);
+});
+
+test('stairs can wait for a flag, and an alcove can keep what it was given', () => {
+  const module = structuredClone(MODULE);
+  module.levels.a.grid = ['#####', '#S..#', '#.A.#', '#####'];
+  module.levels.a.legend = {
+    S: { type: 'stairs', direction: 'up', to: { level: 'a', x: 3, y: 1, dir: 0 }, needsFlag: 'open', blockedText: 'Shut.' },
+    A: { id: 'throne', type: 'wall', kind: 'alcove', art: 'throne', wants: 'crown', keepsFlag: 'crowned', keptText: 'It stays.', onWanted: [{ do: 'setFlag', flag: 'crowned' }] },
+  };
+  const g = new Game(module, new StubRules(), {});
+  g.start([{ kind: 'pc', name: 'A', equipment: {}, pack: [] }]);
+  g.teleport({ level: 'a', x: 1, y: 2, dir: 0 });
+  g.step(0);
+  assert.deepEqual([g.party.x, g.party.y], [1, 2], 'stays put while shut');
+  assert.equal(g.logLines.at(-1).text, 'Shut.');
+  g.flags.open = true;
+  g.party.stepReadyAt = 0;
+  g.step(0);
+  assert.deepEqual([g.party.x, g.party.y], [3, 1]);
+  const throne = g.objectById('throne');
+  g.hand = { proto: 'ring' };
+  g.useObject(throne);
+  assert.equal(g.hand, null);
+  g.useObject(throne);
+  assert.equal(g.hand?.proto, 'ring', 'still free to take back before the flag');
+  g.hand = { proto: 'crown' };
+  g.useObject(throne);
+  assert.equal(g.flags.crowned, true);
+  g.hand = null;
+  assert.equal(g.useObject(throne), false);
+  assert.equal(g.hand, null);
+  assert.equal(g.logLines.at(-1).text, 'It stays.');
+});
+
 test('creatures find a path, share a cell up to four, and never enter the party', () => {
   const g = fresh();
   g.party.x = 3; g.party.y = 5;

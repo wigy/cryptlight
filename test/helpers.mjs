@@ -4,7 +4,7 @@ import { Srd5Ruleset } from '../rules/srd5/ruleset.js';
 import { Game } from '../engine/world.js';
 
 const readJson = async (n) => JSON.parse(readFileSync(new URL(`../data/srd/${n}.json`, import.meta.url)));
-export const loadModule = () => JSON.parse(readFileSync(new URL('../modules/thornwick/module.json', import.meta.url)));
+export const loadModule = (id = 'thornwick') => JSON.parse(readFileSync(new URL(`../modules/${id}/module.json`, import.meta.url)));
 export const srdChapters = () => JSON.parse(readFileSync(new URL('../data/srd/chapters.json', import.meta.url)));
 
 export async function newGame(seed = 1, module = loadModule()) {

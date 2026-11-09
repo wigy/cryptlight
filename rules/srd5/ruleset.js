@@ -15,7 +15,7 @@ const FORWARD_DOT = 0.5;
 /** Which sprite to draw for a monster: specific art first, otherwise by creature type. */
 const SPRITE_BY_ID = {
   'giant-rat': 'rat', rat: 'rat', 'giant-centipede': 'centipede', 'giant-spider': 'spider', 'giant-wolf-spider': 'spider', skeleton: 'skeleton', 'minotaur-skeleton': 'skeleton', 'warhorse-skeleton': 'skeleton',
-  zombie: 'zombie', 'ogre-zombie': 'zombie', ghoul: 'zombie', ghast: 'zombie', shadow: 'shade', specter: 'shade',
+  zombie: 'zombie', 'ogre-zombie': 'zombie', ghoul: 'ghoul', ghast: 'ghoul', shadow: 'shade', specter: 'shade',
   'goblin-minion': 'goblin', 'goblin-warrior': 'goblin', 'goblin-boss': 'goblin-boss', 'kobold-warrior': 'goblin', 'hobgoblin-warrior': 'goblin',
   cultist: 'cultist', 'cultist-fanatic': 'cultist-boss', bandit: 'cultist', 'bandit-captain': 'cultist-boss', mage: 'cultist-boss', priest: 'cultist-boss',
 };
@@ -326,8 +326,10 @@ export class Srd5Ruleset {
   /** Candidates a member could target, best first: the focused target, then whoever is ahead and nearest. */
   targetsFor(game, member, { maxFeet, melee = false }) {
     const out = [];
+    const bound = getEffect(member, 'wrath');
     for (const m of game.entities) {
       if (m.level !== game.party.level || !this.isHostile(m)) continue;
+      if (bound && m.uid !== bound.target) continue;
       const feet = game.feet(member, m);
       if (feet > maxFeet) continue;
       if (!game.los(game.party.x, game.party.y, m.x, m.y)) continue;
@@ -423,6 +425,9 @@ export class Srd5Ruleset {
     const r = m.resources;
     const out = [];
     const add = (id, label, enabled, hint, extra = {}) => out.push({ id, label, enabled, hint, ...extra });
+    if (this.itemDef(m.equipment.mainHand)?.power === 'wrath') {
+      add('wrath', 'Wrath', canAct(m) && !m.equipment.mainHand.powerUsed && !hasEffect(m, 'wrath') && !!this.wrathTarget(game, m), 'Once per Long Rest. Advantage on your next attack against your target, but you can attack nothing else until it or you drop to 0 HP.');
+    }
     if (m.classId === 'barbarian') {
       if (hasEffect(m, 'rage')) add('end-rage', 'End Rage', true, 'Stop raging.', { quickId: 'rage' }); // Keeps Rage's quick slot.
       else add('rage', `Rage (${r.rage})`, bonus && r.rage > 0, 'Bonus Action. +2 Str melee damage, resist B/P/S, Advantage on Str saves.', { bonus: true });
@@ -492,6 +497,7 @@ export class Srd5Ruleset {
         game.log(`${m.name} takes a defensive stance.`);
         return true;
       case 'search': return this.search(game, m);
+      case 'wrath': return this.useWrath(game, m);
       case 'rage':
         m.resources.rage -= 1; this.spendBonus(game, m);
         addEffect(m, { id: 'rage', until: game.time + 600 });
@@ -547,7 +553,7 @@ export class Srd5Ruleset {
     this.spendAction(game, m);
     if (game.feet(m, o) > 10) { game.log(`${o.name} is out of reach.`); return false; }
     const kit = m.pack.find((it) => it?.proto === 'healers-kit');
-    const check = d20(game.rng, m, { bonus: skillBonus(m, 'medicine') });
+    const check = d20(game.rng, m, { bonus: skillBonus(m, 'medicine'), disadvantage: hasEffect(m, 'dread') });
     if (kit || check.total >= 10) {
       o.death.stable = true; o.death.fail = 0; o.death.success = 0;
       game.log(`${m.name} stabilizes ${o.name}.`, GREEN);
@@ -692,7 +698,7 @@ export class Srd5Ruleset {
 
   search(game, m) {
     this.spendAction(game, m);
-    const r = d20(game.rng, m, { bonus: skillBonus(m, 'perception') });
+    const r = d20(game.rng, m, { bonus: skillBonus(m, 'perception'), disadvantage: hasEffect(m, 'dread') });
     const found = game.revealHidden(r.total, 3);
     game.log(found ? `${m.name} finds ${found}!` : `${m.name} finds nothing (${r.total}).`, found ? YELLOW : WHITE);
     return true;
@@ -949,7 +955,7 @@ export class Srd5Ruleset {
     const picker = ready.filter((m) => m.pack.some((it) => it?.proto === 'thieves-tools')).sort((a, b) => mod(b, 'dex') - mod(a, 'dex'))[0];
     if (picker) {
       this.spendAction(game, picker);
-      const r = d20(game.rng, picker, { bonus: mod(picker, 'dex') + pb(picker) });
+      const r = d20(game.rng, picker, { bonus: mod(picker, 'dex') + pb(picker), disadvantage: hasEffect(picker, 'dread') });
       if (r.total >= lock.dc) { game.log(`${picker.name} picks the lock (${r.total}).`, GREEN); game.sound('door'); return true; }
       game.log(`${picker.name} can't pick the lock (${r.total} vs DC ${lock.dc}).`);
       return false;
@@ -957,7 +963,7 @@ export class Srd5Ruleset {
     const brute = ready.sort((a, b) => mod(b, 'str') - mod(a, 'str'))[0];
     this.spendAction(game, brute);
     const dc = lock.dc + 2;
-    const r = d20(game.rng, brute, { bonus: skillBonus(brute, 'athletics') });
+    const r = d20(game.rng, brute, { bonus: skillBonus(brute, 'athletics'), disadvantage: hasEffect(brute, 'dread') });
     if (r.total >= dc) { game.log(`${brute.name} forces it open (${r.total}).`, GREEN); game.alert?.(); return true; }
     game.log(`${brute.name} can't force it (${r.total} vs DC ${dc}).`);
     return false;
@@ -974,6 +980,9 @@ export class Srd5Ruleset {
       case 'trap': return this.trap(game, args);
       case 'fall': return this.fall(game, args);
       case 'awardXp': return this.awardXp(game, args.amount);
+      case 'passTime': return this.passTime(game, args);
+      case 'reward': return this.reward(game, args);
+      case 'dread': return this.dread(game, args);
       default: throw new Error(`unknown rule: ${name}`);
     }
   }
@@ -994,6 +1003,69 @@ export class Srd5Ruleset {
 
   fall(game, { dice = '1d6' }) {
     for (const m of game.party.members) if (!m.dead) this.hurtMember(game, m, roll(game.rng, dice), 'bludgeoning');
+  }
+
+  /** Hours go by, as when digging. */
+  passTime(game, { dice = '1', text }) {
+    const hours = roll(game.rng, dice);
+    game.time += hours * 3600;
+    game.log(`${text ?? 'Time passes.'} (${hours} ${hours === 1 ? 'hour' : 'hours'})`, 9);
+  }
+
+  /** Goes straight into a pack, since a reward often comes as the adventure ends and the floor stays behind. */
+  reward(game, { proto, qty }) {
+    const living = game.party.members.filter((m) => !m.dead);
+    const stack = qty != null && living.flatMap((m) => m.pack).find((it) => it?.proto === proto && it.qty != null);
+    if (stack) { stack.qty += qty; return; }
+    const carrier = living.find((m) => m.pack.includes(null)) ?? living[0];
+    if (!carrier) return;
+    const item = makeItem(qty != null ? `${proto}:${qty}` : proto);
+    const free = carrier.pack.indexOf(null);
+    if (free >= 0) carrier.pack[free] = item;
+    else carrier.pack.push(item);
+  }
+
+  /** Those with treachery in their past: Disadvantage on attack rolls and ability checks for a while. */
+  dread(game, { rounds = 20 }) {
+    for (const m of game.party.members) {
+      if (m.dead || m.backgroundId !== 'criminal') continue;
+      if (!hasEffect(m, 'dread')) game.log(`${m.name} sees visions of old treacheries, and falters.`, RED);
+      removeEffect(m, 'dread');
+      addEffect(m, { id: 'dread', until: game.time + ROUND * rounds });
+    }
+  }
+
+  /** Whether anyone has a given item, worn or in a pack. */
+  partyCarries(game, proto) {
+    return game.party.members.some((m) => Object.values(m.equipment).some((it) => it?.proto === proto) || m.pack.some((it) => it?.proto === proto));
+  }
+
+  /** Wrath: once per Long Rest, Advantage on the next attack against a target, and no attacking anyone else until one of them falls. */
+  useWrath(game, m) {
+    const sword = m.equipment.mainHand;
+    const t = this.wrathTarget(game, m);
+    if (!t || sword?.powerUsed) return false;
+    sword.powerUsed = true;
+    addEffect(m, { id: 'wrath', target: t.uid, until: null });
+    addEffect(m, { id: 'vex', target: t.uid, until: null });
+    game.log(`Wrath binds ${m.name} to ${t.name}!`, YELLOW);
+    return true;
+  }
+  wrathTarget(game, m) {
+    return game.entities.filter((e) => e.level === game.party.level && this.isHostile(e) && game.los(game.party.x, game.party.y, e.x, e.y) && game.forwardness(e) >= FORWARD_DOT)
+      .sort((a, b) => (b.uid === game.party.focus) - (a.uid === game.party.focus) || game.feet(m, a) - game.feet(m, b))[0] ?? null;
+  }
+  /** The binding ends when either of them falls, or the party leaves the level, so nobody is stuck unable to attack. */
+  endWrath(game) {
+    for (const m of game.party.members) {
+      const bound = getEffect(m, 'wrath');
+      if (!bound) continue;
+      const t = game.entities.find((e) => e.uid === bound.target);
+      if (t && !t.dead && t.hp > 0 && t.level === game.party.level && !isDown(m)) continue;
+      removeEffect(m, 'wrath');
+      removeEffect(m, 'vex');
+      if (!m.dead) game.log(`Wrath releases ${m.name}.`, YELLOW);
+    }
   }
 
   /** Damage to a party member, with all the logging and side effects. */
@@ -1041,10 +1113,11 @@ export class Srd5Ruleset {
       m.awake = true;
       m.nextAct = game.time + game.rng.int(1, 20) / 20 * ROUND - (m.initiative ?? 0) * 0.1 + 0.5;
       m.nextMove = game.time + 0.5;
+      if (m.onWake) { const script = m.onWake; m.onWake = null; game.run(script); }
     }
     removeEffect(m, 'unaware');
     for (const o of game.entities) {
-      if (o.awake || o.dead || o.level !== m.level) continue;
+      if (o.awake || o.dead || o.level !== m.level || o.behaviour === 'dormant') continue;
       if (Math.max(Math.abs(o.x - m.x), Math.abs(o.y - m.y)) <= alertRadius && game.los(o.x, o.y, m.x, m.y)) this.wake(game, o, 0);
     }
   }
@@ -1119,10 +1192,12 @@ export class Srd5Ruleset {
     for (const m of game.party.members) this.tickMember(game, m, dt);
     this.checkDefeat(game);
     this.closeRanks(game);
+    this.endWrath(game);
     for (const m of game.entities) {
       if (m.dead || m.level !== game.party.level) continue;
       this.expire(game, m);
       if (!m.awake) {
+        if (m.behaviour === 'dormant') continue; // Waits to be told, or attacked.
         if (m.notBeforeCheck == null || time >= m.notBeforeCheck) {
           m.notBeforeCheck = time + 1;
           if (this.noticeCheck(game, m)) { this.wake(game, m); game.log(`${m.name} notices you!`, RED); }
@@ -1398,6 +1473,8 @@ export class Srd5Ruleset {
     }
     // A stable character regains 1 HP after 1d4 hours, so a Long Rest always wakes them.
     longRest(m);
+    // An item's power comes back with the rest of whoever is carrying it.
+    for (const it of [...Object.values(m.equipment), ...m.pack]) if (it?.powerUsed) it.powerUsed = false;
   }
 
   /** How the party's standing shows on the end screen. */

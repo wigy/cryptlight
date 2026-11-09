@@ -181,7 +181,7 @@ export class View3D {
           const o = faceObj.get(`${nx},${ny},${(d + 2) % 4}`);
           let tex = wallTex;
           if (o?.type === 'stairs') tex = o.direction === 'up' ? 'stairs-up' : 'stairs-down';
-          else if (o) tex = 'alcove';
+          else if (o) tex = o.art ?? 'alcove';
           const mirror = !o && hash(nx * 3 + d, ny * 5) & 1;
           push(tex, wallQuad(x, y, d, mirror));
         }
@@ -334,6 +334,8 @@ export class View3D {
       else if (o.type === 'wall') this.collectFixture(o, draws);
       else if ((o.type === 'pit' && !o.hidden) || (o.type === 'plate' && !o.hidden)) {
         draws.push({ verts: quad([o.x + 0.06, o.y + 0.06, 0.004], [o.x + 0.94, o.y + 0.06, 0.004], [o.x + 0.94, o.y + 0.94, 0.004], [o.x + 0.06, o.y + 0.94, 0.004], [0, 0], [1, 0], [1, 1], [0, 1], [0, 0, 1]), tex: this.texture(o.type), depth: this.depthOf(o.x + 0.5, o.y + 0.5) + 2 });
+      } else if (o.type === 'ward' && !o.broken) {
+        draws.push({ verts: quad([o.x + 0.02, o.y + 0.02, 0.005], [o.x + 0.98, o.y + 0.02, 0.005], [o.x + 0.98, o.y + 0.98, 0.005], [o.x + 0.02, o.y + 0.98, 0.005], [0, 0], [1, 0], [1, 1], [0, 1], [0, 0, 1]), tex: this.texture(o.art ?? 'salt-line'), depth: this.depthOf(o.x + 0.5, o.y + 0.5) });
       } else if (o.type === 'feature') {
         const name = o.sprite === 'chest' && o.opened ? 'chest-open' : o.sprite;
         this.billboard(draws, name, o.x + 0.5, o.y + 0.5, o.height ?? (o.sprite === 'altar' ? 0.5 : 0.36), { pick: { type: 'feature', ref: o } });

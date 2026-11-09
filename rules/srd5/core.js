@@ -147,6 +147,7 @@ export function attackModifiers(attacker, target, ctx) {
   if (has(attacker, 'invisible')) advantage = true;
   if (hasEffect(attacker, 'sapped')) disadvantage = true;
   if (hasEffect(attacker, 'mocked')) disadvantage = true;
+  if (hasEffect(attacker, 'dread')) disadvantage = true;
   if (hasEffect(attacker, 'reckless')) advantage = true;
   if (hasEffect(target, 'unaware')) advantage = true;
   if (has(target, 'blinded') || has(target, 'paralyzed') || has(target, 'petrified') || has(target, 'restrained') || has(target, 'stunned') || has(target, 'unconscious')) advantage = true;

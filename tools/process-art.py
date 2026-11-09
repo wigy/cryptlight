@@ -178,6 +178,10 @@ def main():
             missing.append(art_id)
             continue
         img = Image.open(src)
+        if 'crop' in d:  # Cuts off a frame Gemini painted despite being told not to.
+            w, h = img.size
+            m = int(min(w, h) * d['crop'])
+            img = img.crop((m, m, w - m, h - m))
         kind = d['kind']
         if kind == 'tile':
             tile = make_seamless(img).resize((TILE_SIZE, TILE_SIZE), Image.LANCZOS)
@@ -191,6 +195,10 @@ def main():
             fit(img.convert('RGB'), target).save(os.path.join(OUT, f'{art_id}.jpg'), quality=88)
         elif kind == 'sprite':
             cut = key_out(img)
+            if d.get('neutral'):  # White subjects pick up a tint from the magenta they were painted on.
+                rgba = np.asarray(cut.convert('RGBA')).copy()
+                rgba[..., :3] = rgba[..., :3].min(axis=2, keepdims=True)
+                cut = Image.fromarray(rgba, 'RGBA')
             if d.get('floodKey'):
                 cut = flood_key(cut)
             if not d.get('noTrim'):
@@ -214,6 +222,10 @@ def main():
         print('ok', art_id)
     # The engine looks images up by name in this index, so it needn't know formats.
     index = {os.path.splitext(f)[0]: f for f in sorted(os.listdir(OUT)) if f != 'index.json'}
+    # Art not painted yet shows an existing picture, so it needs no change anywhere once it is.
+    for art_id, d in manifest['art'].items():
+        if art_id not in index and d.get('standIn') in index:
+            index[art_id] = index[d['standIn']]
     with open(os.path.join(OUT, 'index.json'), 'w') as fh:
         json.dump(index, fh, indent=0)
     if missing:

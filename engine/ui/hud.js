@@ -451,6 +451,11 @@ export class Hud {
         if (hit.ref?.type === 'wall' && hit.dist < NEAR_REACH) g.useObject(hit.ref);
         else if (hit.ref?.type === 'stairs' && hit.dist < NEAR_REACH) g.useStairs(hit.ref);
         break;
+      case 'floor': {
+        const ward = g.objectsAt(hit.x, hit.y).find((o) => o.type === 'ward' && !o.broken);
+        if (ward && hit.dist < NEAR_REACH) g.useObject(ward);
+        break;
+      }
       default: break;
     }
   }

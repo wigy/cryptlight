@@ -259,6 +259,8 @@ export class Game {
     const nx = this.party.x + d.x, ny = this.party.y + d.y;
     const stairs = this.objectsAt(nx, ny).find((o) => o.type === 'stairs');
     if (stairs) { this.useStairs(stairs); return true; }
+    const ward = this.objectsAt(nx, ny).find((o) => o.type === 'ward' && !o.broken && o.holdsItem && (this.hand?.proto === o.holdsItem || this.ruleset.partyCarries?.(this, o.holdsItem)));
+    if (ward) { this.log(ward.refuseText ?? 'Something holds you back.', 11); this.sound('bump'); return false; }
     if (!this.isPassable(nx, ny)) { this.sound('bump'); return false; }
     if (this.entities.some((e) => e.level === this.party.level && !e.dead && e.x === nx && e.y === ny)) { this.sound('bump'); return false; }
     const before = new Map(this.party.members.map((m) => [m, this.memberPos(m)]));
@@ -285,6 +287,7 @@ export class Game {
     return true;
   }
   useStairs(s) {
+    if (s.needsFlag && !this.flags[s.needsFlag]) { this.log(s.blockedText ?? 'The way is shut.'); return; }
     if (s.exit) { this.leave(s.text); return; }
     this.teleport(s.to);
     this.sound('stairs');
@@ -312,6 +315,9 @@ export class Game {
           if (o.hidden) o.hidden = false;
           if (o.type === 'plate') this.sound('click');
           this.run(o.onEnter ?? []);
+          break;
+        case 'ward':
+          if (!o.broken && o.text && !o.seen) { o.seen = true; this.log(o.text, 9); }
           break;
         case 'pit':
           if (o.covered) break;
@@ -368,6 +374,7 @@ export class Game {
         case 'toggleDoor': { const d = this.objectById(a.door); if (d) this.setDoor(a.door, d.target ? 0 : 1); break; }
         case 'setFlag': this.flags[a.flag] = a.value ?? true; break;
         case 'if': this.run(this.flags[a.flag] ? a.then ?? [] : a.else ?? []); break;
+        case 'ifCollected': this.run(this.collected.includes(a.proto) ? a.then ?? [] : a.else ?? []); break;
         case 'ifAll': this.run(a.flags.every((f) => this.flags[f]) ? a.then ?? [] : a.else ?? []); break;
         case 'spawn': this.spawnMonster(a.proto, a.x, a.y, a.level ?? this.party.level, { awake: true, ...a.opts }); break;
         case 'teleport': this.teleport(a.to); break;
@@ -376,6 +383,16 @@ export class Game {
         case 'placeItem': this.placeModuleItem(a, a.x, a.y, a.level ?? this.party.level); break;
         case 'win': this.win(a.text); break;
         case 'disarm': { const o = this.objectById(a.id); if (o) o.disarmed = true; break; }
+        case 'wake':
+          for (const e of this.entities) {
+            if (e.tag === a.tag && !e.dead && !e.awake) { e.behaviour = 'guard'; this.ruleset.wake(this, e); }
+          }
+          break;
+        case 'removeObject': {
+          const o = this.objectById(a.id);
+          if (o) this.levels[o.level].objects = this.levels[o.level].objects.filter((other) => other !== o);
+          break;
+        }
         default: throw new Error(`unknown script action: ${a.do}`);
       }
     }
@@ -393,8 +410,18 @@ export class Game {
       case 'door': return this.useDoor(o);
       case 'wall': return this.useWall(o);
       case 'feature': return this.useFeature(o);
+      case 'ward': return this.breakWard(o);
       default: return false;
     }
+  }
+  /** Scuffing a ward ends what it holds back, for good. */
+  breakWard(o) {
+    if (o.broken) return false;
+    o.broken = true;
+    this.sound('click');
+    if (o.breakText) this.log(o.breakText, 9);
+    this.run(o.onBreak ?? []);
+    return true;
   }
   useDoor(d) {
     if (d.noHandle) { this.log(d.text ?? 'There is no way to work this from here.'); return false; }
@@ -412,7 +439,11 @@ export class Game {
         o.items.push(this.hand); this.hand = null; this.sound('drop');
         this.run(o.onPlace ?? []);
         if (o.wants && o.items.some((it) => it.proto === o.wants)) this.run(o.onWanted ?? []);
-      } else if (o.items.length) { this.hand = o.items.pop(); this.sound('pickup'); }
+      } else if (o.items.length) {
+        if (o.keepsFlag && this.flags[o.keepsFlag]) { this.log(o.keptText ?? 'It will not come away.'); return false; }
+        this.hand = o.items.pop();
+        this.sound('pickup');
+      }
       return true;
     }
     if (o.kind === 'plaque' && o.text) { this.log(o.text, 9); return true; }
@@ -520,6 +551,8 @@ export class Game {
     Object.assign(m, { x, y, level, behaviour: opts.behaviour ?? 'guard', onDeath: opts.onDeath, sx: 0, sy: 0 });
     if (opts.name) m.name = opts.name;
     if (opts.flag) m.flagOnDeath = opts.flag;
+    if (opts.tag) m.tag = opts.tag;
+    if (opts.onWake) m.onWake = opts.onWake;
     this.entities.push(m);
     this.seatEntity(m);
     if (opts.awake) this.ruleset.wake(this, m);
@@ -530,6 +563,7 @@ export class Game {
   /** Can an entity fit in a cell? Large creatures need it empty; others need a free square. */
   canEnter(e, x, y) {
     if (!this.isPassable(x, y, e.level)) return false;
+    if (e.tag && this.objectsAt(x, y, e.level).some((o) => o.type === 'ward' && !o.broken && o.holdsTag === e.tag)) return false;
     if (e.level === this.party?.level && x === this.party.x && y === this.party.y) return false;
     if (this.objectsAt(x, y, e.level).some((o) => o.type === 'pit' && !o.covered)) return false;
     const others = this.occupants(x, y, e.level).filter((o) => o !== e);

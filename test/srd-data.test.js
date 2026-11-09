@@ -148,13 +148,15 @@ test('default class picks only use real, legal, implemented things', async () =>
 
 test('module references exist and encounters fit the SRD budget', async () => {
   const { srd, ruleset } = await newGame();
-  const module = loadModule();
-  for (const level of Object.values(module.levels)) {
-    for (const defs of Object.values(level.legend)) {
-      for (const d of [defs].flat()) {
-        if (d.type === 'monster') assert.ok(srd.monsters[d.proto], d.proto);
-        if (d.type === 'item') assert.ok(srd.items[d.proto], d.proto);
-        for (const it of d.items ?? []) assert.ok(srd.items[it.proto], it.proto);
+  for (const id of JSON.parse(readFileSync(new URL('../modules/index.json', import.meta.url)))) {
+    const { srd: known } = await newGame(1, loadModule(id));
+    for (const level of Object.values(loadModule(id).levels)) {
+      for (const defs of Object.values(level.legend)) {
+        for (const d of [defs].flat()) {
+          if (d.type === 'monster') assert.ok(known.monsters[d.proto], d.proto);
+          if (d.type === 'item') assert.ok(known.items[d.proto], d.proto);
+          for (const it of d.items ?? []) assert.ok(known.items[it.proto], it.proto);
+        }
       }
     }
   }
@@ -164,5 +166,8 @@ test('module references exist and encounters fit the SRD budget', async () => {
   assert.ok(xp('goblin-warrior', 3) <= HIGH_L1);
   assert.ok(xp('goblin-boss') + xp('goblin-warrior', 2) <= HIGH_L1);
   assert.ok(xp('cultist-fanatic') + xp('cultist', 2) <= HIGH_L2);
+  // Barrow of the Two Brothers, which a party meets at level 1 until well after the Tomb of the Traitors.
+  assert.ok(xp('skeleton', 3) + xp('ghoul') <= HIGH_L1, 'the Tomb of the Traitors, reduced');
+  assert.ok(xp('skeleton', 4) + xp('shadow', 2) <= HIGH_L1, 'the chamber, when both brothers attack');
   assert.ok(ruleset.attribution.includes('SRD 5.2.1'));
 });

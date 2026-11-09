@@ -1,0 +1,1004 @@
+{
+  "id": "barrow",
+  "name": "Barrow of the Two Brothers",
+  "summary": "A foolish young man went treasure hunting in the old barrow, and his parents will pay for news of him. Two dead brothers still quarrel there over their mother's crown.",
+  "recommendedLevels": {
+    "min": 1,
+    "max": 2
+  },
+  "license": {
+    "name": "Creative Commons Attribution-ShareAlike 3.0",
+    "file": "modules/barrow/LICENSE",
+    "credit": "Adapted from Barrow of the Two Brothers by L. Shaffrey (Copper Pieces), https://copperpieces.itch.io/barrow-of-the-two-brothers, under CC BY-SA 3.0. This adaptation is released under the same license. Changes: a hillside level joining the two entrances, one ghoul fewer in the Tomb of the Traitors, a Criminal background as the mark of treachery, the crown staying on the throne once a brother is crowned, and rules and wording for this game. The art was generated for this game and isn't by the author."
+  },
+  "titleImage": "title-barrow",
+  "ruleset": "srd5",
+  "start": {
+    "level": "hillside",
+    "x": 6,
+    "y": 2,
+    "dir": 1
+  },
+  "intro": [
+    "BARROW OF THE TWO BROTHERS",
+    "Anders went looking for treasure in the old barrow, and hasn't come home. His parents have offered 50 gold to whoever finds him.",
+    "Fresh digging opens the mound ahead. Further along, a second entrance lies choked with rubble."
+  ],
+  "items": {
+    "anders-diary": {
+      "stays": true,
+      "name": "Anders's Diary",
+      "kind": "gear",
+      "weight": 0.5,
+      "icon": "book",
+      "description": "Ends with a copied tale of two royal brothers, and a note about a magic sword buried with the younger."
+    },
+    "anders-thanks": {
+      "unique": true,
+      "name": "Letter of Thanks",
+      "kind": "gear",
+      "weight": 0.1,
+      "icon": "scroll",
+      "description": "From Anders's parents, for bringing them the truth."
+    },
+    "two-brothers-crown": {
+      "unique": true,
+      "name": "Gold Crown",
+      "kind": "gear",
+      "weight": 3,
+      "icon": "ring",
+      "description": "The dead queen's crown, worth 300 GP. Her two sons killed each other for it."
+    },
+    "ethelred-dagger": {
+      "unique": true,
+      "name": "Ethelred's Silver Dagger",
+      "base": "dagger",
+      "description": "A silver Dagger worth 20 GP. The blade still has a dark stain of old poison."
+    },
+    "traitor-torc": {
+      "name": "Traitor's Torc",
+      "kind": "gear",
+      "weight": 1,
+      "icon": "amulet",
+      "cost": "10 GP",
+      "description": "A silver torc worth 10 GP, inscribed 'Traitor'."
+    },
+    "wrath": {
+      "unique": true,
+      "name": "Wrath",
+      "base": "longsword",
+      "bonus": 1,
+      "power": "wrath",
+      "description": "A +1 Longsword, Olaf's enchanted blade. Once per Long Rest, while it's in your main hand, you can gain Advantage on your next attack against a target. You can attack nothing else until it or you drop to 0 HP. Add it from Skills & Spells."
+    }
+  },
+  "levels": {
+    "hillside": {
+      "name": "The Barrow Mound",
+      "textures": {
+        "wall": "wall-earth",
+        "floor": "floor-grass",
+        "ceiling": "ceiling-night"
+      },
+      "grid": [
+        "##############",
+        "#######1####2#",
+        "#Xw.........R#",
+        "##############"
+      ],
+      "legend": {
+        "X": {
+          "type": "stairs",
+          "direction": "up",
+          "exit": true,
+          "text": "You follow the path back to the village."
+        },
+        "w": {
+          "type": "zone",
+          "onEnter": [
+            {
+              "do": "if",
+              "flag": "anders-found",
+              "then": [
+                {
+                  "do": "ifCollected",
+                  "proto": "anders-thanks",
+                  "else": [
+                    {
+                      "do": "rule",
+                      "name": "reward",
+                      "proto": "gold",
+                      "qty": 50
+                    },
+                    {
+                      "do": "rule",
+                      "name": "reward",
+                      "proto": "anders-thanks"
+                    },
+                    {
+                      "do": "rule",
+                      "name": "awardXp",
+                      "amount": 100
+                    },
+                    {
+                      "do": "if",
+                      "flag": "crowned",
+                      "then": [
+                        {
+                          "do": "win",
+                          "text": "You bring Anders's parents their sad news, and their 50 gold is pressed on you. Behind you the barrow is quiet: one brother at last wears the crown, and sleeps."
+                        }
+                      ],
+                      "else": [
+                        {
+                          "do": "win",
+                          "text": "You bring Anders's parents their sad news, and their 50 gold is pressed on you. Behind you the old quarrel in the barrow goes on, or has ended the hard way."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "1": {
+          "type": "stairs",
+          "direction": "down",
+          "to": {
+            "level": "upper",
+            "x": 6,
+            "y": 1,
+            "dir": 2
+          },
+          "text": "You go down the freshly dug stairs. Salt crunches under your boots. The air is cold, still and foul."
+        },
+        "2": {
+          "type": "stairs",
+          "direction": "down",
+          "to": {
+            "level": "upper",
+            "x": 24,
+            "y": 1,
+            "dir": 2
+          },
+          "text": "You go down into the second barrow. Salt lies thick on these stairs too."
+        },
+        "R": {
+          "id": "rubble",
+          "type": "feature",
+          "sprite": "rubble",
+          "blocks": true,
+          "height": 0.6,
+          "onUse": [
+            {
+              "do": "rule",
+              "name": "passTime",
+              "dice": "1d6",
+              "text": "You dig the rubble out of the second entrance."
+            },
+            {
+              "do": "removeObject",
+              "id": "rubble"
+            }
+          ]
+        }
+      }
+    },
+    "upper": {
+      "name": "The Upper Barrows",
+      "textures": {
+        "wall": "wall-crypt",
+        "floor": "floor-crypt",
+        "ceiling": "ceiling"
+      },
+      "grid": [
+        "######a#################b######",
+        "######~#################!######",
+        "######.#################.######",
+        "#..s.....t..#######.u.......v.#",
+        "#.sKs....t$.#######Gu.......vG#",
+        "#........t..#######.u.......v.#",
+        "####.....#############.....####",
+        "#####.o.###############.O.#####",
+        "######T#################U######",
+        "###############################"
+      ],
+      "legend": {
+        "a": {
+          "type": "stairs",
+          "direction": "up",
+          "to": {
+            "level": "hillside",
+            "x": 7,
+            "y": 2,
+            "dir": 2
+          },
+          "text": "You climb out into the night air."
+        },
+        "b": {
+          "type": "stairs",
+          "direction": "up",
+          "to": {
+            "level": "hillside",
+            "x": 12,
+            "y": 2,
+            "dir": 3
+          },
+          "text": "You climb out into the night air."
+        },
+        "~": {
+          "type": "ward",
+          "holdsTag": "spirit",
+          "holdsItem": "two-brothers-crown",
+          "text": "Salt is scattered over the stairs here, in an unbroken line.",
+          "refuseText": "The crown will not cross the unbroken salt. It grows too heavy to carry past it.",
+          "breakText": "You scuff a gap in the line of salt."
+        },
+        "!": {
+          "type": "ward",
+          "holdsTag": "spirit",
+          "holdsItem": "two-brothers-crown",
+          "text": "Salt covers the stairs here, in an unbroken line.",
+          "refuseText": "The crown will not cross the unbroken salt. It grows too heavy to carry past it.",
+          "breakText": "You scuff a gap in the line of salt."
+        },
+        "s": {
+          "type": "monster",
+          "proto": "skeleton"
+        },
+        "K": {
+          "type": "feature",
+          "sprite": "corpse-slab",
+          "blocks": false,
+          "height": 0.34,
+          "text": "Under the slab lies a crushed young man: Anders. A diary has fallen from his coat.",
+          "emptyText": "Poor Anders. There is nothing more to be done for him here.",
+          "items": [
+            {
+              "proto": "anders-diary"
+            }
+          ],
+          "onUse": [
+            {
+              "do": "if",
+              "flag": "anders-found",
+              "else": [
+                {
+                  "do": "setFlag",
+                  "flag": "anders-found"
+                },
+                {
+                  "do": "message",
+                  "text": "Now his parents can be told.",
+                  "color": 9
+                },
+                {
+                  "do": "message",
+                  "text": "The diary tells of a queen's two sons. Ethelred fled the battle where she took her death wound, and young Olaf won it.",
+                  "color": 9
+                },
+                {
+                  "do": "message",
+                  "text": "Each plotted against the other. Olaf cut Ethelred down with his enchanted sword, and died of Ethelred's poisoned dagger.",
+                  "color": 9
+                },
+                {
+                  "do": "message",
+                  "text": "The dying queen had them buried together, and their fellow plotters put to death.",
+                  "color": 9
+                }
+              ]
+            }
+          ]
+        },
+        "t": {
+          "type": "plate",
+          "once": true,
+          "hidden": true,
+          "detectDc": 13,
+          "foundName": "a loose slab",
+          "revealText": "A slab in the ceiling above hangs loose, held on a worn stone catch.",
+          "onEnter": [
+            {
+              "do": "if",
+              "flag": "trap-3",
+              "else": [
+                {
+                  "do": "setFlag",
+                  "flag": "trap-3"
+                },
+                {
+                  "do": "message",
+                  "text": "A stone slab crashes down, and the wall behind it breaks open!",
+                  "color": 11
+                },
+                {
+                  "do": "rule",
+                  "name": "trap",
+                  "dice": "2d8",
+                  "save": "dex",
+                  "dc": 12,
+                  "half": true,
+                  "type": "bludgeoning"
+                },
+                {
+                  "do": "spawn",
+                  "proto": "skeleton",
+                  "x": 11,
+                  "y": 3
+                },
+                {
+                  "do": "spawn",
+                  "proto": "skeleton",
+                  "x": 11,
+                  "y": 4
+                },
+                {
+                  "do": "spawn",
+                  "proto": "skeleton",
+                  "x": 11,
+                  "y": 5
+                }
+              ]
+            }
+          ]
+        },
+        "$": {
+          "type": "item",
+          "proto": "gold",
+          "qty": 15
+        },
+        "o": {
+          "type": "ward",
+          "text": "A ring of salt surrounds the tomb. You could scuff it with a click.",
+          "breakText": "You scuff the ring of salt. Something in the stone lets go.",
+          "onBreak": [
+            {
+              "do": "setFlag",
+              "flag": "ethelred-salt"
+            }
+          ]
+        },
+        "T": {
+          "type": "feature",
+          "sprite": "tomb",
+          "blocks": true,
+          "height": 0.5,
+          "onUse": [
+            {
+              "do": "if",
+              "flag": "ethelred-open",
+              "then": [
+                {
+                  "do": "message",
+                  "text": "You climb down the shaft inside the tomb.",
+                  "color": 9
+                },
+                {
+                  "do": "teleport",
+                  "to": {
+                    "level": "lower",
+                    "x": 2,
+                    "y": 10,
+                    "dir": 1
+                  }
+                }
+              ],
+              "else": [
+                {
+                  "do": "if",
+                  "flag": "ethelred-salt",
+                  "then": [
+                    {
+                      "do": "setFlag",
+                      "flag": "ethelred-open"
+                    },
+                    {
+                      "do": "message",
+                      "text": "With the salt broken, the lid of Ethelred the Coward's tomb grinds aside. Inside it, a shaft runs down into the dark, and the effigy gives up its dagger.",
+                      "color": 9
+                    },
+                    {
+                      "do": "giveItem",
+                      "proto": "ethelred-dagger"
+                    }
+                  ],
+                  "else": [
+                    {
+                      "do": "message",
+                      "text": "The tomb of Ethelred the Coward. The effigy's hands are locked around its prize, and the lid won't move while the ring of salt is whole.",
+                      "color": 9
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "u": {
+          "type": "plate",
+          "once": true,
+          "hidden": true,
+          "detectDc": 13,
+          "foundName": "a loose slab",
+          "revealText": "A slab in the ceiling above hangs loose, held on a worn stone catch.",
+          "onEnter": [
+            {
+              "do": "if",
+              "flag": "trap-10a",
+              "else": [
+                {
+                  "do": "setFlag",
+                  "flag": "trap-10a"
+                },
+                {
+                  "do": "message",
+                  "text": "A stone slab crashes down, and the wall behind it breaks open!",
+                  "color": 11
+                },
+                {
+                  "do": "rule",
+                  "name": "trap",
+                  "dice": "2d8",
+                  "save": "dex",
+                  "dc": 12,
+                  "half": true,
+                  "type": "bludgeoning"
+                },
+                {
+                  "do": "spawn",
+                  "proto": "skeleton",
+                  "x": 19,
+                  "y": 3
+                },
+                {
+                  "do": "spawn",
+                  "proto": "skeleton",
+                  "x": 19,
+                  "y": 4
+                },
+                {
+                  "do": "spawn",
+                  "proto": "skeleton",
+                  "x": 19,
+                  "y": 5
+                }
+              ]
+            }
+          ]
+        },
+        "v": {
+          "type": "plate",
+          "once": true,
+          "hidden": true,
+          "detectDc": 13,
+          "foundName": "a loose slab",
+          "revealText": "A slab in the ceiling above hangs loose, held on a worn stone catch.",
+          "onEnter": [
+            {
+              "do": "if",
+              "flag": "trap-10b",
+              "else": [
+                {
+                  "do": "setFlag",
+                  "flag": "trap-10b"
+                },
+                {
+                  "do": "message",
+                  "text": "A stone slab crashes down, and the wall behind it breaks open!",
+                  "color": 11
+                },
+                {
+                  "do": "rule",
+                  "name": "trap",
+                  "dice": "2d8",
+                  "save": "dex",
+                  "dc": 12,
+                  "half": true,
+                  "type": "bludgeoning"
+                },
+                {
+                  "do": "spawn",
+                  "proto": "skeleton",
+                  "x": 29,
+                  "y": 3
+                },
+                {
+                  "do": "spawn",
+                  "proto": "skeleton",
+                  "x": 29,
+                  "y": 4
+                },
+                {
+                  "do": "spawn",
+                  "proto": "skeleton",
+                  "x": 29,
+                  "y": 5
+                }
+              ]
+            }
+          ]
+        },
+        "G": {
+          "type": "item",
+          "proto": "gold",
+          "qty": 10
+        },
+        "O": {
+          "type": "ward",
+          "text": "A ring of salt surrounds the tomb. You could scuff it with a click.",
+          "breakText": "You scuff the ring of salt. Something in the stone lets go.",
+          "onBreak": [
+            {
+              "do": "setFlag",
+              "flag": "olaf-salt"
+            }
+          ]
+        },
+        "U": {
+          "type": "feature",
+          "sprite": "tomb",
+          "blocks": true,
+          "height": 0.5,
+          "onUse": [
+            {
+              "do": "if",
+              "flag": "olaf-open",
+              "then": [
+                {
+                  "do": "message",
+                  "text": "You climb down the shaft inside the tomb.",
+                  "color": 9
+                },
+                {
+                  "do": "teleport",
+                  "to": {
+                    "level": "lower",
+                    "x": 26,
+                    "y": 10,
+                    "dir": 3
+                  }
+                }
+              ],
+              "else": [
+                {
+                  "do": "if",
+                  "flag": "olaf-salt",
+                  "then": [
+                    {
+                      "do": "setFlag",
+                      "flag": "olaf-open"
+                    },
+                    {
+                      "do": "message",
+                      "text": "With the salt broken, the lid of Olaf the Treacherous's tomb grinds aside. Inside it, a shaft runs down into the dark, and the effigy gives up its sword.",
+                      "color": 9
+                    },
+                    {
+                      "do": "giveItem",
+                      "proto": "wrath"
+                    }
+                  ],
+                  "else": [
+                    {
+                      "do": "message",
+                      "text": "The tomb of Olaf the Treacherous. The effigy's hands are locked around its prize, and the lid won't move while the ring of salt is whole.",
+                      "color": 9
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "lower": {
+      "name": "The Chamber of the Two Brothers",
+      "textures": {
+        "wall": "wall-crypt",
+        "floor": "floor-crypt",
+        "ceiling": "ceiling"
+      },
+      "grid": [
+        "###########E#####F###########",
+        "###########.......###########",
+        "###########...c...###########",
+        "###########g.gyg.g###########",
+        "##############z##############",
+        "##############^##############",
+        "##############D##############",
+        "#########...........#########",
+        "#########.s.h...s.s.#########",
+        "##############r##############",
+        "#5.........................8#",
+        "#############################"
+      ],
+      "legend": {
+        "5": {
+          "type": "stairs",
+          "direction": "up",
+          "to": {
+            "level": "upper",
+            "x": 6,
+            "y": 7,
+            "dir": 2
+          },
+          "needsFlag": "ethelred-open",
+          "blockedText": "You climb the shaft to the underside of a tomb lid. It won't move from in here."
+        },
+        "8": {
+          "type": "stairs",
+          "direction": "up",
+          "to": {
+            "level": "upper",
+            "x": 24,
+            "y": 7,
+            "dir": 2
+          },
+          "needsFlag": "olaf-open",
+          "blockedText": "You climb the shaft to the underside of a tomb lid. It won't move from in here, and nothing will shift it short of digging in from above."
+        },
+        "r": {
+          "type": "zone",
+          "onEnter": [
+            {
+              "do": "rule",
+              "name": "dread",
+              "rounds": 20
+            }
+          ]
+        },
+        "s": {
+          "type": "monster",
+          "proto": "skeleton",
+          "onDeath": [
+            {
+              "do": "giveItem",
+              "proto": "traitor-torc"
+            }
+          ],
+          "behaviour": "sleep"
+        },
+        "h": {
+          "type": "monster",
+          "proto": "ghoul",
+          "onDeath": [
+            {
+              "do": "giveItem",
+              "proto": "traitor-torc"
+            }
+          ],
+          "behaviour": "sleep"
+        },
+        "D": {
+          "type": "door",
+          "style": "wood"
+        },
+        "^": {
+          "type": "ward",
+          "holdsTag": "spirit",
+          "holdsItem": "two-brothers-crown",
+          "text": "A thick line of salt crosses the passage. Beyond it the cold is worse.",
+          "refuseText": "The crown will not cross the unbroken salt. It grows too heavy to carry past it.",
+          "breakText": "You scuff a gap in the line of salt."
+        },
+        "z": {
+          "type": "zone",
+          "onEnter": [
+            {
+              "do": "if",
+              "flag": "spoken",
+              "then": [
+                {
+                  "do": "if",
+                  "flag": "judged",
+                  "else": [
+                    {
+                      "do": "setFlag",
+                      "flag": "judged"
+                    },
+                    {
+                      "do": "message",
+                      "text": "\"Thief! Traitor!\" Both spirits fall on you, and the skeletons at the thrones step forward.",
+                      "color": 11
+                    },
+                    {
+                      "do": "spawn",
+                      "proto": "shadow",
+                      "x": 11,
+                      "y": 1,
+                      "opts": {
+                        "name": "Ethelred's Spirit",
+                        "tag": "spirit"
+                      },
+                      "level": "lower"
+                    },
+                    {
+                      "do": "spawn",
+                      "proto": "shadow",
+                      "x": 17,
+                      "y": 1,
+                      "opts": {
+                        "name": "Olaf's Spirit",
+                        "tag": "spirit"
+                      },
+                      "level": "lower"
+                    },
+                    {
+                      "do": "wake",
+                      "tag": "guard"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "y": {
+          "type": "zone",
+          "once": true,
+          "onEnter": [
+            {
+              "do": "setFlag",
+              "flag": "spoken"
+            },
+            {
+              "do": "ifCollected",
+              "proto": "two-brothers-crown",
+              "then": [
+                {
+                  "do": "message",
+                  "text": "Two spirits rise from the thrones. \"The crown! Where is the crown?\"",
+                  "color": 9
+                },
+                {
+                  "do": "if",
+                  "flag": "judged",
+                  "else": [
+                    {
+                      "do": "setFlag",
+                      "flag": "judged"
+                    },
+                    {
+                      "do": "message",
+                      "text": "\"Thief! Traitor!\" Both spirits fall on you, and the skeletons at the thrones step forward.",
+                      "color": 11
+                    },
+                    {
+                      "do": "spawn",
+                      "proto": "shadow",
+                      "x": 11,
+                      "y": 1,
+                      "opts": {
+                        "name": "Ethelred's Spirit",
+                        "tag": "spirit"
+                      },
+                      "level": "lower"
+                    },
+                    {
+                      "do": "spawn",
+                      "proto": "shadow",
+                      "x": 17,
+                      "y": 1,
+                      "opts": {
+                        "name": "Olaf's Spirit",
+                        "tag": "spirit"
+                      },
+                      "level": "lower"
+                    },
+                    {
+                      "do": "wake",
+                      "tag": "guard"
+                    }
+                  ]
+                }
+              ],
+              "else": [
+                {
+                  "do": "message",
+                  "text": "Two skeletons sit on facing thrones with a gold crown between them. Four more stand guard, waiting for orders.",
+                  "color": 9
+                },
+                {
+                  "do": "message",
+                  "text": "A spirit rises, cold and proud: \"Crown my remains and let me rest. As the eldest, the crown is rightfully mine.\"",
+                  "color": 9
+                },
+                {
+                  "do": "message",
+                  "text": "Another snarls: \"Crown me! I saved the kingdom from my brother's cowardice.\"",
+                  "color": 9
+                }
+              ]
+            }
+          ]
+        },
+        "g": {
+          "type": "monster",
+          "proto": "skeleton",
+          "behaviour": "dormant",
+          "tag": "guard",
+          "onWake": [
+            {
+              "do": "if",
+              "flag": "judged",
+              "else": [
+                {
+                  "do": "setFlag",
+                  "flag": "judged"
+                },
+                {
+                  "do": "message",
+                  "text": "\"Thief! Traitor!\" Both spirits fall on you, and the skeletons at the thrones step forward.",
+                  "color": 11
+                },
+                {
+                  "do": "spawn",
+                  "proto": "shadow",
+                  "x": 11,
+                  "y": 1,
+                  "opts": {
+                    "name": "Ethelred's Spirit",
+                    "tag": "spirit"
+                  },
+                  "level": "lower"
+                },
+                {
+                  "do": "spawn",
+                  "proto": "shadow",
+                  "x": 17,
+                  "y": 1,
+                  "opts": {
+                    "name": "Olaf's Spirit",
+                    "tag": "spirit"
+                  },
+                  "level": "lower"
+                },
+                {
+                  "do": "wake",
+                  "tag": "guard"
+                }
+              ]
+            }
+          ]
+        },
+        "c": {
+          "type": "item",
+          "proto": "two-brothers-crown"
+        },
+        "E": {
+          "type": "wall",
+          "kind": "alcove",
+          "art": "throne-ethelred",
+          "wants": "two-brothers-crown",
+          "keepsFlag": "crowned",
+          "keptText": "The crown has settled on the old bones, and will not come away.",
+          "onWanted": [
+            {
+              "do": "if",
+              "flag": "judged",
+              "then": [
+                {
+                  "do": "message",
+                  "text": "Ethelred's bones wear the crown, but no spirit is listening now.",
+                  "color": 9
+                }
+              ],
+              "else": [
+                {
+                  "do": "setFlag",
+                  "flag": "judged"
+                },
+                {
+                  "do": "setFlag",
+                  "flag": "crowned"
+                },
+                {
+                  "do": "setFlag",
+                  "flag": "rest-ethelred"
+                },
+                {
+                  "do": "message",
+                  "text": "You set the crown on Ethelred's skull. His spirit sighs, and fades at last.",
+                  "color": 9
+                },
+                {
+                  "do": "message",
+                  "text": "\"No!\" Olaf's spirit howls, and calls his guards down on you.",
+                  "color": 11
+                },
+                {
+                  "do": "rule",
+                  "name": "awardXp",
+                  "amount": 200
+                },
+                {
+                  "do": "spawn",
+                  "proto": "shadow",
+                  "x": 17,
+                  "y": 1,
+                  "opts": {
+                    "name": "Olaf's Spirit",
+                    "tag": "spirit"
+                  },
+                  "level": "lower"
+                },
+                {
+                  "do": "wake",
+                  "tag": "guard"
+                }
+              ]
+            }
+          ]
+        },
+        "F": {
+          "type": "wall",
+          "kind": "alcove",
+          "art": "throne-olaf",
+          "wants": "two-brothers-crown",
+          "keepsFlag": "crowned",
+          "keptText": "The crown has settled on the old bones, and will not come away.",
+          "onWanted": [
+            {
+              "do": "if",
+              "flag": "judged",
+              "then": [
+                {
+                  "do": "message",
+                  "text": "Olaf's bones wear the crown, but no spirit is listening now.",
+                  "color": 9
+                }
+              ],
+              "else": [
+                {
+                  "do": "setFlag",
+                  "flag": "judged"
+                },
+                {
+                  "do": "setFlag",
+                  "flag": "crowned"
+                },
+                {
+                  "do": "setFlag",
+                  "flag": "rest-olaf"
+                },
+                {
+                  "do": "message",
+                  "text": "You set the crown on Olaf's skull. His spirit sighs, and fades at last.",
+                  "color": 9
+                },
+                {
+                  "do": "message",
+                  "text": "\"No!\" Ethelred's spirit howls, and calls his guards down on you.",
+                  "color": 11
+                },
+                {
+                  "do": "rule",
+                  "name": "awardXp",
+                  "amount": 200
+                },
+                {
+                  "do": "spawn",
+                  "proto": "shadow",
+                  "x": 11,
+                  "y": 1,
+                  "opts": {
+                    "name": "Ethelred's Spirit",
+                    "tag": "spirit"
+                  },
+                  "level": "lower"
+                },
+                {
+                  "do": "wake",
+                  "tag": "guard"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -188,6 +188,20 @@ for (const [species, classes] of Object.entries(OTHER_SEX)) {
   }
 }
 
+// --- Barrow of the Two Brothers: our own paintings, from these descriptions only
+add('wall-earth', 'tile', '1:1', `A steep bank of dark peaty earth and coarse grass with embedded stones, at night. ${TEXTURE}`, { gain: 0.7, standIn: 'wall-warren' });
+add('floor-grass', 'tile', '1:1', `Top-down view of rough moorland ground, trampled dark grass and bare soil with small stones, at night. ${TEXTURE}`, { gain: 0.7, standIn: 'floor-warren' });
+add('ceiling-night', 'tile', '1:1', `View straight up at a dark, overcast night sky with faint clouds and a few dim stars. ${TEXTURE}`, { standIn: 'ceiling' });
+add('throne-ethelred', 'face', '1:1', `A skeleton in rusted royal armor slumped on a tall stone throne with a carved fleeing stag above it, the bony head bare and waiting for a crown, in a shallow niche in a limestone crypt wall, straight-on view, the wall fills the frame edge to edge. ${PAINT} No text, no border.`, { standIn: 'alcove' });
+add('throne-olaf', 'face', '1:1', `A skeleton in battered war gear sitting upright on a tall stone throne with a carved sword above it, the bony head bare and waiting for a crown, in a shallow niche in a limestone crypt wall, straight-on view, the wall fills the frame edge to edge. ${PAINT} No text, no border.`, { standIn: 'alcove' });
+add('tomb', 'sprite', '1:1', `${SOLO} A closed medieval stone tomb chest with the carved effigy of a lying warrior on its lid, front three-quarter view from slightly above. ${CUTOUT}`, { standIn: 'altar' });
+add('rubble', 'sprite', '1:1', `${SOLO} A heap of fallen dark rocks and packed earth, front view. ${CUTOUT}`, { standIn: 'altar' });
+add('corpse-slab', 'sprite', '1:1', `${SOLO} The legs and one arm of a dead young man in plain traveller's clothes, sticking out from under a broken stone slab, seen from slightly above, only a little blood. ${CUTOUT}`, { standIn: 'skeleton' });
+add('salt-line', 'sprite', '1:1', `Top-down view of a thick, rough band of coarse white salt poured straight across the middle of the frame from the left edge to the right edge, with scattered white grains along it. Only the salt. ${CUTOUT}`, { noTrim: true, neutral: true, standIn: 'plate' });
+add('ghoul', 'sprite', '3:4', `A gaunt, hunched ghoul with grey-white leathery skin stretched over its bones, long black claws, a lolling tongue and pointed teeth, in rotted burial wrappings. ${CREATURE}`);
+attackPose('ghoul', '3:4', 'The ghoul springs at the viewer with both clawed hands reaching out and its jaws gaping wide to bite. The whole body down to the feet fits in the frame with a wide empty margin on every side.');
+add('title-barrow', 'image', '16:9', `${PAINT} A wide view of a grassy burial mound at night with a freshly dug stone-lined entrance, a heap of spoil and a spade beside it, and a second, smaller mound with a blocked entrance behind it, under a dark cloudy sky. No text, no border.`, { crop: 0.035, standIn: 'title' });
+
 // --- screens and interface
 add('title', 'image', '16:9', `${PAINT} A wide view of an old stone village well at night, its stones cracked, sickly green light glowing up from deep within, thorny brambles around it, a frightened village in the distance under a dark sky, with a coiled rope hanging down into the well. Plenty of dark empty sky in the upper part. No text, no border.`);
 add('panel', 'tile', '1:1', `Dark weathered bronze-and-leather surface for a fantasy game interface panel, subtle scratches and tooling, low contrast, very dark. ${TEXTURE}`);

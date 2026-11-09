@@ -34,7 +34,7 @@ class App {
     this.sizeCanvas();
     // Everything drawn in 3D is loaded up front so nothing pops in during play.
     this.stage.innerHTML = '<div class="screen"><div class="body"><h2 style="margin:auto">Loading...</h2></div></div>';
-    await this.view.preload(Object.keys(assets).filter((n) => !/^(portrait-|title$|panel$)/.test(n)));
+    await this.view.preload(Object.keys(assets).filter((n) => !/^(portrait-|title|panel$)/.test(n)));
     this.hud = new Hud(this.stage, this);
     window.addEventListener('keydown', (e) => this.onKey(e));
     this.last = performance.now();
@@ -210,7 +210,7 @@ class App {
   showVacation(save, message = 'Your party rests between adventures.', picked = null) {
     const levels = ({ min, max }) => (min === max ? `Recommended level ${min}` : `Recommended levels ${min}\u2013${max}`);
     const roster = save.members.map((m, i) => `<div class="member${m.dead ? ' dead' : ''}${i === picked ? ' picked' : ''}" data-member="${i}"><img src="${this.assetUrl(this.ruleset.portrait(m))}" alt=""><b>${esc(m.name)}</b><span>${esc(this.ruleset.memberTitle(m))}</span><small>${i < 2 ? 'Front rank' : 'Back rank'}</small></div>`).join('');
-    const adventures = this.modules.map((m) => `<div class="adventure"><h3>${esc(m.name)}</h3><div class="levels">${levels(m.recommendedLevels)}</div><p>${esc(m.summary)}</p>${outgrown(m, this.ruleset, save.members) ? '<button disabled>Your party has outgrown this</button>' : `<button data-adventure="${esc(m.id)}">Set Out</button>`}<button class="license-link" data-license="${esc(m.id)}">License and Attributions</button></div>`).join('');
+    const adventures = this.modules.map((m) => `<div class="adventure"><h3>${esc(m.name)}</h3><div class="levels">${levels(m.recommendedLevels)}</div><p>${esc(m.summary)}</p>${outgrown(m, this.ruleset, save.members) ? '<button disabled>Your party has outgrown this</button>' : `<button data-adventure="${esc(m.id)}">Launch Adventure</button>`}<button class="license-link" data-license="${esc(m.id)}">License and Attributions</button></div>`).join('');
     this.screen(`<div class="body" id="vacation"><h1>On Vacation</h1><h2>${esc(message)}</h2>
       <div class="roster">${roster}</div>
       <p class="marching">Marching order: click two characters to swap their places.</p>
