@@ -29,6 +29,11 @@ item, click the near floor to set it down, or further away to throw it.
 
 The map in the bottom right corner fills in as you explore, showing everything you have seen by your light.
 
+A new party is saved as soon as it's created, and is then on vacation, where you choose an adventure. Taking an exit from
+the adventure, or leaving after winning, brings the party back on vacation with its experience and gear. Going on vacation is a Long Rest, but
+the dead stay dead. **View Party** shows your characters, and lets you hire a replacement for any who have died, at the level
+of your lowest living character. The party keeps the dead character's gear. An adventure can be replayed until the party's average level is above its recommended range.
+
 There is one save slot, kept by the server in `.data/save.json` (set `DATA_DIR` to move it). Everyone playing on the same
 server shares it, and there is no login, so anyone who can reach the server can overwrite it.
 
@@ -42,7 +47,7 @@ cell ahead; the back two need reach, ranged weapons or spells. Pause whenever yo
 |---|---|
 | `engine/` | The generic engine. Imports nothing from any ruleset (a test enforces this). See [docs/ENGINE.md](docs/ENGINE.md). |
 | `rules/srd5/` | The 5E compatible ruleset. |
-| `modules/thornwick/` | The adventure, entirely as data. |
+| `modules/` | The adventures, entirely as data. `index.json` lists them. |
 | `data/srd/` | Generated from the SRD by `npm run extract`: 330 monsters, 339 spells, 258 magic items, weapons, armor, gear, classes, conditions and rules text. |
 | `assets/raw/`, `assets/game/` | Gemini's output, and the game-ready versions made from it. |
 | `tools/` | The SRD extractor, art pipeline, server and browser driver. |

@@ -48,6 +48,12 @@ function autoFace(cells, x, y) {
   return 0;
 }
 
+/** The save for a party between adventures. `carried` is what comes along from the last one. */
+export const vacationSave = (ruleset, members, carried = {}) => JSON.stringify({ version: 1, vacation: true, ruleset: ruleset.id, members, hand: null, time: 0, realTime: 0, collected: [], ...carried });
+
+/** A party can play a module, again if it likes, until its average level is above the recommended range. */
+export const outgrown = (module, ruleset, members) => ruleset.partyLevel(members) > module.recommendedLevels.max;
+
 export class Game {
   constructor(module, ruleset, { seed = Date.now() >>> 0, listeners = {} } = {}) {
     this.module = module;
@@ -57,7 +63,7 @@ export class Game {
     this.time = 0;       // Game seconds.
     this.realTime = 0;   // Seconds played.
     this.paused = false;
-    this.over = null;    // null | 'won' | 'lost'
+    this.over = null;    // null | 'won' | 'lost' | 'left'
     this.fx = [];
     this.memberFx = new Map();
     this.logLines = [];
@@ -67,26 +73,33 @@ export class Game {
     this.levels = {};
     this.hand = null;
     this.party = null;
+    this.collected = []; // Unique items the party has already carried out of an adventure.
     this.lastAlert = -100;
   }
 
-  /** Starts a new game with a party from the ruleset. */
-  start(members) {
+  /** Starts the adventure with a party from the ruleset. Game time carries over, as that's what timed effects count against. */
+  start(members, { hand = null, time = 0, realTime = 0, collected = [] } = {}) {
+    Object.assign(this, { hand, time, realTime, collected });
     for (const [id, def] of Object.entries(this.module.levels)) {
       const level = buildLevel(id, def);
       this.levels[id] = level;
       for (const s of level.spawns) {
-        if (s.type === 'item') this.dropItem(this.instantiateItem(s), s.x, s.y, id);
+        if (s.type === 'item') this.placeModuleItem(s, s.x, s.y, id);
         else this.spawnMonster(s.proto, s.x, s.y, id, s);
       }
       delete level.spawns;
     }
     const st = this.module.start;
     this.party = { x: st.x, y: st.y, dir: st.dir ?? 0, level: st.level, members, stepReadyAt: 0, focus: null };
-    this.ruleset.onNewGame?.(this);
+    this.ruleset.onAdventureStart?.(this);
     if (this.module.intro) for (const line of this.module.intro) this.log(line, 9);
     this.runObjectsAt(this.party.x, this.party.y, 'enter');
     this.updateExplored();
+  }
+
+  /** Puts an item from the module into the world, unless it's unique and the party already has it from an earlier run. */
+  placeModuleItem(s, x, y, level) {
+    if (!this.collected.includes(s.proto)) this.dropItem(this.instantiateItem(s), x, y, level);
   }
 
   instantiateItem(s) {
@@ -121,6 +134,8 @@ export class Game {
   memberHit(member, amount) { this.memberFx.set(member, { at: this.realTime, amount }); }
   gameOver() { if (!this.over) { this.over = 'lost'; this.sound('down'); this.listeners.over?.('lost'); } }
   win(text) { if (!this.over) { this.over = 'won'; this.winText = text; this.sound('level'); this.listeners.over?.('won'); } }
+  /** The party takes an exit, ending the adventure without winning or losing it. */
+  leave(text) { if (!this.over) { this.over = 'left'; this.leaveText = text; this.sound('stairs'); this.listeners.over?.('left'); } }
 
   // ---------------------------------------------------------------- map queries
   cellAt(x, y, level = this.party.level) { return this.levels[level].cells[y]?.[x] ?? ' '; }
@@ -257,6 +272,7 @@ export class Game {
     return true;
   }
   useStairs(s) {
+    if (s.exit) { this.leave(s.text); return; }
     this.teleport(s.to);
     this.sound('stairs');
     if (s.text) this.log(s.text);
@@ -343,8 +359,8 @@ export class Game {
         case 'spawn': this.spawnMonster(a.proto, a.x, a.y, a.level ?? this.party.level, { awake: true, ...a.opts }); break;
         case 'teleport': this.teleport(a.to); break;
         case 'rule': this.ruleset.rule(this, a.name, a); break;
-        case 'giveItem': this.dropItem(this.instantiateItem(a), this.party.x, this.party.y, this.party.level); break;
-        case 'placeItem': this.dropItem(this.instantiateItem(a), a.x, a.y, a.level ?? this.party.level); break;
+        case 'giveItem': this.placeModuleItem(a, this.party.x, this.party.y, this.party.level); break;
+        case 'placeItem': this.placeModuleItem(a, a.x, a.y, a.level ?? this.party.level); break;
         case 'win': this.win(a.text); break;
         case 'disarm': { const o = this.objectById(a.id); if (o) o.disarmed = true; break; }
         default: throw new Error(`unknown script action: ${a.do}`);
@@ -402,7 +418,7 @@ export class Game {
     }
     if (o.trap && !o.trap.disarmed) { o.trap.disarmed = true; this.run(o.trap.onTrigger ?? []); }
     if (o.items?.length) {
-      for (const s of o.items) this.dropItem(this.instantiateItem(s), o.x, o.y, o.level);
+      for (const s of o.items) this.placeModuleItem(s, o.x, o.y, o.level);
       o.items = [];
       o.opened = true;
       this.sound('door');
@@ -608,16 +624,32 @@ export class Game {
   advanceTime(seconds) { this.time += seconds; }
 
   // ---------------------------------------------------------------- saving
+  /**
+   * The save for this party once it has left the adventure, without changing the game, so it can carry on if
+   * the save fails. Items the module marks `stays` don't come along, and those it marks `unique` won't be there next time.
+   */
+  vacationSave() {
+    const members = clone(this.party.members);
+    const stays = (it) => this.module.items?.[it?.proto]?.stays;
+    const carried = [this.hand, ...members.flatMap((m) => [...Object.values(m.equipment), ...m.pack])];
+    const unique = carried.filter((it) => this.module.items?.[it?.proto]?.unique).map((it) => it.proto);
+    for (const m of members) {
+      for (const slot of Object.keys(m.equipment)) if (stays(m.equipment[slot])) m.equipment[slot] = null;
+      m.pack = m.pack.map((it) => (stays(it) ? null : it));
+    }
+    const rested = this.ruleset.onLeaveAdventure?.(this, members) ?? 0;
+    return vacationSave(this.ruleset, members, { hand: stays(this.hand) ? null : clone(this.hand), time: this.time + rested, realTime: this.realTime, collected: [...new Set([...this.collected, ...unique])] });
+  }
   serialize() {
     return JSON.stringify({
       version: 1, module: this.module.id, ruleset: this.ruleset.id, rng: this.rng.state, time: this.time, realTime: this.realTime, flags: this.flags,
-      entities: this.entities, floorItems: this.floorItems, levels: this.levels, hand: this.hand, party: this.party, logLines: this.logLines.slice(-12),
+      entities: this.entities, floorItems: this.floorItems, levels: this.levels, hand: this.hand, party: this.party, logLines: this.logLines.slice(-12), collected: this.collected,
     });
   }
   restore(json) {
     const s = JSON.parse(json);
     if (s.module !== this.module.id || s.ruleset !== this.ruleset.id) throw new Error('save is for a different game');
-    Object.assign(this, { time: s.time, realTime: s.realTime, flags: s.flags, entities: s.entities, floorItems: s.floorItems, levels: s.levels, hand: s.hand, party: s.party, logLines: s.logLines, over: null, fx: [], paused: false, exploredKey: null });
+    Object.assign(this, { time: s.time, realTime: s.realTime, flags: s.flags, entities: s.entities, floorItems: s.floorItems, levels: s.levels, hand: s.hand, party: s.party, logLines: s.logLines, collected: s.collected ?? [], over: null, fx: [], paused: false, exploredKey: null });
     this.rng.state = s.rng;
     this.memberFx = new Map();
   }

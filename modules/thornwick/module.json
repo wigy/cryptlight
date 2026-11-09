@@ -1,7 +1,8 @@
 {
   "id": "thornwick",
   "name": "The Well at Thornwick",
-  "summary": "A first-level adventure for four characters.",
+  "summary": "The village well runs foul, and things climb out at night. Someone has stolen the stone that kept it pure.",
+  "recommendedLevels": { "min": 1, "max": 2 },
   "titleImage": "title",
   "ruleset": "srd5",
   "start": { "level": "warren", "x": 11, "y": 20, "dir": 0 },
@@ -12,9 +13,9 @@
     "Your rope ends here, in the dark. Find the stone."
   ],
   "items": {
-    "iron-key": { "name": "Iron Key", "kind": "gear", "weight": 0.1, "icon": "key", "description": "A heavy key with a goblin's tooth tied to it." },
-    "wellstone": { "name": "The Wellstone", "kind": "gear", "weight": 2, "icon": "amulet", "description": "A smooth blue stone, cool and always damp. It belongs in the font by the crypt stairs." },
-    "thornwick-fang": { "name": "Thornwick Fang", "base": "shortsword", "bonus": 1, "description": "A +1 Shortsword, once the pride of the village militia." }
+    "iron-key": { "stays": true, "name": "Iron Key", "kind": "gear", "weight": 0.1, "icon": "key", "description": "A heavy key with a goblin's tooth tied to it." },
+    "wellstone": { "stays": true, "name": "The Wellstone", "kind": "gear", "weight": 2, "icon": "amulet", "description": "A smooth blue stone, cool and always damp. It belongs in the font by the crypt stairs." },
+    "thornwick-fang": { "unique": true, "name": "Thornwick Fang", "base": "shortsword", "bonus": 1, "description": "A +1 Shortsword, once the pride of the village militia." }
   },
   "levels": {
     "warren": {
@@ -43,7 +44,7 @@
         "#########..k..#################",
         "#########.....#################",
         "#########.....#################",
-        "###########Y###################"
+        "#########R#Y###################"
       ],
       "legend": {
         "Y": { "type": "wall", "kind": "plaque", "text": "Carved by the village: 'Keep the stone in the font, and the font keeps the well.'" },
@@ -71,6 +72,7 @@
         "c": { "type": "feature", "sprite": "chest", "blocks": false, "text": "Skarn's hoard!", "emptyText": "The chest is empty.",
                "items": [{ "proto": "iron-key" }, { "proto": "gold", "qty": 60 }, { "proto": "potion-of-healing" }] },
         "K": { "type": "door", "style": "iron", "lock": { "key": "iron-key", "dc": 20 } },
+        "R": { "type": "stairs", "direction": "up", "exit": true, "text": "You climb the rope back up to Thornwick." },
         "T": { "type": "stairs", "direction": "down", "to": { "level": "crypt", "x": 1, "y": 2, "dir": 1 }, "text": "Worn steps lead down into a much older place." }
       }
     },

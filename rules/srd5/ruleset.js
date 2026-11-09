@@ -34,6 +34,8 @@ const SPECIES_PORTRAITS = {
   elf: ['barbarian', 'bard', 'cleric', 'druid', 'fighter', 'monk', 'paladin', 'ranger', 'rogue'],
 };
 
+const LONG_REST_SECONDS = 8 * 3600;
+
 export class Srd5Ruleset {
   id = 'srd5';
   name = '5E compatible (SRD 5.2.1)';
@@ -86,8 +88,53 @@ export class Srd5Ruleset {
     return SPECIES_PORTRAITS[speciesId]?.includes(classId) ? `portrait-${speciesId}-${classId}` : `portrait-${classId}`;
   }
 
-  /** Called once for a new game: someone with a free hand lights a torch. */
-  onNewGame(game) {
+  /** A title for the screens between adventures. */
+  memberTitle(m) { return `Level ${m.level} ${this.srd.classes[m.classId].name}`; }
+
+  /** A replacement starts at the level of the lowest character still alive. */
+  hireLevel(members) {
+    const living = members.filter((m) => !m.dead);
+    return living.length ? Math.min(...living.map((m) => m.level)) : 1;
+  }
+
+  /**
+   * The party with a new character in place of a dead one. The dead character's gear goes to the replacement, then
+   * to whoever has room. It can't be lost, so if nobody has room the replacement's pack grows to hold it.
+   */
+  hire(members, slot, choices) {
+    const party = structuredClone(members);
+    const { equipment, pack } = party[slot];
+    const hired = this.createMember({ ...choices, level: this.hireLevel(members) });
+    party[slot] = hired;
+    const carriers = [hired, ...party.filter((m) => m !== hired && !m.dead)];
+    for (const item of [...Object.values(equipment), ...pack].filter(Boolean)) {
+      const stack = item.qty != null && carriers.flatMap((m) => m.pack).find((it) => it?.proto === item.proto && it.qty != null);
+      if (stack) { stack.qty += item.qty; continue; }
+      const carrier = carriers.find((m) => m.pack.includes(null));
+      if (carrier) carrier.pack[carrier.pack.indexOf(null)] = item;
+      else hired.pack.push(item);
+    }
+    return party;
+  }
+
+  /** The average level of those still alive, who are the ones setting out. */
+  partyLevel(members) {
+    const living = members.filter((m) => !m.dead);
+    return living.reduce((sum, m) => sum + m.level, 0) / Math.max(1, living.length);
+  }
+
+  /** Going on vacation is a Long Rest. Gets copies of the members, so game stays as it is. */
+  onLeaveAdventure(game, members) {
+    for (const m of members) {
+      this.endConcentration({ party: { members }, entities: [], log() {} }, m);
+      this.longRestMember(m);
+    }
+    return LONG_REST_SECONDS;
+  }
+
+  /** Called at the start of each adventure: someone with a free hand lights a torch, unless one is still burning. */
+  onAdventureStart(game) {
+    if (game.party.members.some((m) => ['mainHand', 'offHand'].some((s) => m.equipment[s]?.proto === 'torch'))) return;
     const carrier = game.party.members.find((m) => !m.equipment.offHand && !this.itemDef(m.equipment.mainHand)?.props?.twoHanded);
     if (!carrier) return;
     const i = carrier.pack.findIndex((it) => it?.proto === 'torch');
@@ -1305,21 +1352,23 @@ export class Srd5Ruleset {
       }
       game.log('A short rest passes.');
     } else {
-      game.advanceTime(8 * 3600);
-      for (const m of game.party.members) {
-        const hasFood = m.pack.findIndex((it) => it?.proto === 'rations');
-        if (hasFood >= 0) {
-          const stack = m.pack[hasFood];
-          stack.qty = (stack.qty ?? 1) - 1;
-          if (stack.qty <= 0) m.pack[hasFood] = null;
-        }
-        // A stable character regains 1 HP after 1d4 hours, so a Long Rest always wakes them.
-        longRest(m);
-      }
+      game.advanceTime(LONG_REST_SECONDS);
+      for (const m of game.party.members) this.longRestMember(m);
       game.log('A long rest passes. You feel restored.', GREEN);
     }
     game.sound('heal');
     return true;
+  }
+
+  longRestMember(m) {
+    const hasFood = m.pack.findIndex((it) => it?.proto === 'rations');
+    if (hasFood >= 0) {
+      const stack = m.pack[hasFood];
+      stack.qty = (stack.qty ?? 1) - 1;
+      if (stack.qty <= 0) m.pack[hasFood] = null;
+    }
+    // A stable character regains 1 HP after 1d4 hours, so a Long Rest always wakes them.
+    longRest(m);
   }
 
   /** How the party's standing shows on the end screen. */

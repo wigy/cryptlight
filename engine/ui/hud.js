@@ -4,7 +4,7 @@ import { COLORS } from '../colors.js';
 import { DIRS } from '../world.js';
 import { createAutomap, drawAutomap } from './automap.js';
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 /** Replaces an element's content only when it actually changed, so hover and clicks survive updates. */
 function setHtml(el, html) { if (el._html !== html) { el._html = html; el.innerHTML = html; } }
 
@@ -18,6 +18,9 @@ const glyph = (body) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentCol
 const GLYPHS = {
   plus: glyph('<path d="M12 7v10M7 12h10" stroke-width="1.3"/>'),
 };
+
+/** A ruleset's memberSheet lines as HTML, for inside an element of class sheet. */
+export const sheetHtml = (lines) => lines.map((l) => (typeof l === 'string' ? esc(l) : `<span style="color:${COLORS[l.color]}">${esc(l.text)}</span>`)).join('\n');
 
 export class Hud {
   constructor(stage, app) {
@@ -121,7 +124,10 @@ export class Hud {
     if (g.hand) { const src = this.itemImg(g.hand); if (this.handEl.getAttribute('src') !== src) this.handEl.setAttribute('src', src); }
     setHtml(this.els.banner, g.hand ? esc(g.ruleset.itemInfo(g.hand).name) : '');
     for (const f of this.app.view.takeFloaters()) this.addFloater(f);
-    if (g.over && !this.ended) this.showEnd();
+    if (g.over === 'left' && !this.ended) {
+      this.ended = true;
+      this.app.leaveAdventure().then((left) => { if (!left) { g.over = null; this.ended = false; } }); // Stays in the game rather than lose it.
+    } else if (g.over && !this.ended) this.showEnd();
   }
 
   renderParty() {
@@ -208,7 +214,7 @@ export class Hud {
     if (this.inventory == null) return;
     const i = this.inventory;
     const m = g.party.members[i];
-    const sheet = g.ruleset.memberSheet(g, m).map((l) => (typeof l === 'string' ? esc(l) : `<span style="color:${COLORS[l.color]}">${esc(l.text)}</span>`)).join('\n');
+    const sheet = sheetHtml(g.ruleset.memberSheet(g, m));
     const tab = (mode, label) => `<button class="${this.invMode === mode ? 'on' : ''}" data-act="invmode:${mode}">${label}</button>`;
     const top = `<div class="invtabs">${tab('items', 'Items')}${tab('abilities', 'Skills &amp; Spells')}${g.ruleset.memberFeatures ? tab('features', 'Features') : ''}</div>`;
     const close = '<button class="close" data-act="inv:close">Close</button>';
@@ -399,10 +405,14 @@ export class Hud {
     this.els.end.style.backgroundImage = `url(${this.img(g.module.titleImage)})`;
     this.els.end.innerHTML = `<div class="shade"></div><div class="body">
       <h1>${won ? 'Victory' : 'The Party Has Fallen'}</h1>
-      <p class="endtext">${esc(won ? g.winText : 'The dark keeps its secrets. Thornwick waits for braver souls.')}</p>
+      <p class="endtext">${esc(won ? g.winText : 'The dark keeps its secrets, and waits for braver souls.')}</p>
       <p class="endtext">${lines.map(esc).join('<br>')}</p>
-      <div class="menu"><button id="endmenu">Main menu</button></div></div>
+      <div class="menu"><button id="endmenu">${won ? 'Leave the adventure' : 'Main menu'}</button></div></div>
       <div class="legal">${esc(g.ruleset.attribution)}</div>`;
-    this.els.end.querySelector('#endmenu').addEventListener('click', () => { this.ended = false; this.app.showTitle(); });
+    const button = this.els.end.querySelector('#endmenu');
+    button.addEventListener('click', async () => {
+      if (!won) { this.app.showTitle(); return; }
+      if (!(await this.app.leaveAdventure())) button.textContent = 'Could not save. Try again';
+    });
   }
 }

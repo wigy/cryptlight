@@ -39,7 +39,7 @@ function applyBackground(scores, bg, classId) {
   scores[order[1]] = Math.min(20, scores[order[1]] + 1);
 }
 
-export function createCharacter(srd, { name, classId, speciesId = 'human', backgroundId = 'soldier', fightingStyle }) {
+export function createCharacter(srd, { name, classId, speciesId = 'human', backgroundId = 'soldier', fightingStyle, level = 1 }) {
   const cls = srd.classes[classId];
   const table = CLASS_TABLE[classId];
   const species = SPECIES[speciesId];
@@ -92,6 +92,8 @@ export function createCharacter(srd, { name, classId, speciesId = 'human', backg
     c.initiateAbility = initiate.ability;
   }
   resetResources(c);
+  while (c.level < Math.min(level, MAX_LEVEL)) gainLevel(c);
+  c.xp = XP_TABLE[c.level - 1]; // As if it had earned its way there.
   return c;
 }
 
@@ -123,6 +125,11 @@ export const spellsAtLevel = (c, level) => DEFAULT_SPELLS[c.classId].prepared.sl
 /** Grants a level if earned. Returns true if levelled. */
 export function maybeLevelUp(c) {
   if (c.dead || c.level >= MAX_LEVEL || c.xp < xpForNextLevel(c)) return false;
+  gainLevel(c);
+  return true;
+}
+
+function gainLevel(c) {
   c.level += 1;
   const gain = hitPointGain(c);
   c.maxHp += gain;
@@ -134,7 +141,6 @@ export function maybeLevelUp(c) {
     for (const id of spellsAtLevel(c, c.level)) if (!c.prepared.includes(id)) c.prepared.push(id);
   }
   resetResources(c);
-  return true;
 }
 
 export function shortRest(rng, c) {

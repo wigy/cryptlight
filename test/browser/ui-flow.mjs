@@ -10,6 +10,10 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
     await click(r.x, r.y);
     await wait(120);
   };
+  // Panels redraw on the next frame, which can be slow under the software renderer.
+  const until = async (expr, tries = 50) => { for (let i = 0; i < tries && !(await ev(expr)); i++) await wait(100); assert.ok(await ev(expr), expr); };
+  // Loading takes as long as it takes on a busy machine, and Continue only lights up once the save has been read.
+  const reloadToMenu = async () => { await ev(`location.reload()`); await wait(500); await until(`document.querySelector('#cont')?.disabled === false`, 300); };
   await wait(1500);
 
   // Creator screen.
@@ -21,15 +25,25 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await wait(200);
   assert.match(await ev(`document.querySelector('.pc img').getAttribute('src')`), /portrait-dwarf-barbarian/, 'the first pick is a dwarf');
   await clickEl('#begin');
+  await wait(400);
+  // A new party is saved and on vacation, which is also where Continue finds it.
+  await shot('10c-vacation');
+  assert.match(await ev(`document.querySelector('.adventure').textContent`), /The Well at Thornwick.*Recommended levels 1\u20132/s);
+  await reloadToMenu();
+  await clickEl('#cont');
+  await wait(300);
+  assert.match(await ev(`document.querySelector('.member').textContent`), /Brunna.*Level 1 Barbarian/s);
+  await clickEl('[data-adventure="thornwick"]');
   await wait(1200);
+  assert.equal(await state(`[g.party.x, g.party.y, g.party.level].join()`), '11,20,warren', 'an adventure begins at its starting point');
+  assert.equal(await state(`g.floorItems.some((f) => f.item.proto === 'thornwick-fang')`), true, 'the first run has the unique reward');
   assert.equal(await state(`g.party.members[0].classId`), 'barbarian');
   assert.equal(await state(`g.party.members[0].equipment.mainHand.proto`), 'greataxe');
   await key('KeyK');
   await wait(100);
 
   // Back to the default party through the menu, proving Continue exists now.
-  await ev(`location.reload()`);
-  await wait(2000);
+  await reloadToMenu();
   assert.equal(await ev(`document.querySelector('#cont').disabled`), false);
   // With a save to lose, New Game asks first, and Cancel or Escape leaves everything as it was.
   const asking = `document.querySelector('#confirm-new').open`;
@@ -51,6 +65,8 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await clickEl('#newgame-yes');
   await wait(400);
   await clickEl('#begin');
+  await wait(400);
+  await clickEl('[data-adventure="thornwick"]');
   await wait(1500);
 
   // Pick up the potion on the floor by clicking it in the view.
@@ -99,8 +115,6 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await shot('13-combat');
   await shot('14-action-boxes');
   // The icons act directly, dim while recovering and light up again afterwards.
-  // Panels redraw on the next frame, which can be slow under the software renderer.
-  const until = async (expr) => { for (let i = 0; i < 50 && !(await ev(expr)); i++) await wait(100); assert.ok(await ev(expr), expr); };
   const quick = (i, act) => `document.querySelectorAll('.who')[${i}].querySelector('[data-act="quick:${i}:${act}"]')`;
   assert.equal(await ev(`${quick(1, 'attack:off')}.disabled`), false, 'a second Light weapon can attack');
   await until(`window.__game.ruleset.targetsFor(window.__game, window.__game.party.members[1], { maxFeet: 5, melee: true }).length > 0`);
@@ -315,9 +329,81 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await wait(300);
   assert.equal(await state(`g.party.x`), 10, 'Exit saved the step taken after the last manual save');
 
+  // Taking an exit puts the party on vacation, with what it earned but not what belongs to the adventure.
+  await ev(`(() => { const m = window.__game.party.members[0]; m.xp = 123; m.pack[m.pack.indexOf(null)] = { uid: 'k', proto: 'iron-key' }; })()`);
+  await go('warren', 9, 21, 2); await wait(450);
+  await key('KeyW');
+  await wait(400);
+  await shot('29-left');
+  assert.match(await ev(`document.querySelector('#vacation h2').textContent`), /climb the rope/);
+  await reloadToMenu();
+  await clickEl('#cont');
+  await wait(300);
+  await clickEl('[data-adventure="thornwick"]');
+  await wait(1000);
+  assert.equal(await state(`g.party.members[0].xp`), 123, 'the party is saved as it left');
+  assert.equal(await state(`g.party.members[0].pack.some((it) => it?.proto === 'iron-key')`), false, 'the key stays in the adventure');
+  assert.equal(await state(`[g.party.x, g.party.y].join()`), '11,20');
+
   // Winning shows the end screen with the attribution.
   await ev(`window.__game.win('Clear water wells up.')`);
   await wait(400);
   await shot('30-victory');
   assert.match(await ev(`document.querySelector('.legal').textContent`), /SRD 5\.2\.1/);
+  await clickEl('#endmenu');
+  await wait(300);
+  assert.ok(await ev(`!!document.querySelector('#vacation')`), 'the end of the adventure is an exit too');
+  assert.ok(await ev(`!!document.querySelector('[data-adventure="thornwick"]')`), 'and it can be played again');
+  await clickEl('#view-party');
+  await wait(200);
+  assert.equal(await ev(`document.querySelectorAll('.partycard').length`), 4, 'View Party shows all four');
+  assert.equal(await ev(`document.querySelector('[data-hire]')`), null, 'nobody to replace yet');
+  await clickEl('#party-back');
+  await wait(200);
+
+  // Someone dies, and their replacement starts at the level of the lowest of the others.
+  await clickEl('[data-adventure="thornwick"]');
+  await wait(800);
+  await ev(`window.__game.party.members.forEach((m, i) => { m.level = 2; if (i === 1) { m.dead = true; m.hp = 0; m.pack[m.pack.indexOf(null)] = { uid: 'fang', proto: 'thornwick-fang' }; } })`);
+  await go('warren', 9, 21, 2); await wait(450);
+  await key('KeyW');
+  await wait(400);
+  await clickEl('#view-party');
+  await wait(200);
+  await shot('30b-party');
+  assert.equal(await ev(`document.querySelectorAll('[data-hire]').length`), 1);
+  await clickEl('[data-hire="1"]');
+  await wait(200);
+  assert.match(await ev(`document.querySelector('#hire').textContent`), /at level 2.*Pip/s);
+  await ev(`(() => { const s = document.querySelector('select[data-key="classId"]'); s.value = 'wizard'; s.dispatchEvent(new Event('change')); })()`);
+  await wait(200);
+  await shot('30c-hire');
+  await clickEl('#hire-go');
+  await wait(300);
+  assert.equal(await ev(`document.querySelector('[data-hire]')`), null, 'the slot is filled');
+  // It lasts, and the new character goes along.
+  await reloadToMenu();
+  await clickEl('#cont');
+  await wait(300);
+  assert.match(await ev(`document.querySelectorAll('.member')[1].textContent`), /Recruit.*Level 2 Wizard/s);
+  await clickEl('[data-adventure="thornwick"]');
+  await wait(800);
+  assert.deepEqual(await state(`[g.party.members[1].name, g.party.members[1].level, g.party.members[1].xp, !!g.party.members[1].dead]`), ['Recruit', 2, 300, false]);
+  assert.equal(await state(`g.party.members[1].pack.some((it) => it?.uid === 'fang')`), true, 'the fallen character\'s gear follows the party');
+  assert.equal(await state(`g.floorItems.some((f) => f.item.proto === 'thornwick-fang')`), false, 'and a unique reward is not there again');
+  await go('warren', 9, 21, 2); await wait(450);
+  await key('KeyW');
+  await wait(400);
+
+  // Once the party has outgrown it, it can't.
+  await clickEl('[data-adventure="thornwick"]');
+  await wait(800);
+  await ev(`window.__game.party.members.forEach((m) => { m.level = 3; })`);
+  await go('warren', 9, 21, 2); await wait(450);
+  await key('KeyW');
+  await wait(400);
+  await shot('31-outgrown');
+  assert.equal(await ev(`document.querySelector('[data-adventure="thornwick"]')`), null, 'no way to set out');
+  assert.match(await ev(`document.querySelector('.adventure button').textContent`), /outgrown/);
+  assert.equal(await ev(`document.querySelector('.adventure button').disabled`), true);
 }
