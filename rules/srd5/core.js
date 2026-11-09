@@ -58,7 +58,7 @@ export const removeEffect = (c, id) => { c.effects = (c.effects ?? []).filter((x
 /**
  * SRD Cover from the share of sight lines a wall or shut door blocks: Half Cover (+2) when one or two of
  * the four are blocked, Three-Quarters Cover (+5) when three or more are. It adds to AC and Dexterity saves.
- * Total Cover needs no number: without a line of sight there is no attack.
+ * Total Cover needs no number: without a line of sight (centre to centre) there is no attack at all.
  */
 export const coverBonus = (fraction) => (fraction >= 0.75 ? 5 : fraction > 0 ? 2 : 0);
 export const coverName = (bonus) => (bonus >= 5 ? 'three-quarters cover' : bonus > 0 ? 'half cover' : '');

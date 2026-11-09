@@ -610,3 +610,22 @@ test('cover adds +2 or +5 to AC and Dexterity saves', () => {
   assert.equal(savingThrow(rng(), c, 'dex', 12, { cover: 2 }).success, true, 'Dex: 10 + 2 makes 12');
   assert.equal(savingThrow(rng(), c, 'wis', 12, { cover: 2 }).success, false, 'other saves get nothing');
 });
+
+test('a burst reaches from where it hits, not from the caster', async () => {
+  const g = await newGame();
+  const r = g.ruleset;
+  const foe = (x) => ({ kind: 'monster', x, y: 0, level: 'L', hp: 5 });
+  const [hit, near, walled, far] = [foe(0), foe(1), foe(2), foe(9)];
+  const seen = [];
+  const game = {
+    entities: [hit, near, walled, far],
+    feet: (a, b) => Math.abs(a.x - b.x) * 5,
+    centerOf: (c) => ({ x: c.x + 0.5, y: 0.5 }),
+    clearSegment: (p, q) => { seen.push(p); return q.x < 2; }, // A wall stands between the hit and `walled`.
+  };
+  r.isHostile = () => true;
+  r.targetsFor = () => [hit]; // The caster can only see the first one.
+  const list = r.areaTargets(game, {}, { radiusFeet: 10 }, 60);
+  assert.deepEqual(list, [hit, near]);
+  assert.ok(seen.every((p) => p.x === 0.5), 'lines start at the point of impact');
+});

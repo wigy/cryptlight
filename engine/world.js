@@ -4,6 +4,18 @@ import { Rng } from './rng.js';
 
 export const DIRS = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }]; // N E S W
 const LOG_LIMIT = 60;
+
+/** Does the segment (x0,y0)→(x1,y1) pass through the inside of the box [left, top, right, bottom]? */
+function segmentHitsBox(x0, y0, x1, y1, [l, t, r, b]) {
+  let lo = 0, hi = 1;
+  for (const [d, a, min, max] of [[x1 - x0, x0, l, r], [y1 - y0, y0, t, b]]) {
+    if (Math.abs(d) < 1e-12) { if (a <= min || a >= max) return false; continue; }
+    let ta = (min - a) / d, tb = (max - a) / d;
+    if (ta > tb) [ta, tb] = [tb, ta];
+    lo = Math.max(lo, ta); hi = Math.min(hi, tb);
+  }
+  return hi - lo > 1e-9;
+}
 const DOOR_SPEED = 1.4; // Fractions of a door per real second.
 const UNSEEN = 0, SEEN = 1, VISITED = 2; // Values in level.explored, one per cell.
 
@@ -183,28 +195,66 @@ export class Game {
     return true;
   }
 
+  /** The middle of where a creature stands, in cell units (a cell is 1×1; party members use their quarter). */
+  centerOf(c) {
+    const p = this.posOf(c);
+    return { x: (p.x + p.w / 2) / 2, y: (p.y + p.w / 2) / 2 };
+  }
+  levelOf(c) { return c.kind === 'pc' ? this.party.level : c.level; }
+
   /**
-   * How much of `target` is hidden from `from` by walls and shut doors, as the share (0, 0.25 … 1) of
-   * sight lines blocked: from the centre of the attacker's square to the four corners of the target's,
-   * pulled a little inwards so a line that just grazes a corner doesn't count. The ruleset turns this
-   * into cover. Only cells between the two block; the ones they stand in never do.
+   * Is the straight segment p→q (cell units) free of walls and shut doors? Walks every cell it crosses, so
+   * the answer is the same from either end. Passing exactly through a corner is blocked only when both
+   * cells beside it are. The cells the ends lie in never block.
    */
-  coverFraction(from, target) {
-    const a = this.posOf(from), b = this.posOf(target);
-    const level = target.kind === 'pc' ? this.party.level : target.level;
-    const ax = (a.x + a.w / 2) / 2, ay = (a.y + a.w / 2) / 2;
-    const own = (x, y) => (x === Math.floor(ax) && y === Math.floor(ay)) || (x >= Math.floor(b.x / 2) && x <= Math.floor((b.x + b.w - 1) / 2) && y >= Math.floor(b.y / 2) && y <= Math.floor((b.y + b.w - 1) / 2));
+  clearSegment(p, q, level = this.party.level) {
+    let cx = Math.floor(p.x), cy = Math.floor(p.y);
+    const ex = Math.floor(q.x), ey = Math.floor(q.y);
+    const dx = q.x - p.x, dy = q.y - p.y;
+    const sx = Math.sign(dx), sy = Math.sign(dy);
+    const tDx = sx ? Math.abs(1 / dx) : Infinity, tDy = sy ? Math.abs(1 / dy) : Infinity;
+    let tx = sx > 0 ? (cx + 1 - p.x) * tDx : sx < 0 ? (p.x - cx) * tDx : Infinity;
+    let ty = sy > 0 ? (cy + 1 - p.y) * tDy : sy < 0 ? (p.y - cy) * tDy : Infinity;
+    const solid = (x, y) => !(x === ex && y === ey) && this.blocksSight(x, y, level);
+    while (cx !== ex || cy !== ey) {
+      if (Math.min(tx, ty) > 1) break; // Rounding at the far end.
+      if (Math.abs(tx - ty) < 1e-9) {
+        if (solid(cx + sx, cy) && solid(cx, cy + sy)) return false;
+        cx += sx; cy += sy; tx += tDx; ty += tDy;
+      } else if (tx < ty) { cx += sx; tx += tDx; } else { cy += sy; ty += tDy; }
+      if (solid(cx, cy)) return false;
+    }
+    return true;
+  }
+
+  /** Line of sight between two creatures, from where each actually stands in its square. Symmetric. */
+  canSee(a, b) {
+    const level = this.levelOf(a);
+    return level === this.levelOf(b) && this.clearSegment(this.centerOf(a), this.centerOf(b), level);
+  }
+
+  /**
+   * What hides `target` from `from` (a creature, or a point {x, y} in cell units such as where a spell
+   * bursts): four sight lines run to the corners of the target's square, pulled a little inwards so one
+   * that only grazes a corner doesn't count. `walls` is the share of them a wall or shut door stops;
+   * `creatures` the share, of the rest, that pass through another living creature's square. The ruleset
+   * turns these into cover.
+   */
+  sightCover(from, target) {
+    const level = this.levelOf(target);
+    const o = from.kind ? this.centerOf(from) : from;
+    const b = this.posOf(target);
     const inset = 0.1 * b.w;
-    const corners = [[b.x / 2 + inset, b.y / 2 + inset], [(b.x + b.w) / 2 - inset, b.y / 2 + inset], [b.x / 2 + inset, (b.y + b.w) / 2 - inset], [(b.x + b.w) / 2 - inset, (b.y + b.w) / 2 - inset]];
-    const blocked = (tx, ty) => {
-      const steps = Math.ceil(Math.hypot(tx - ax, ty - ay) / 0.05);
-      for (let i = 1; i < steps; i++) {
-        const x = Math.floor(ax + ((tx - ax) * i) / steps), y = Math.floor(ay + ((ty - ay) * i) / steps);
-        if (!own(x, y) && this.blocksSight(x, y, level)) return true;
-      }
-      return false;
-    };
-    return corners.filter(([x, y]) => blocked(x, y)).length / corners.length;
+    const x0 = b.x / 2 + inset, x1 = (b.x + b.w) / 2 - inset, y0 = b.y / 2 + inset, y1 = (b.y + b.w) / 2 - inset;
+    const others = [...this.party.members.filter((m) => !m.dead && level === this.party.level), ...this.entities.filter((e) => !e.dead && e.level === level)]
+      .filter((c) => c !== from && c !== target)
+      .map((c) => { const p = this.posOf(c); return [p.x / 2, p.y / 2, (p.x + p.w) / 2, (p.y + p.w) / 2]; });
+    let walls = 0, creatures = 0;
+    for (const [x, y] of [[x0, y0], [x1, y0], [x0, y1], [x1, y1]]) {
+      if (!this.clearSegment(o, { x, y }, level)) walls++;
+      else if (others.some((r) => segmentHitsBox(o.x, o.y, x, y, r))) creatures++;
+    }
+    return { walls: walls / 4, creatures: creatures / 4 };
   }
 
   // ---------------------------------------------------------------- automap

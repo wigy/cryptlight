@@ -332,7 +332,7 @@ export class Srd5Ruleset {
       if (bound && m.uid !== bound.target) continue;
       const feet = game.feet(member, m);
       if (feet > maxFeet) continue;
-      if (!game.los(game.party.x, game.party.y, m.x, m.y)) continue;
+      if (!game.canSee(member, m)) continue;
       const ahead = game.forwardness(m);
       if (!melee && ahead < FORWARD_DOT) continue;
       out.push({ m, feet, score: (m.uid === game.party.focus ? -1000 : 0) + feet - ahead * 2 + (ahead < FORWARD_DOT ? 50 : 0) });
@@ -576,7 +576,7 @@ export class Srd5Ruleset {
   }
 
   breathWeapon(game, m) {
-    const targets = game.entities.filter((t) => t.level === game.party.level && this.isHostile(t) && game.feet(m, t) <= 15 && game.forwardness(t) > 0 && game.los(game.party.x, game.party.y, t.x, t.y));
+    const targets = game.entities.filter((t) => t.level === game.party.level && this.isHostile(t) && game.feet(m, t) <= 15 && game.forwardness(t) > 0 && game.canSee(m, t));
     if (!targets.length) { game.log('Nothing in the cone.'); return false; }
     m.resources.breath -= 1; this.spendAction(game, m);
     const dc = 8 + mod(m, 'con') + pb(m);
@@ -781,9 +781,10 @@ export class Srd5Ruleset {
         const list = this.areaTargets(game, m, fx, rangeFeet);
         if (!list.length) { game.log(`${spell.name}: no target in range.`); return false; }
         const ability = spell.saveAbility ?? 'dex';
+        const origin = this.areaOrigin(game, m, fx, list);
         game.fxBolt(fx.color, list[0]);
         for (const t of list) {
-          const s = this.save(game, t, ability, dc, { cover: coverOf(game, m, t) });
+          const s = this.save(game, t, ability, dc, { cover: coverOf(game, origin, t) });
           const full = roll(game.rng, dice);
           if (s.success && !fx.half) { game.log(`${t.name} resists ${spell.name}.`); this.wake(game, t); continue; }
           this.harm(game, m, t, s.success ? Math.floor(full / 2) : full, type);
@@ -876,8 +877,17 @@ export class Srd5Ruleset {
     if (fx.cone) return this.targetsFor(game, m, { maxFeet: rangeFeet, melee: true }).filter((t) => game.forwardness(t) > 0);
     const list = this.targetsFor(game, m, { maxFeet: rangeFeet });
     if (!list.length) return [];
-    if (fx.radiusFeet) return list.filter((t) => t === list[0] || game.feet(t, list[0]) <= fx.radiusFeet);
-    return [list[0]];
+    if (!fx.radiusFeet) return [list[0]];
+    // A burst spreads from where it hits, so it reaches round corners the caster can't see past.
+    const at = list[0], point = this.areaOrigin(game, m, fx, list);
+    const caught = game.entities.filter((t) => t !== at && !t.dead && t.level === at.level && this.isHostile(t)
+      && game.feet(t, at) <= fx.radiusFeet && game.clearSegment(point, game.centerOf(t), at.level));
+    return [at, ...caught];
+  }
+
+  /** Where an area effect starts: a burst at its first target's feet, anything else at the caster. */
+  areaOrigin(game, m, fx, list) {
+    return fx.radiusFeet && !fx.cone ? game.centerOf(list[0]) : m;
   }
 
   /** The Shield spell as an automatic Reaction for prepared casters when it would turn a hit into a miss. */
@@ -1053,7 +1063,7 @@ export class Srd5Ruleset {
     return true;
   }
   wrathTarget(game, m) {
-    return game.entities.filter((e) => e.level === game.party.level && this.isHostile(e) && game.los(game.party.x, game.party.y, e.x, e.y) && game.forwardness(e) >= FORWARD_DOT)
+    return game.entities.filter((e) => e.level === game.party.level && this.isHostile(e) && game.canSee(m, e) && game.forwardness(e) >= FORWARD_DOT)
       .sort((a, b) => (b.uid === game.party.focus) - (a.uid === game.party.focus) || game.feet(m, a) - game.feet(m, b))[0] ?? null;
   }
   /** The binding ends when either of them falls, or the party leaves the level, so nobody is stuck unable to attack. */
@@ -1119,7 +1129,7 @@ export class Srd5Ruleset {
     removeEffect(m, 'unaware');
     for (const o of game.entities) {
       if (o.awake || o.dead || o.level !== m.level || o.behaviour === 'dormant') continue;
-      if (Math.max(Math.abs(o.x - m.x), Math.abs(o.y - m.y)) <= alertRadius && game.los(o.x, o.y, m.x, m.y)) this.wake(game, o, 0);
+      if (Math.max(Math.abs(o.x - m.x), Math.abs(o.y - m.y)) <= alertRadius && game.canSee(o, m)) this.wake(game, o, 0);
     }
   }
 
@@ -1127,7 +1137,7 @@ export class Srd5Ruleset {
   noticeCheck(game, m) {
     const dist = Math.max(Math.abs(m.x - game.party.x), Math.abs(m.y - game.party.y));
     const senses = m.behaviour === 'sleep' ? 1 : 6;
-    if (dist > senses || !game.los(m.x, m.y, game.party.x, game.party.y)) return false;
+    if (dist > senses || !game.party.members.some((x) => !x.dead && game.canSee(m, x))) return false;
     if (dist <= 1) return true;
     // Passive Perception vs the party's noisiest member's passive Stealth.
     const stealth = Math.min(...game.party.members.filter((x) => !x.dead).map((x) => {
@@ -1278,7 +1288,7 @@ export class Srd5Ruleset {
   }
 
   monsterTargets(game, m, reach) {
-    return game.party.members.filter((x) => !x.dead && game.feet(x, m) <= reach && game.los(m.x, m.y, game.party.x, game.party.y));
+    return game.party.members.filter((x) => !x.dead && game.feet(x, m) <= reach && game.canSee(m, x));
   }
 
   monsterAct(game, m) {
@@ -1304,8 +1314,9 @@ export class Srd5Ruleset {
       return;
     }
     const rangedPlan = multiattackPlan(m, true).filter((e) => e.attack.range);
-    if (rangedPlan.length && game.los(m.x, m.y, game.party.x, game.party.y)) {
-      const living = game.party.members.filter((x) => x.hp > 0);
+    const visible = game.party.members.filter((x) => x.hp > 0 && game.canSee(m, x));
+    if (rangedPlan.length && visible.length) {
+      const living = visible;
       for (const entry of rangedPlan) {
         const inRange = living.filter((x) => game.feet(x, m) <= entry.attack.longRange);
         if (!inRange.length) break;
@@ -1326,8 +1337,7 @@ export class Srd5Ruleset {
     for (const e of list) {
       const within = e.text.match(/within (\d+) feet/) ?? e.text.match(/(\d+)-foot/);
       const range = within ? Number(within[1]) : 30;
-      if (!game.los(m.x, m.y, game.party.x, game.party.y)) continue;
-      if (!game.party.members.some((x) => x.hp > 0 && game.feet(x, m) <= range)) continue;
+      if (!game.party.members.some((x) => x.hp > 0 && game.feet(x, m) <= range && game.canSee(m, x))) continue;
       const recharge = e.name.match(/Recharge (\d)/);
       const perDay = e.name.match(/(\d)\/Day/);
       m.charges[e.name] ??= perDay ? Number(perDay[1]) : 1;
@@ -1344,7 +1354,7 @@ export class Srd5Ruleset {
   useSpecial(game, m, { entry, range }) {
     m.charges[entry.name] -= 1;
     const area = /each creature|-foot (cone|line|emanation|sphere|cube)/i.test(entry.text);
-    const inRange = game.party.members.filter((x) => x.hp > 0 && game.feet(x, m) <= range);
+    const inRange = game.party.members.filter((x) => x.hp > 0 && game.feet(x, m) <= range && game.canSee(m, x));
     const targets = area ? inRange : [game.rng.pick(inRange)];
     game.log(`${m.name} uses ${entry.name.replace(/ \(.*$/, '')}!`, RED);
     game.fxBoltFrom(m, 13);
@@ -1397,7 +1407,7 @@ export class Srd5Ruleset {
     if (hasCondition(m, 'restrained') || hasCondition(m, 'grappled')) return;
     if (this.monsterTargets(game, m, reach).some((x) => x.hp > 0)) return;
     const prefersRange = !meleePlan.length || (multiattackPlan(m, true).some((e) => e.attack.range) && game.rng.int(1, 2) === 1);
-    if (prefersRange && game.los(m.x, m.y, game.party.x, game.party.y)) return;
+    if (prefersRange && game.party.members.some((x) => x.hp > 0 && game.canSee(m, x))) return;
     game.stepEntityToward(m, game.party.x, game.party.y);
   }
 

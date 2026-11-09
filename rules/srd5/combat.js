@@ -20,8 +20,14 @@ export function attackBlessings(rng, c, mods) {
 }
 
 /** An attack roll as the log shows it: "d20(14) + 1d4(3) + 4 = 21 vs AC 15". With two dice, "d20(5,14 high)". */
-/** The cover bonus `target` has against `from`, from the engine's line-of-sight geometry. */
-export const coverOf = (game, from, target) => coverBonus(game.coverFraction?.(from, target) ?? 0);
+/**
+ * The cover bonus `target` has against `from` (a creature, or the point a spell bursts at): walls give
+ * Half or Three-Quarters Cover, creatures in the way (friend or foe) Half Cover. Only the best one counts.
+ */
+export function coverOf(game, from, target) {
+  const c = game.sightCover?.(from, target);
+  return c ? Math.max(coverBonus(c.walls), c.creatures > 0 ? 2 : 0) : 0;
+}
 
 export function attackRollText(r, mods, ac, cover = 0) {
   const dice = `d20(${r.values.join(',')}${r.keep ? ` ${r.keep}` : ''})${mods.map((d) => `${d.sign < 0 ? ' - ' : ' + '}${d.die}(${d.values.join(',')})`).join('')}`;

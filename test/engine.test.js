@@ -173,11 +173,39 @@ test('cover: none down a straight corridor, some around a corner, both ways', ()
   g.party.x = 1; g.party.y = 3;
   const [me] = g.party.members;
   const ahead = g.spawnMonster('m', 1, 1, 'a');
-  assert.equal(g.coverFraction(ahead, me), 0, 'straight up the corridor');
-  assert.equal(g.coverFraction(me, ahead), 0);
+  assert.deepEqual(g.sightCover(ahead, me), { walls: 0, creatures: 0 }, 'straight up the corridor');
+  assert.deepEqual(g.sightCover(me, ahead), { walls: 0, creatures: 0 });
   const round = g.spawnMonster('m', 2, 1, 'a');
-  assert.ok(g.coverFraction(round, me) > 0, 'the wall shields the party');
-  assert.ok(g.coverFraction(me, round) > 0, 'and the monster');
+  g.party.y = 4; // Two squares down the side passage.
+  round.sx = 0; round.sy = 0; // The far half of its square, away from the corner.
+  assert.ok(g.canSee(round, me));
+  assert.ok(g.sightCover(round, me).walls > 0, 'the wall shields the party');
+  assert.ok(g.sightCover(me, round).walls > 0, 'and the monster');
+  round.sy = 1; // Tucked in behind the corner: no line between the two at all.
+  assert.equal(g.canSee(round, me), false);
+});
+
+test('line of sight runs between where creatures stand, the same both ways', () => {
+  const g = fresh();
+  const spots = [];
+  for (let y = 0; y < 7; y++) for (let x = 0; x < 7; x++) {
+    if (g.blocksSight(x, y)) continue;
+    for (const [sx, sy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const m = g.spawnMonster('m', x, y, 'a'); m.sx = sx; m.sy = sy; spots.push(m); }
+  }
+  for (const a of spots) for (const b of spots) assert.equal(g.canSee(a, b), g.canSee(b, a), `${a.x},${a.y} and ${b.x},${b.y}`);
+  const [a, b] = [spots.find((m) => m.x === 1 && m.y === 1), spots.find((m) => m.x === 3 && m.y === 3)];
+  assert.equal(g.canSee(a, b), false, 'through the wall');
+});
+
+test('creatures in the way give cover, friend or foe', () => {
+  const g = new Game(structuredClone(MODULE), new StubRules(), {});
+  g.start([0, 1, 2, 3].map((i) => ({ kind: 'pc', name: `P${i}`, equipment: {}, pack: [] })));
+  g.party.x = 1; g.party.y = 3; g.party.dir = 0;
+  const foe = g.spawnMonster('m', 1, 1, 'a');
+  const [front, , back] = g.party.members;
+  assert.equal(g.sightCover(foe, front).creatures, 0, 'nobody between the foe and the front rank');
+  assert.ok(g.sightCover(foe, back).creatures > 0, 'the front rank covers the back rank');
+  assert.ok(g.sightCover(back, foe).creatures > 0, 'and the foe from the back rank');
 });
 
 test('five-foot positions: front rank is next to the cell ahead, back rank is not', () => {
