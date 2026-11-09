@@ -46,7 +46,8 @@ cell ahead; the back two need reach, ranged weapons or spells. Pause whenever yo
 
 ## What's implemented
 
-**All classes, species and backgrounds can be chosen**, at levels 1-2 (level 2 is the current cap).
+**All backgrounds and most classes and species can be chosen**, at levels 1-2 (level 2 is the current cap). Sorcerer,
+Warlock, Orc, Goliath, Dragonborn and Tiefling have rules but aren't offered for now, to keep down the art needed.
 
 - **Rules:** D20 Tests, Advantage/Disadvantage, Armor Class, armor training, all weapon properties and masteries, conditions,
   resistances, concentration, death saves, Temporary HP, Opportunity Attacks against the party, XP, Short and Long Rests, darkvision and light, traps, locks.
@@ -64,7 +65,7 @@ cell ahead; the back two need reach, ranged weapons or spells. Pause whenever yo
 - Some species traits aren't mechanical yet, and Dragonborn and Tieflings are fixed to fire. Bardic Inspiration acts as a short Bless. Great Weapon Fighting is averaged as +1.
 - Divine Smite is cast before the hit rather than after. Encumbrance isn't enforced. Torches don't burn during rests.
 - The party loses as soon as nobody is standing, though the SRD would let a dying character roll on.
-- The default party's portraits are tied to class, so a custom elf fighter shows the dwarf fighter's face.
+- Portraits are tied to class, plus a dwarf set, so a custom elf fighter shows the dwarf fighter's face.
 
 ## Art
 

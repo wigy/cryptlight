@@ -18,7 +18,7 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await shot('10-creator');
   await ev(`(() => { const s = document.querySelector('select[data-i="0"][data-key="classId"]'); s.value = 'barbarian'; s.dispatchEvent(new Event('change')); })()`);
   await wait(200);
-  assert.match(await ev(`document.querySelector('.pc img').getAttribute('src')`), /portrait-barbarian/);
+  assert.match(await ev(`document.querySelector('.pc img').getAttribute('src')`), /portrait-dwarf-barbarian/, 'the first pick is a dwarf');
   await clickEl('#begin');
   await wait(1200);
   assert.equal(await state(`g.party.members[0].classId`), 'barbarian');

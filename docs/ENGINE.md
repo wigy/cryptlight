@@ -62,7 +62,7 @@ Pass an object with these to `new Game(module, ruleset)`. `rules/srd5/ruleset.js
 | `memberStatus(game, m)`, `memberSheet(game, m)`, `memberActions(game, m, menu)`, `doAction(game, m, id)` | What the HUD shows and does |
 | `light(game)` | `{ radius, mono, bright }`, which drives the renderer's lighting |
 | `tryUnlock(game, lock, held)`, `noticeHidden(game, dc)`, `rule(game, name, args)` | World interactions |
-| `defaultParty()`, `creationSteps()`, `createMember(choices)` | Party creation |
+| `defaultParty()`, `creationSteps()`, `createMember(choices)`, `portrait(choices)` | Party creation, and the name of the image a character shows |
 | `restOptions`, `rest`, `canRest`, `carriedWeight`, `throwHeld`, `attribution`, `summary` | Used by the HUD and end screen |
 | `memberQuickActions(game, m)` | Optional. The icon row on a member's action box: `memberActions` entries plus `item` or `glyph` for the picture (`glyph` shows the asset `icon-<glyph>`), `kind` to show the label, `empty` for an unassigned slot |
 | `memberAbilities(game, m)`, `toggleQuick(game, m, id)` | Optional. The inventory's Skills & Spells list (`kind` is `skill` or `spell`) and picking two for quick access |

@@ -94,6 +94,20 @@ add('portrait-ranger', 'image', '1:1', `A lean ranger in a green hooded cloak wi
 add('portrait-sorcerer', 'image', '1:1', `A young sorcerer with arcane light in their eyes, wind-tossed hair and traces of faint scales on the cheek. ${PORTRAIT}`);
 add('portrait-warlock', 'image', '1:1', `A pale warlock in dark leathers with an eerie violet glow from an occult pendant, unsettling smile. ${PORTRAIT}`);
 
+// --- dwarf portraits, one per class apart from the fighter, whose portrait is already a dwarf
+const DWARF = 'Clearly a dwarf: short, broad and stocky, with a wide nose and a heavy brow.';
+add('portrait-dwarf-barbarian', 'image', '1:1', `A fierce male dwarf barbarian with a wild red beard, war paint and a fur mantle. No flames or fire in front of the character. ${DWARF} ${PORTRAIT}`);
+add('portrait-dwarf-bard', 'image', '1:1', `A charming female dwarf bard with braided auburn hair, a feathered cap and a lute strap over one shoulder, a knowing smile. ${DWARF} ${PORTRAIT}`);
+add('portrait-dwarf-cleric', 'image', '1:1', `A determined male dwarf cleric with a neat grey beard, chain shirt and a silver holy symbol at his neck. ${DWARF} ${PORTRAIT}`);
+add('portrait-dwarf-druid', 'image', '1:1', `A weathered female dwarf druid with leaf-woven braids, wooden torc and green-brown robes. ${DWARF} ${PORTRAIT}`);
+add('portrait-dwarf-monk', 'image', '1:1', `A calm shaven-headed male dwarf monk with a short plaited beard, simple ochre wraps and a focused gaze. ${DWARF} ${PORTRAIT}`);
+add('portrait-dwarf-paladin', 'image', '1:1', `A noble female dwarf paladin with blonde braids, polished plate armor and a white tabard, resolute expression. ${DWARF} ${PORTRAIT}`);
+add('portrait-dwarf-ranger', 'image', '1:1', `A lean, keen-eyed male dwarf ranger with a dark beard, a green hooded cloak and a bowstring across the chest. ${DWARF} ${PORTRAIT}`);
+add('portrait-dwarf-rogue', 'image', '1:1', `A sly female dwarf rogue with black braids, a dark leather hood and a mischievous smile. ${DWARF} ${PORTRAIT}`);
+add('portrait-dwarf-sorcerer', 'image', '1:1', `A young male dwarf sorcerer with a short copper beard, arcane light in his eyes, wind-tossed hair and traces of faint scales on the cheek. ${DWARF} ${PORTRAIT}`);
+add('portrait-dwarf-warlock', 'image', '1:1', `A pale female dwarf warlock in dark leathers with an eerie violet glow from an occult pendant, unsettling smile. No flames or fire in front of the character. ${DWARF} ${PORTRAIT}`);
+add('portrait-dwarf-wizard', 'image', '1:1', `An elderly male dwarf wizard with a long silver beard and deep blue robes, faint magic light on his face. ${DWARF} ${PORTRAIT}`);
+
 // --- screens and interface
 add('title', 'image', '16:9', `${PAINT} A wide view of an old stone village well at night, its stones cracked, sickly green light glowing up from deep within, thorny brambles around it, a frightened village in the distance under a dark sky, with a coiled rope hanging down into the well. Plenty of dark empty sky in the upper part. No text, no border.`);
 add('panel', 'tile', '1:1', `Dark weathered bronze-and-leather surface for a fantasy game interface panel, subtle scratches and tooling, low contrast, very dark. ${TEXTURE}`);

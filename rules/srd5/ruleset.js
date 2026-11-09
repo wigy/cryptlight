@@ -66,13 +66,19 @@ export class Srd5Ruleset {
   /** Character-creation choices for the engine's generic creation screen. */
   creationSteps() {
     const rows = (o) => Object.entries(o).map(([id, v]) => ({ id, label: v.name, detail: v.detail ?? v.notes ?? '' }));
+    // Not offered for now, to keep down the art needed. Their rules stay, so saves with them still work.
+    const hiddenClasses = ['sorcerer', 'warlock'], hiddenSpecies = ['orc', 'goliath', 'dragonborn', 'tiefling'];
     return [
-      { key: 'classId', label: 'Class', options: Object.values(this.srd.classes).map((c) => ({ id: c.id, label: c.name, detail: `d${c.hitDie} HP. ${c.primaryAbility}. Armor: ${c.armorTraining}` })) },
-      { key: 'speciesId', label: 'Species', options: rows(SPECIES) },
+      { key: 'classId', label: 'Class', options: Object.values(this.srd.classes).filter((c) => !hiddenClasses.includes(c.id)).map((c) => ({ id: c.id, label: c.name, detail: `d${c.hitDie} HP. ${c.primaryAbility}. Armor: ${c.armorTraining}` })) },
+      { key: 'speciesId', label: 'Species', options: rows(SPECIES).filter((o) => !hiddenSpecies.includes(o.id)) },
       { key: 'backgroundId', label: 'Background', options: rows(Object.fromEntries(Object.entries(BACKGROUNDS).map(([k, b]) => [k, { name: b.name, notes: `${b.feat.replace(/-/g, ' ')}; ${b.skills.join(', ')}` }]))) },
     ];
   }
   createMember(choices) { return createCharacter(this.srd, choices); }
+  /** Which portrait a character shows. Takes creation choices or a member. The plain fighter portrait is already a dwarf. */
+  portrait({ classId, speciesId }) {
+    return speciesId === 'dwarf' && classId !== 'fighter' ? `portrait-dwarf-${classId}` : `portrait-${classId}`;
+  }
 
   /** Called once for a new game: someone with a free hand lights a torch. */
   onNewGame(game) {
@@ -146,7 +152,7 @@ export class Srd5Ruleset {
     else if (hasSlots) bars.push({ value: m.slots.max - m.slots.used, max: Math.max(1, m.slots.max), color: CYAN, label: 'Slots' });
     const actionIn = Math.max(0, m.actionReadyAt - game.time);
     return {
-      name: m.name, portrait: `portrait-${m.classId}`, bars, dead: !!m.dead, down: m.hp <= 0 && !m.dead,
+      name: m.name, portrait: this.portrait(m), bars, dead: !!m.dead, down: m.hp <= 0 && !m.dead,
       ready: canAct(m) && actionIn <= 0, cooldown: Math.min(1, actionIn / ROUND),
       tag: m.dead ? 'DEAD' : m.hp <= 0 ? (m.death.stable ? 'STABLE' : `DYING ${m.death.fail}/3`) : m.conditions.filter((c) => c.id !== 'exhaustion')[0]?.id?.toUpperCase() ?? '',
     };

@@ -510,3 +510,23 @@ test('Stabilize can be slotted and lights up only while an ally is dying', async
   assert.equal(slot().enabled, true);
   assert.equal(slot().submenu, 'ally:stabilize');
 });
+
+test('dwarves of every class have their own portrait, and other species share the class portrait', async () => {
+  const { game: g } = await newGame();
+  const index = JSON.parse(readFileSync(new URL('../assets/game/index.json', import.meta.url)));
+  for (const classId of Object.keys(g.ruleset.srd.classes)) {
+    assert.ok(index[g.ruleset.portrait({ classId, speciesId: 'dwarf' })], `dwarf ${classId}`);
+    assert.equal(g.ruleset.portrait({ classId, speciesId: 'elf' }), `portrait-${classId}`);
+  }
+  assert.equal(g.ruleset.portrait({ classId: 'wizard', speciesId: 'dwarf' }), 'portrait-dwarf-wizard');
+  assert.equal(g.ruleset.portrait({ classId: 'fighter', speciesId: 'dwarf' }), 'portrait-fighter');
+});
+
+test('the creator leaves out the classes and species held back for now, but their rules still work', async () => {
+  const { game: g } = await newGame();
+  const offered = (key) => g.ruleset.creationSteps().find((s) => s.key === key).options.map((o) => o.id);
+  assert.deepEqual(offered('classId'), ['barbarian', 'bard', 'cleric', 'druid', 'fighter', 'monk', 'paladin', 'ranger', 'rogue', 'wizard']);
+  for (const id of ['orc', 'goliath', 'dragonborn', 'tiefling']) assert.ok(!offered('speciesId').includes(id), id);
+  for (const id of ['dwarf', 'elf', 'halfling', 'human']) assert.ok(offered('speciesId').includes(id), id);
+  assert.equal(g.ruleset.createMember({ name: 'T', classId: 'warlock', speciesId: 'tiefling' }).classId, 'warlock');
+});

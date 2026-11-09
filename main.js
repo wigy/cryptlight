@@ -95,7 +95,7 @@ class App {
       const p = picks[i];
       const selects = steps.map((s) => `<label>${s.label}</label><select data-i="${i}" data-key="${s.key}">${s.options.map((o) => `<option value="${o.id}" ${p[s.key] === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}</select>`).join('');
       const detail = steps.map((s) => s.options.find((o) => o.id === p[s.key])?.detail).filter(Boolean)[0] ?? '';
-      return `<div class="pc"><img src="${this.assetUrl(`portrait-${p.classId}`)}" alt=""><input data-name="${i}" value="${names[i]}" maxlength="12">${selects}<div class="detail">${detail}</div></div>`;
+      return `<div class="pc"><img src="${this.assetUrl(this.ruleset.portrait(p))}" alt=""><input data-name="${i}" value="${names[i]}" maxlength="12">${selects}<div class="detail">${detail}</div></div>`;
     };
     const draw = () => {
       this.screen(`<div class="body"><h2>Create your party of four</h2><div class="creator">${picks.map((_, i) => card(i)).join('')}</div>
