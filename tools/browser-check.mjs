@@ -50,8 +50,10 @@ try {
       for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x, y, button: type === 'mouseMoved' ? 'none' : 'left', buttons: type === 'mousePressed' ? 1 : 0, clickCount: 1, pointerType: 'mouse' });
     },
     key: async (code) => {
-      await send('Input.dispatchKeyEvent', { type: 'keyDown', code });
-      await send('Input.dispatchKeyEvent', { type: 'keyUp', code });
+      // The browser's own handling of Escape, such as closing a dialog, needs the virtual key code.
+      const vk = code === 'Escape' ? { key: code, windowsVirtualKeyCode: 27 } : {};
+      await send('Input.dispatchKeyEvent', { type: 'keyDown', code, ...vk });
+      await send('Input.dispatchKeyEvent', { type: 'keyUp', code, ...vk });
     },
     shot: async (name) => {
       const r = await send('Page.captureScreenshot', { format: 'png' });

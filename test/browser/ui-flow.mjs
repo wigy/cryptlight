@@ -15,6 +15,7 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   // Creator screen.
   await clickEl('#go');
   await wait(400);
+  assert.equal(await ev(`document.querySelector('#confirm-new')`), null, 'with no save, New Game does not ask');
   await shot('10-creator');
   await ev(`(() => { const s = document.querySelector('select[data-i="0"][data-key="classId"]'); s.value = 'barbarian'; s.dispatchEvent(new Event('change')); })()`);
   await wait(200);
@@ -30,7 +31,24 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await ev(`location.reload()`);
   await wait(2000);
   assert.equal(await ev(`document.querySelector('#cont').disabled`), false);
+  // With a save to lose, New Game asks first, and Cancel or Escape leaves everything as it was.
+  const asking = `document.querySelector('#confirm-new').open`;
   await clickEl('#go');
+  await wait(200);
+  await shot('10b-confirm-new');
+  assert.equal(await ev(asking), true, 'New Game opens the dialog');
+  assert.equal(await ev(`document.querySelector('#begin')`), null, 'New Game asks before reaching the creator');
+  await clickEl('#newgame-no');
+  assert.equal(await ev(asking), false, 'Cancel closes the dialog');
+  assert.equal(await ev(`document.querySelector('#go') !== null`), true, 'Cancel stays on the main menu');
+  await clickEl('#go');
+  await wait(200);
+  await key('Escape');
+  await wait(100);
+  assert.equal(await ev(asking), false, 'Escape closes the dialog');
+  await clickEl('#go');
+  await wait(200);
+  await clickEl('#newgame-yes');
   await wait(400);
   await clickEl('#begin');
   await wait(1500);

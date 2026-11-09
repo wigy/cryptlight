@@ -41,6 +41,7 @@ class App {
   fit() {
     const s = Math.min(window.innerWidth / 1280, window.innerHeight / 800);
     this.stage.style.transform = `scale(${s}) translate(-50%, -50%)`;
+    this.stage.style.setProperty('--scale', s); // Modal dialogs draw outside the stage's transform.
     this.scale = s;
     if (this.canvas) this.sizeCanvas();
   }
@@ -77,10 +78,20 @@ class App {
         <button id="go">New Game</button>
         <button id="cont" disabled>Continue</button>
       </div></div>
-      <div class="legal">${this.ruleset.attribution}</div>`, this.module.titleImage);
-    this.stage.querySelector('#go').onclick = () => this.showCreator();
+      <div class="legal">${this.ruleset.attribution}</div>
+      <dialog id="confirm-new" class="panelbg">
+        <h3>Start a new game?</h3>
+        <p>You already have a saved game. It will be replaced when the new game saves or exits.</p>
+        <div class="choices"><button id="newgame-no" autofocus>Cancel</button><button id="newgame-yes">Start New Game</button></div>
+      </dialog>`, this.module.titleImage);
+    const saved = this.readSave();
+    // There is one save slot, so a new party's first save replaces the existing game.
+    const confirm = this.stage.querySelector('#confirm-new');
+    this.stage.querySelector('#go').onclick = async () => { if (await saved) confirm.showModal(); else this.showCreator(); };
+    this.stage.querySelector('#newgame-yes').onclick = () => this.showCreator();
+    this.stage.querySelector('#newgame-no').onclick = () => confirm.close();
     this.stage.querySelector('#cont').onclick = () => { this.audio.unlock(); this.continueGame(); };
-    this.readSave().then((json) => {
+    saved.then((json) => {
       const cont = this.stage.querySelector('#cont');
       if (cont && json) cont.disabled = false;
     });
