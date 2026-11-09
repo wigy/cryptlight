@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { Game, outgrown } from '../engine/world.js';
-import { newGame } from './helpers.mjs';
+import { loadModule, newGame, tick } from './helpers.mjs';
 
 test('every listed module has a usable recommended level range', () => {
   const ids = JSON.parse(readFileSync(new URL('../modules/index.json', import.meta.url)));
@@ -244,4 +244,15 @@ test('old saves from inside an adventure still load', async () => {
 test('a unique weapon shows its base weapon icon, whatever it is called', async () => {
   const { ruleset } = await newGame();
   assert.equal(ruleset.itemInfo({ proto: 'thornwick-fang' }).icon, 'sword');
+});
+
+test('time passing alone leaves nothing new to save, but moving does', async () => {
+  for (const id of ['thornwick', 'barrow']) {
+    const { game: g } = await newGame(1, loadModule(id));
+    const saved = g.progress();
+    tick(g, 20);
+    assert.equal(g.progress(), saved, `${id}: waiting changes nothing worth saving`);
+    g.turn(1);
+    assert.notEqual(g.progress(), saved, `${id}: turning does`);
+  }
 });

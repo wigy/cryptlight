@@ -81,10 +81,17 @@ export class Hud {
           <button data-act="rest" data-hint="Take a Short or Long Rest.">Rest</button>
           <button data-act="save" data-hint="Save the game in this browser. (K)">Save</button>
           <button data-act="load" data-hint="Load your saved game. (L)">Load</button>
-          <button data-act="exit" data-hint="Save the game and return to the main menu.">Exit</button>
+          <button data-act="exit" data-hint="Return to the main menu. If there is anything unsaved, you are asked whether to save it first.">Exit</button>
         </div>
         <div id="actions"></div>
-      </div>`;
+      </div>
+      <dialog id="confirm-exit" class="panelbg">
+        <h3>Exit to the main menu?</h3>
+        <p>Your progress since the last save will be lost unless you save it.</p>
+        <div class="choices"><button data-act="exit:cancel" autofocus>Cancel</button><button data-act="exit:discard">Exit Without Saving</button><button data-act="exit:save">Save and Exit</button></div>
+      </dialog>`;
+    this.exitDialog = this.stage.querySelector('#confirm-exit');
+    this.exitDialog.addEventListener('close', () => { if (this.pausedBeforeExit != null) { this.game.paused = this.pausedBeforeExit; this.pausedBeforeExit = null; } });
     this.pauseButton = this.stage.querySelector('[data-act="pause"]');
     this.lockable = [...this.stage.querySelectorAll('#pad button, [data-act="rest"]')];
     const wrap = this.stage.querySelector('#viewwrap');
@@ -360,6 +367,23 @@ export class Hud {
     this.command(el.dataset.act);
   }
 
+  /** Exits straight away if everything is saved, and otherwise asks first. The game is paused while it asks. */
+  exit(choice) {
+    const g = this.game;
+    if (!choice) {
+      if (this.app.isSaved()) { this.app.showTitle(); return; }
+      this.pausedBeforeExit = g.paused;
+      g.paused = true;
+      this.exitDialog.showModal();
+      return;
+    }
+    if (choice === 'cancel') { this.exitDialog.close(); return; }
+    this.pausedBeforeExit = null; // Leaving, so there is no game to resume.
+    this.exitDialog.close();
+    if (choice === 'discard') { this.app.showTitle(); return; }
+    this.app.save().then((saved) => { if (saved) this.app.showTitle(); }); // Stays in the game rather than lose it.
+  }
+
   /** Plays the press animation on a movement button, for clicks and keys alike. */
   pressPad(act) {
     const el = this.stage.querySelector(`#pad [data-act="${act}"]`);
@@ -387,7 +411,7 @@ export class Hud {
       case 'dorest': if (g.ruleset.rest(g, a)) this.menu = null; break;
       case 'save': this.app.save(); break;
       case 'load': this.app.load(); break;
-      case 'exit': this.app.save().then((saved) => { if (saved) this.app.showTitle(); }); break; // Stays in the game rather than lose it.
+      case 'exit': this.exit(a); break;
       case 'inv': this.inventory = a === 'close' || this.inventory === Number(a) ? null : Number(a); this.hint = null; break;
       case 'menu':
         if (a === 'close') this.menu = null;

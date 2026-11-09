@@ -49,6 +49,9 @@ function autoFace(cells, x, y) {
 }
 
 /** The save for a party between adventures. `carried` is what comes along from the last one. */
+// Save fields that change while nobody does anything: the clocks, the log, a torch burning down and when monsters next look around.
+const CLOCK_FIELDS = new Set(['time', 'realTime', 'logLines', 'burn', 'notBeforeCheck']);
+
 export const vacationSave = (ruleset, members, carried = {}) => JSON.stringify({ version: 1, vacation: true, ruleset: ruleset.id, members, hand: null, time: 0, realTime: 0, collected: [], ...carried });
 
 /** A party can play a module, again if it likes, until its average level is above the recommended range. */
@@ -687,12 +690,14 @@ export class Game {
     const rested = this.ruleset.onLeaveAdventure?.(this, members) ?? 0;
     return vacationSave(this.ruleset, members, { hand: stays(this.hand) ? null : clone(this.hand), time: this.time + rested, realTime: this.realTime, collected: [...new Set([...this.collected, ...unique])] });
   }
-  serialize() {
+  serialize(replacer) {
     return JSON.stringify({
       version: 1, module: this.module.id, ruleset: this.ruleset.id, rng: this.rng.state, time: this.time, realTime: this.realTime, flags: this.flags,
       entities: this.entities, floorItems: this.floorItems, levels: this.levels, hand: this.hand, party: this.party, logLines: this.logLines.slice(-12), collected: this.collected,
-    });
+    }, replacer);
   }
+  /** The save without what changes just by time passing. When it is the same as at the last save, there is nothing new to save. */
+  progress() { return this.serialize((k, v) => (CLOCK_FIELDS.has(k) ? undefined : v)); }
   restore(json) {
     const s = JSON.parse(json);
     if (s.module !== this.module.id || s.ruleset !== this.ruleset.id) throw new Error('save is for a different game');

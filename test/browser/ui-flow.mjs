@@ -377,15 +377,25 @@ export default async function ({ eval: ev, click, drag, key, wait, shot }) {
   await go('crypt', 9, 11, 3); await wait(500); await shot('26-vesper');
   await go('warren', 3, 11, 3); await ev(`window.__game.doorAt(3,11).target = 1`); await wait(1400); await key('KeyW'); await wait(500); await shot('27-stairs');
 
-  // Exit saves and goes straight to the main menu, and Continue resumes from where the party left.
+  // Exit asks first when there is something unsaved. The game holds still while it asks.
   await go('warren', 11, 20, 0); await wait(450);
   await key('KeyK'); await wait(100);
   await key('KeyA'); await wait(450);
   assert.equal(await state(`g.party.x`), 10);
   await clickEl('[data-act="exit"]');
   await wait(100);
+  assert.equal(await ev(`document.querySelector('#confirm-exit').open`), true, 'an unsaved step makes Exit ask');
+  assert.equal(await state(`g.paused`), true);
   await shot('28-exit');
-  assert.equal(await ev(`document.querySelector('#go') !== null`), true, 'Exit reaches the main menu');
+  await key('KeyD'); await wait(200);
+  assert.equal(await state(`g.party.x`), 10, 'keys do not reach the game behind the dialog');
+  await clickEl('[data-act="exit:cancel"]');
+  assert.equal(await ev(`document.querySelector('#confirm-exit').open`), false);
+  assert.equal(await state(`g.paused`), false, 'Cancel goes back to the game as it was');
+  await clickEl('[data-act="exit"]');
+  await clickEl('[data-act="exit:save"]');
+  await wait(300);
+  assert.equal(await ev(`document.querySelector('#go') !== null`), true, 'Save and Exit reaches the main menu');
   // A save from inside an adventure can be looked at from the menu too, with no way to hire into it.
   await until(`document.querySelector('#title-party')?.disabled === false`);
   await clickEl('#title-party');
@@ -397,7 +407,25 @@ export default async function ({ eval: ev, click, drag, key, wait, shot }) {
   await until(`document.querySelector('#cont')?.disabled === false`);
   await clickEl('#cont');
   await wait(300);
-  assert.equal(await state(`g.party.x`), 10, 'Exit saved the step taken after the last manual save');
+  assert.equal(await state(`g.party.x`), 10, 'Save and Exit saved the step taken after the last manual save');
+  // Just loaded, so there is nothing to lose: Exit goes straight to the menu.
+  await wait(1000);
+  await clickEl('[data-act="exit"]');
+  await wait(300);
+  assert.equal(await ev(`document.querySelector('#go') !== null`), true, 'with nothing unsaved, Exit does not ask');
+  await until(`document.querySelector('#cont')?.disabled === false`);
+  await clickEl('#cont');
+  await wait(300);
+  // Exit Without Saving drops what was done since the save.
+  await key('KeyD'); await wait(450);
+  assert.equal(await state(`g.party.x`), 11);
+  await clickEl('[data-act="exit"]');
+  await clickEl('[data-act="exit:discard"]');
+  await wait(300);
+  await until(`document.querySelector('#cont')?.disabled === false`);
+  await clickEl('#cont');
+  await wait(300);
+  assert.equal(await state(`g.party.x`), 10, 'Exit Without Saving kept the save as it was');
 
   // Taking an exit puts the party on vacation, with what it earned but not what belongs to the adventure.
   await ev(`(() => { const m = window.__game.party.members[0]; m.xp = 123; m.pack[m.pack.indexOf(null)] = { uid: 'k', proto: 'iron-key' }; })()`);

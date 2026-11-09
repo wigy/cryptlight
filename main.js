@@ -258,8 +258,11 @@ class App {
     this.showVacation(JSON.parse(json), `${g.leaveText ?? `You return from ${g.module.name}.`} The party takes a long rest.`);
     return true;
   }
+  /** Whether the game is as it was last saved or loaded, apart from time passing. */
+  isSaved() { return this.savedProgress === this.game.progress(); }
   enter(g) {
     this.game = g;
+    this.savedProgress = null;
     this.view.meshKey = null;
     this.view.cam = null;
     this.hud.ended = false;
@@ -298,13 +301,16 @@ class App {
     const g = this.makeGame(module);
     g.restore(json);
     this.enter(g);
+    this.savedProgress = g.progress();
     g.log('Game loaded.', 15);
     return true;
   }
   /** Resolves to whether the save reached the server. */
   async save() {
     const g = this.game;
+    const progress = g.progress();
     const saved = await this.putSave(g.serialize());
+    if (saved) this.savedProgress = progress;
     g.log(saved ? 'Game saved.' : 'Could not save the game.', saved ? 15 : 11);
     return saved;
   }
@@ -317,7 +323,7 @@ class App {
 
   // ---------------------------------------------------------------- keys
   onKey(e) {
-    if (!this.game || !this.playing || e.target.tagName === 'INPUT') return;
+    if (!this.game || !this.playing || e.target.tagName === 'INPUT' || document.querySelector('dialog[open]')) return;
     this.audio.unlock();
     const map = { KeyQ: 'turn:-1', KeyE: 'turn:1', KeyW: 'step:0', KeyS: 'step:2', KeyA: 'step:3', KeyD: 'step:1', ArrowUp: 'step:0', ArrowDown: 'step:2', ArrowLeft: 'step:3', ArrowRight: 'step:1', PageUp: 'turn:-1', PageDown: 'turn:1', Space: 'pause', KeyK: 'save', KeyL: 'load' };
     let cmd = map[e.code];
