@@ -307,7 +307,7 @@ export class Hud {
       case 'dorest': if (g.ruleset.rest(g, a)) this.menu = null; break;
       case 'save': this.app.save(); break;
       case 'load': this.app.load(); break;
-      case 'exit': this.app.save(); this.app.showTitle(); break;
+      case 'exit': this.app.save().then((saved) => { if (saved) this.app.showTitle(); }); break; // Stays in the game rather than lose it.
       case 'inv': this.inventory = a === 'close' || this.inventory === Number(a) ? null : Number(a); this.hint = null; break;
       case 'menu':
         if (a === 'close') this.menu = null;

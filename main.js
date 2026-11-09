@@ -6,7 +6,8 @@ import { Audio8 } from './engine/audio.js';
 import { loadSrd } from './rules/srd5/data.js';
 import { Srd5Ruleset } from './rules/srd5/ruleset.js';
 
-const SAVE_KEY = 'cryptlight.save';
+const SAVE_URL = 'api/save';
+localStorage.removeItem('cryptlight.save'); // Saves from when they were kept in the browser are dropped.
 const MODULE = 'modules/thornwick/module.json';
 const fetchJson = async (url) => { const r = await fetch(url); if (!r.ok) throw new Error(`${url}: ${r.status}`); return r.json(); };
 
@@ -71,17 +72,18 @@ class App {
   }
 
   showTitle() {
-    const canContinue = !!localStorage.getItem(SAVE_KEY);
     this.screen(`<div class="body"><h1>${this.module.name}</h1><h2>${this.module.summary} A Cryptlight adventure, 5E compatible.</h2>
       <div class="menu">
         <button id="go">New Game</button>
-        <button id="custom">Create Your Party</button>
-        <button id="cont" ${canContinue ? '' : 'disabled'}>Continue</button>
+        <button id="cont" disabled>Continue</button>
       </div></div>
       <div class="legal">${this.ruleset.attribution}</div>`, this.module.titleImage);
-    this.stage.querySelector('#go').onclick = () => { this.audio.unlock(); this.startGame(this.ruleset.defaultParty()); };
-    this.stage.querySelector('#custom').onclick = () => this.showCreator();
+    this.stage.querySelector('#go').onclick = () => this.showCreator();
     this.stage.querySelector('#cont').onclick = () => { this.audio.unlock(); this.continueGame(); };
+    this.readSave().then((json) => {
+      const cont = this.stage.querySelector('#cont');
+      if (cont && json) cont.disabled = false;
+    });
   }
 
   showCreator() {
@@ -133,16 +135,41 @@ class App {
     window.__view = this.view;
     window.__audio = this.audio;
   }
-  continueGame() {
-    const json = localStorage.getItem(SAVE_KEY);
-    if (!json) return;
+  /** The saved game as JSON, or null if there is none or the server can't be reached. */
+  async readSave() {
+    try {
+      const r = await fetch(SAVE_URL);
+      return r.status === 200 ? await r.text() : null;
+    } catch {
+      return null;
+    }
+  }
+  async continueGame() {
+    const json = await this.readSave();
+    if (!json) return false;
     const g = this.makeGame();
     g.restore(json);
     this.enter(g);
     g.log('Game loaded.', 15);
+    return true;
   }
-  save() { localStorage.setItem(SAVE_KEY, this.game.serialize()); this.game.log('Game saved.', 15); }
-  load() { if (localStorage.getItem(SAVE_KEY)) this.continueGame(); else this.game.log('No saved game.'); }
+  /** Resolves to whether the save reached the server. */
+  async save() {
+    const g = this.game;
+    try {
+      const r = await fetch(SAVE_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: g.serialize() });
+      if (!r.ok) throw new Error(`save: ${r.status}`);
+      g.log('Game saved.', 15);
+      return true;
+    } catch {
+      g.log('Could not save the game.', 11);
+      return false;
+    }
+  }
+  async load() {
+    const g = this.game;
+    if (!(await this.continueGame())) g.log('No saved game.');
+  }
 
   // ---------------------------------------------------------------- keys
   onKey(e) {

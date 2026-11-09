@@ -10,8 +10,8 @@ import { pathToFileURL } from 'node:url';
 const [outDir, scriptPath] = process.argv.slice(2);
 mkdirSync(outDir, { recursive: true });
 const PORT = 8123, DEBUG = 9333;
-const server = spawn('node', ['tools/serve.mjs'], { env: { ...process.env, PORT: String(PORT) }, stdio: 'ignore' });
 const profile = join(tmpdir(), `cryptlight-chrome-${process.pid}`);
+const server = spawn('node', ['tools/serve.mjs'], { env: { ...process.env, PORT: String(PORT), DATA_DIR: join(profile, 'server-data') }, stdio: 'ignore' }); // Never the real save.
 const chrome = spawn(process.env.CHROME ?? 'google-chrome', ['--headless=new', `--remote-debugging-port=${DEBUG}`, `--user-data-dir=${profile}`, '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--window-size=1280,800', '--mute-audio', 'about:blank'], { stdio: 'ignore' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let code = 1;

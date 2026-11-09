@@ -72,7 +72,7 @@ export class Srd5Ruleset {
   /** Character-creation choices for the engine's generic creation screen. */
   creationSteps() {
     const rows = (o) => Object.entries(o).map(([id, v]) => ({ id, label: v.name, detail: v.detail ?? v.notes ?? '' }));
-    // Not offered for now, to keep down the art needed. Their rules stay, so saves with them still work.
+    // Not offered for now, to keep down the art needed. Their rules stay for when they come back.
     const hiddenClasses = ['sorcerer', 'warlock'], hiddenSpecies = ['orc', 'goliath', 'dragonborn', 'tiefling'];
     return [
       { key: 'classId', label: 'Class', options: Object.values(this.srd.classes).filter((c) => !hiddenClasses.includes(c.id)).map((c) => ({ id: c.id, label: c.name, detail: `d${c.hitDie} HP. ${c.primaryAbility}. Armor: ${c.armorTraining}` })) },

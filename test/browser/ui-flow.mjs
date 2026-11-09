@@ -13,7 +13,7 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await wait(1500);
 
   // Creator screen.
-  await clickEl('#custom');
+  await clickEl('#go');
   await wait(400);
   await shot('10-creator');
   await ev(`(() => { const s = document.querySelector('select[data-i="0"][data-key="classId"]'); s.value = 'barbarian'; s.dispatchEvent(new Event('change')); })()`);
@@ -31,6 +31,8 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await wait(2000);
   assert.equal(await ev(`document.querySelector('#cont').disabled`), false);
   await clickEl('#go');
+  await wait(400);
+  await clickEl('#begin');
   await wait(1500);
 
   // Pick up the potion on the floor by clicking it in the view.

@@ -29,6 +29,9 @@ item, click the near floor to set it down, or further away to throw it.
 
 The map in the bottom right corner fills in as you explore, showing everything you have seen by your light.
 
+There is one save slot, kept by the server in `.data/save.json` (set `DATA_DIR` to move it). Everyone playing on the same
+server shares it, and there is no login, so anyone who can reach the server can overwrite it.
+
 Combat runs in real time. Each character has an Action and a Bonus Action that recover after a 6-second round,
 which plays in 4 real seconds. Monsters follow the same clock. Your front two characters can reach the
 cell ahead; the back two need reach, ranged weapons or spells. Pause whenever you need to think.
@@ -94,7 +97,7 @@ npm run sfx:process -- <folder of source recordings>   # trim, level and encode 
 
 ```
 docker build -t cryptlight .             # needs assets/audio, and fails without it
-docker run -p 8080:8080 cryptlight
+docker run -p 8080:8080 -v cryptlight-data:/data cryptlight   # the volume keeps the save
 ```
 
 The image holds only what the game loads, as listed in `.dockerignore`, including the licensed sounds. So build it

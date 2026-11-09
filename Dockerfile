@@ -10,7 +10,9 @@ COPY data/ data/
 COPY assets/game/ assets/game/
 COPY assets/audio/ assets/audio/
 COPY tools/serve.mjs tools/serve.mjs
-ENV HOST=0.0.0.0 PORT=8080
+ENV HOST=0.0.0.0 PORT=8080 DATA_DIR=/data
+RUN mkdir /data && chown node /data
+VOLUME /data
 USER node
 EXPOSE 8080
 HEALTHCHECK CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
