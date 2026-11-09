@@ -36,6 +36,16 @@ const SPECIES_PORTRAITS = {
   halfling: ['barbarian', 'bard', 'cleric', 'druid', 'fighter', 'monk', 'paladin', 'ranger', 'wizard'],
   gnome: ['barbarian', 'bard', 'cleric', 'druid', 'fighter', 'monk', 'paladin', 'ranger', 'rogue', 'wizard'],
 };
+// Not offered for now, to keep down the art needed. Their rules stay for when they come back.
+const HIDDEN_CLASSES = ['sorcerer', 'warlock'], HIDDEN_SPECIES = ['orc', 'goliath', 'dragonborn', 'tiefling'];
+// Classes whose portrait above shows a woman, per species on offer. Each portrait of a class on offer also has a version of the other sex.
+const FEMALE_PORTRAITS = {
+  human: ['cleric', 'fighter', 'rogue'],
+  dwarf: ['bard', 'druid', 'fighter', 'paladin', 'rogue'],
+  elf: ['barbarian', 'cleric', 'monk', 'ranger', 'wizard'],
+  halfling: ['barbarian', 'cleric', 'monk', 'paladin', 'wizard'],
+  gnome: ['bard', 'druid', 'fighter', 'ranger', 'wizard'],
+};
 
 const LONG_REST_SECONDS = 8 * 3600;
 
@@ -66,10 +76,10 @@ export class Srd5Ruleset {
   // ---------------------------------------------------------------- party
   defaultParty() {
     const party = [
-      { name: 'Brunna', classId: 'fighter', speciesId: 'dwarf', backgroundId: 'soldier' },
-      { name: 'Pip', classId: 'rogue', speciesId: 'halfling', backgroundId: 'criminal' },
-      { name: 'Maren', classId: 'cleric', speciesId: 'human', backgroundId: 'acolyte' },
-      { name: 'Elowen', classId: 'wizard', speciesId: 'elf', backgroundId: 'sage' },
+      { name: 'Brunna', classId: 'fighter', speciesId: 'dwarf', sex: 'female', backgroundId: 'soldier' },
+      { name: 'Pip', classId: 'rogue', speciesId: 'halfling', sex: 'male', backgroundId: 'criminal' },
+      { name: 'Maren', classId: 'cleric', speciesId: 'human', sex: 'female', backgroundId: 'acolyte' },
+      { name: 'Elowen', classId: 'wizard', speciesId: 'elf', sex: 'female', backgroundId: 'sage' },
     ].map((o) => createCharacter(this.srd, o));
     return party;
   }
@@ -77,18 +87,21 @@ export class Srd5Ruleset {
   /** Character-creation choices for the engine's generic creation screen. */
   creationSteps() {
     const rows = (o) => Object.entries(o).map(([id, v]) => ({ id, label: v.name, detail: v.detail ?? v.notes ?? '' }));
-    // Not offered for now, to keep down the art needed. Their rules stay for when they come back.
-    const hiddenClasses = ['sorcerer', 'warlock'], hiddenSpecies = ['orc', 'goliath', 'dragonborn', 'tiefling'];
     return [
-      { key: 'classId', label: 'Class', options: Object.values(this.srd.classes).filter((c) => !hiddenClasses.includes(c.id)).map((c) => ({ id: c.id, label: c.name, detail: `d${c.hitDie} HP. ${c.primaryAbility}. Armor: ${c.armorTraining}` })) },
-      { key: 'speciesId', label: 'Species', options: rows(SPECIES).filter((o) => !hiddenSpecies.includes(o.id)) },
+      { key: 'classId', label: 'Class', options: Object.values(this.srd.classes).filter((c) => !HIDDEN_CLASSES.includes(c.id)).map((c) => ({ id: c.id, label: c.name, detail: `d${c.hitDie} HP. ${c.primaryAbility}. Armor: ${c.armorTraining}` })) },
+      { key: 'speciesId', label: 'Species', options: rows(SPECIES).filter((o) => !HIDDEN_SPECIES.includes(o.id)) },
+      { key: 'sex', label: 'Sex', options: [{ id: 'female', label: 'Female', detail: '' }, { id: 'male', label: 'Male', detail: '' }] },
       { key: 'backgroundId', label: 'Background', options: rows(Object.fromEntries(Object.entries(BACKGROUNDS).map(([k, b]) => [k, { name: b.name, notes: `${b.feat.replace(/-/g, ' ')}; ${b.skills.join(', ')}` }]))) },
     ];
   }
   createMember(choices) { return createCharacter(this.srd, choices); }
   /** Which portrait a character shows. Takes creation choices or a member. */
-  portrait({ classId, speciesId }) {
-    return SPECIES_PORTRAITS[speciesId]?.includes(classId) ? `portrait-${speciesId}-${classId}` : `portrait-${classId}`;
+  portrait({ classId, speciesId, sex }) {
+    const base = SPECIES_PORTRAITS[speciesId]?.includes(classId) ? `portrait-${speciesId}-${classId}` : `portrait-${classId}`;
+    // Characters saved before sex could be chosen have none, and keep the face they always had.
+    if (!sex || !FEMALE_PORTRAITS[speciesId] || HIDDEN_CLASSES.includes(classId)) return base;
+    const shown = FEMALE_PORTRAITS[speciesId].includes(classId) ? 'female' : 'male';
+    return sex === shown ? base : `portrait-${speciesId}-${classId}-${sex}`;
   }
 
   /** A title for the screens between adventures. */

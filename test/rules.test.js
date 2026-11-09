@@ -532,6 +532,27 @@ test('every species on offer has a matching portrait for every class on offer, a
   assert.equal(g.ruleset.portrait({ classId: 'warlock', speciesId: 'gnome' }), 'portrait-warlock', 'held back, so no gnome portrait');
 });
 
+test('every species and class on offer has a portrait of each sex, and characters without one keep their old face', async () => {
+  const { game: g } = await newGame();
+  const index = JSON.parse(readFileSync(new URL('../assets/game/index.json', import.meta.url)));
+  const offered = (key) => g.ruleset.creationSteps().find((s) => s.key === key).options.map((o) => o.id);
+  assert.deepEqual(offered('sex'), ['female', 'male']);
+  for (const speciesId of offered('speciesId')) {
+    for (const classId of offered('classId')) {
+      const female = g.ruleset.portrait({ classId, speciesId, sex: 'female' }), male = g.ruleset.portrait({ classId, speciesId, sex: 'male' });
+      assert.notEqual(female, male, `${speciesId} ${classId}`);
+      assert.ok(index[female], female);
+      assert.ok(index[male], male);
+      assert.ok([female, male].includes(g.ruleset.portrait({ classId, speciesId })), 'the old portrait is one of the two');
+    }
+  }
+  assert.equal(g.ruleset.portrait({ classId: 'fighter', speciesId: 'dwarf', sex: 'female' }), 'portrait-fighter');
+  assert.equal(g.ruleset.portrait({ classId: 'fighter', speciesId: 'dwarf', sex: 'male' }), 'portrait-dwarf-fighter-male');
+  assert.equal(g.ruleset.portrait({ classId: 'warlock', speciesId: 'elf', sex: 'female' }), 'portrait-warlock', 'held back, so one portrait');
+  assert.equal(g.ruleset.portrait({ classId: 'fighter', speciesId: 'orc', sex: 'female' }), 'portrait-fighter', 'held back, so one portrait');
+  assert.equal(g.ruleset.createMember({ name: 'S', classId: 'bard', speciesId: 'gnome', sex: 'male', backgroundId: 'sage' }).sex, 'male');
+});
+
 test('the creator leaves out the classes and species held back for now, but their rules still work', async () => {
   const { game: g } = await newGame();
   const offered = (key) => g.ruleset.creationSteps().find((s) => s.key === key).options.map((o) => o.id);

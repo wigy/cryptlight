@@ -104,8 +104,8 @@ class App {
     const steps = this.ruleset.creationSteps();
     const names = ['Brunna', 'Pip', 'Maren', 'Elowen'];
     const picks = [
-      { classId: 'fighter', speciesId: 'dwarf', backgroundId: 'soldier' }, { classId: 'rogue', speciesId: 'halfling', backgroundId: 'criminal' },
-      { classId: 'cleric', speciesId: 'human', backgroundId: 'acolyte' }, { classId: 'wizard', speciesId: 'elf', backgroundId: 'sage' },
+      { classId: 'fighter', speciesId: 'dwarf', sex: 'female', backgroundId: 'soldier' }, { classId: 'rogue', speciesId: 'halfling', sex: 'male', backgroundId: 'criminal' },
+      { classId: 'cleric', speciesId: 'human', sex: 'female', backgroundId: 'acolyte' }, { classId: 'wizard', speciesId: 'elf', sex: 'female', backgroundId: 'sage' },
     ];
     const draw = () => {
       this.screen(`<div class="body"><h2>Create your party of four</h2><div class="creator">${picks.map((p, i) => this.creatorCard(steps, p, names[i], i)).join('')}</div>

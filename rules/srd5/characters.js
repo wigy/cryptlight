@@ -39,7 +39,7 @@ function applyBackground(scores, bg, classId) {
   scores[order[1]] = Math.min(20, scores[order[1]] + 1);
 }
 
-export function createCharacter(srd, { name, classId, speciesId = 'human', backgroundId = 'soldier', fightingStyle, level = 1 }) {
+export function createCharacter(srd, { name, classId, speciesId = 'human', sex, backgroundId = 'soldier', fightingStyle, level = 1 }) {
   const cls = srd.classes[classId];
   const table = CLASS_TABLE[classId];
   const species = SPECIES[speciesId];
@@ -50,7 +50,7 @@ export function createCharacter(srd, { name, classId, speciesId = 'human', backg
   applyBackground(abilities, bg, classId);
 
   const c = {
-    kind: 'pc', uid: newUid('c'), name, classId, speciesId, backgroundId, level: 1, xp: 0, abilities,
+    kind: 'pc', uid: newUid('c'), name, classId, speciesId, sex, backgroundId, level: 1, xp: 0, abilities,
     hitDie: cls.hitDie, saveProficiencies: [...cls.savingThrows],
     skills: [...new Set([...CLASS_SKILLS[classId], ...bg.skills, ...(species.skills ?? [])])],
     expertise: classId === 'rogue' ? ['stealth', 'perception'] : [],

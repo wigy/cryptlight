@@ -151,6 +151,43 @@ add('portrait-human-fighter', 'image', '1:1', `A battle-hardened human woman fig
 add('portrait-human-rogue', 'image', '1:1', `A sly human woman rogue with short black hair, olive skin, a dark leather hood and a mischievous smile. ${HUMAN} ${PORTRAIT}`);
 add('portrait-human-wizard', 'image', '1:1', `A wise elderly human man wizard with a long grey beard and deep blue robes, faint magic light on his face. ${HUMAN} ${PORTRAIT}`);
 
+// --- the other sex for every species and class on offer, as each portrait above shows only one
+const NO_FRAME = 'The painting runs right to the edges of the image, with no aged paper, worn edges or vignette frame.';
+const CLASS_LOOK = {
+  barbarian: 'war paint and a fur mantle', bard: 'a feathered cap and a lute strap over one shoulder, a knowing smile', cleric: 'a chain shirt and a silver holy symbol at the neck',
+  druid: 'leaves woven into the hair, a wooden torc and green-brown robes', fighter: 'a battle-hardened look, a scar on the face and steel chain mail', monk: 'a shaven head, simple ochre wraps and a focused gaze',
+  paladin: 'polished plate armor and a white tabard, resolute expression', ranger: 'a lean build, keen eyes, a green hooded cloak and a bowstring across the chest', rogue: 'a dark leather hood and a sly, mischievous smile',
+  wizard: 'deep blue robes and faint magic light on the face',
+};
+const SPECIES_LOOK = { human: HUMAN, dwarf: `${DWARF} No flames or fire in front of the character.`, elf: ELF, halfling: HALFLING, gnome: GNOME };
+const OTHER_SEX = {
+  human: {
+    barbarian: ['female', 'wild black hair and a broken nose'], bard: ['female', 'long auburn hair'], cleric: ['male', 'a cropped dark beard and warm brown skin'], druid: ['female', 'long grey-streaked hair and a weathered face'], fighter: ['male', 'short greying hair and a stubbled jaw'],
+    monk: ['female', 'calm dark eyes'], paladin: ['female', 'tied-back blonde hair'], ranger: ['female', 'a dark braid'], rogue: ['male', 'tousled black hair and olive skin'], wizard: ['female', 'long white hair and an elderly, wise face'],
+  },
+  dwarf: {
+    barbarian: ['female', 'wild red braids and no beard'], bard: ['male', 'a braided chestnut beard'], cleric: ['female', 'neat iron-grey braids and no beard'], druid: ['male', 'a long moss-brown beard'], fighter: ['male', 'a thick black beard and a broken nose'],
+    monk: ['female', 'no beard'], paladin: ['male', 'a square golden beard'], ranger: ['female', 'dark brown braids and no beard'], rogue: ['male', 'a short forked black beard'], wizard: ['female', 'long silver braids, an elderly face and no beard'],
+  },
+  elf: {
+    barbarian: ['male', 'wild black hair'], bard: ['female', 'long copper hair'], cleric: ['male', 'short silver hair'], druid: ['female', 'long chestnut hair'], fighter: ['female', 'tied-back raven hair'],
+    monk: ['male', 'a serene face'], paladin: ['female', 'long golden hair'], ranger: ['male', 'long ash-brown hair'], rogue: ['female', 'short dark hair'], wizard: ['male', 'long pale hair'],
+  },
+  halfling: {
+    barbarian: ['male', 'wild curly black hair'], bard: ['female', 'curly honey-blonde hair'], cleric: ['male', 'short curly grey hair, middle-aged'], druid: ['female', 'curly grey hair, weathered and middle-aged'], fighter: ['female', 'cropped auburn curls, middle-aged and weathered'],
+    monk: ['male', 'fine lines around the eyes, middle-aged'], paladin: ['male', 'cropped sandy curls, middle-aged'], ranger: ['female', 'dark curly hair in a short braid'], rogue: ['female', 'curly brown hair'], wizard: ['male', 'curly white hair and an elderly, kindly face'],
+  },
+  gnome: {
+    barbarian: ['female', 'wild orange hair'], bard: ['male', 'a curled copper moustache'], cleric: ['female', 'neat white hair in a bun'], druid: ['male', 'a long ash-grey beard'], fighter: ['male', 'a short russet beard and a scarred nose'],
+    monk: ['female', 'bright calm eyes'], paladin: ['female', 'golden braids'], ranger: ['male', 'a short dark beard'], rogue: ['female', 'slicked black hair'], wizard: ['male', 'a wild white beard and small round spectacles'],
+  },
+};
+for (const [species, classes] of Object.entries(OTHER_SEX)) {
+  for (const [cls, [sex, look]] of Object.entries(classes)) {
+    add(`portrait-${species}-${cls}-${sex}`, 'image', '1:1', `A ${sex} ${species} ${cls} with ${look}, ${CLASS_LOOK[cls]}. Clearly ${sex}. ${SPECIES_LOOK[species]} ${NO_FRAME} ${PORTRAIT}`);
+  }
+}
+
 // --- screens and interface
 add('title', 'image', '16:9', `${PAINT} A wide view of an old stone village well at night, its stones cracked, sickly green light glowing up from deep within, thorny brambles around it, a frightened village in the distance under a dark sky, with a coiled rope hanging down into the well. Plenty of dark empty sky in the upper part. No text, no border.`);
 add('panel', 'tile', '1:1', `Dark weathered bronze-and-leather surface for a fantasy game interface panel, subtle scratches and tooling, low contrast, very dark. ${TEXTURE}`);

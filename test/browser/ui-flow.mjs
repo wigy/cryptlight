@@ -24,6 +24,13 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await ev(`(() => { const s = document.querySelector('select[data-i="0"][data-key="classId"]'); s.value = 'barbarian'; s.dispatchEvent(new Event('change')); })()`);
   await wait(200);
   assert.match(await ev(`document.querySelector('.pc img').getAttribute('src')`), /portrait-dwarf-barbarian/, 'the first pick is a dwarf');
+  await ev(`(() => { const s = document.querySelector('select[data-i="0"][data-key="sex"]'); s.value = 'male'; s.dispatchEvent(new Event('change')); })()`);
+  await wait(50);
+  assert.match(await ev(`document.querySelector('.pc img').getAttribute('src')`), /portrait-dwarf-barbarian\.jpg/, 'the male dwarf barbarian is the original portrait');
+  await ev(`(() => { const s = document.querySelector('select[data-i="0"][data-key="sex"]'); s.value = 'female'; s.dispatchEvent(new Event('change')); })()`);
+  await wait(50);
+  assert.match(await ev(`document.querySelector('.pc img').getAttribute('src')`), /portrait-dwarf-barbarian-female\.jpg/, 'choosing female swaps the portrait');
+  await shot('creator-sex');
   await clickEl('#begin');
   await wait(400);
   // A new party is saved and on vacation, which is also where Continue finds it.

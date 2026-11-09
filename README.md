@@ -73,7 +73,7 @@ Warlock, Orc, Goliath, Dragonborn and Tiefling have rules but aren't offered for
 - Some species traits aren't mechanical yet, and Dragonborn and Tieflings are fixed to fire. Bardic Inspiration acts as a short Bless. Great Weapon Fighting is averaged as +1.
 - Divine Smite is cast before the hit rather than after. Encumbrance isn't enforced. Torches don't burn during rests.
 - The party loses as soon as nobody is standing, though the SRD would let a dying character roll on.
-- Portraits follow class and species, but the species and classes held back have no sets of their own, so an orc fighter from an old save shows the dwarf fighter's face.
+- Portraits follow class, species and sex, but the species and classes held back have no sets of their own, so an orc fighter from an old save shows the dwarf fighter's face.
 
 ## Art
 
