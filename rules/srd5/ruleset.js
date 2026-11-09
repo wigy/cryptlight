@@ -28,10 +28,13 @@ const ICONS = [
   [/ration|food|berry/, 'food'], [/tools|kit/, 'tools'], [/gold|coin|silver/, 'coin'], [/amulet|symbol|holy/, 'amulet'], [/ring/, 'ring'], [/book|tome/, 'book'], [/arrows|bolts|bullets|needles|dart/, 'arrows'],
 ];
 
-// Classes with their own portrait for a species. The rest use the class portrait: the fighter's is already a dwarf, the wizard's an elf.
+// Classes with their own portrait for a species. The rest use the class portrait: the fighter's is a dwarf, the wizard's an elf, the rogue's a halfling, and the others are human.
 const SPECIES_PORTRAITS = {
+  human: ['fighter', 'rogue', 'wizard'],
   dwarf: ['barbarian', 'bard', 'cleric', 'druid', 'monk', 'paladin', 'ranger', 'rogue', 'sorcerer', 'warlock', 'wizard'],
   elf: ['barbarian', 'bard', 'cleric', 'druid', 'fighter', 'monk', 'paladin', 'ranger', 'rogue'],
+  halfling: ['barbarian', 'bard', 'cleric', 'druid', 'fighter', 'monk', 'paladin', 'ranger', 'wizard'],
+  gnome: ['barbarian', 'bard', 'cleric', 'druid', 'fighter', 'monk', 'paladin', 'ranger', 'rogue', 'wizard'],
 };
 
 const LONG_REST_SECONDS = 8 * 3600;

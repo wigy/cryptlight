@@ -120,6 +120,37 @@ add('portrait-elf-paladin', 'image', '1:1', `A noble male elf paladin with long 
 add('portrait-elf-ranger', 'image', '1:1', `A lean, keen-eyed female elf ranger with auburn braids, a green hooded cloak and a bowstring across the chest. ${ELF} ${PORTRAIT}`);
 add('portrait-elf-rogue', 'image', '1:1', `A sly male elf rogue with dark tousled hair, a dark leather hood and a mischievous smile. ${ELF} ${PORTRAIT}`);
 
+// --- halfling portraits, one per class on offer apart from the rogue, whose portrait is already a halfling
+const HALFLING = 'Clearly a full-grown adult halfling, not a child: a small folk with a round, rosy, mature face, full cheeks, a small nose, rounded ears with only the faintest point, and no beard. No flames or fire in front of the character.';
+add('portrait-halfling-barbarian', 'image', '1:1', `A fierce female halfling barbarian with wild curly red hair, war paint and a fur mantle too big for her. ${HALFLING} ${PORTRAIT}`);
+add('portrait-halfling-bard', 'image', '1:1', `A charming male halfling bard with curly chestnut hair, a feathered cap and a lute strap over one shoulder, a knowing smile. ${HALFLING} ${PORTRAIT}`);
+add('portrait-halfling-cleric', 'image', '1:1', `A determined female halfling cleric in her forties, bareheaded, with short curly black hair, deep brown skin, a chain shirt and a silver holy symbol at her neck. ${HALFLING} ${PORTRAIT}`);
+add('portrait-halfling-druid', 'image', '1:1', `A weathered older male halfling druid with leaf-woven curly grey hair, wooden torc and green-brown robes. ${HALFLING} ${PORTRAIT}`);
+add('portrait-halfling-fighter', 'image', '1:1', `A battle-hardened middle-aged male halfling fighter with cropped sandy curls, weathered skin, crow's feet, a scar on the chin and steel chain mail. ${HALFLING} ${PORTRAIT}`);
+add('portrait-halfling-monk', 'image', '1:1', `A calm shaven-headed middle-aged female halfling monk with fine lines around the eyes, simple ochre wraps and a focused gaze. ${HALFLING} ${PORTRAIT}`);
+add('portrait-halfling-paladin', 'image', '1:1', `A noble female halfling paladin with tied-back golden curls, polished plate armor and a white tabard, resolute expression. ${HALFLING} ${PORTRAIT}`);
+add('portrait-halfling-ranger', 'image', '1:1', `A lean, keen-eyed male halfling ranger with dark curly hair, a green hooded cloak and a bowstring across the chest. ${HALFLING} ${PORTRAIT}`);
+add('portrait-halfling-wizard', 'image', '1:1', `A kindly elderly female halfling wizard with curly white hair and deep blue robes, faint magic light on her face. ${HALFLING} ${PORTRAIT}`);
+
+// --- gnome portraits, one per class on offer
+const GNOME = 'Clearly a gnome: a tiny folk with a large head, a big prominent nose, very large bright eyes, a wide grin line and small pointed ears. No flames or fire in front of the character.';
+add('portrait-gnome-barbarian', 'image', '1:1', `A fierce male gnome barbarian with a wild orange beard, war paint and a fur mantle too big for him. ${GNOME} ${PORTRAIT}`);
+add('portrait-gnome-bard', 'image', '1:1', `A charming female gnome bard with bright copper pigtails, a feathered cap and a lute strap over one shoulder, a knowing smile. ${GNOME} ${PORTRAIT}`);
+add('portrait-gnome-cleric', 'image', '1:1', `A determined male gnome cleric with a neat white beard, tanned skin, a chain shirt and a silver holy symbol at his neck. ${GNOME} ${PORTRAIT}`);
+add('portrait-gnome-druid', 'image', '1:1', `A weathered female gnome druid with leaf-woven ash-grey hair, wooden torc and green-brown robes. ${GNOME} ${PORTRAIT}`);
+add('portrait-gnome-fighter', 'image', '1:1', `A battle-hardened female gnome fighter with short spiky russet hair, a scarred nose and steel chain mail. ${GNOME} ${PORTRAIT}`);
+add('portrait-gnome-monk', 'image', '1:1', `A calm shaven-headed male gnome monk with a thin grey moustache, simple ochre wraps and a focused gaze. ${GNOME} ${PORTRAIT}`);
+add('portrait-gnome-paladin', 'image', '1:1', `A noble male gnome paladin with a trimmed golden beard, polished plate armor and a white tabard, resolute expression. ${GNOME} ${PORTRAIT}`);
+add('portrait-gnome-ranger', 'image', '1:1', `A lean, keen-eyed female gnome ranger with dark brown braids, a green hooded cloak and a bowstring across the chest. ${GNOME} ${PORTRAIT}`);
+add('portrait-gnome-rogue', 'image', '1:1', `A sly male gnome rogue with slicked black hair, a dark leather hood and a mischievous smile. ${GNOME} ${PORTRAIT}`);
+add('portrait-gnome-wizard', 'image', '1:1', `An eccentric female gnome wizard with wild white hair, small round spectacles and deep blue robes, faint magic light on her face. ${GNOME} ${PORTRAIT}`);
+
+// --- human portraits, for the classes whose portrait is another species; the other class portraits already look human
+const HUMAN = 'Clearly an ordinary human of normal proportions, with rounded ears. No flames or fire in front of the character.';
+add('portrait-human-fighter', 'image', '1:1', `A battle-hardened human woman fighter with tied-back dark blonde hair, a scar across one cheek and steel chain mail. The painting runs right to the edges of the image, with no aged paper, worn edges or vignette frame. ${HUMAN} ${PORTRAIT}`);
+add('portrait-human-rogue', 'image', '1:1', `A sly human woman rogue with short black hair, olive skin, a dark leather hood and a mischievous smile. ${HUMAN} ${PORTRAIT}`);
+add('portrait-human-wizard', 'image', '1:1', `A wise elderly human man wizard with a long grey beard and deep blue robes, faint magic light on his face. ${HUMAN} ${PORTRAIT}`);
+
 // --- screens and interface
 add('title', 'image', '16:9', `${PAINT} A wide view of an old stone village well at night, its stones cracked, sickly green light glowing up from deep within, thorny brambles around it, a frightened village in the distance under a dark sky, with a coiled rope hanging down into the well. Plenty of dark empty sky in the upper part. No text, no border.`);
 add('panel', 'tile', '1:1', `Dark weathered bronze-and-leather surface for a fantasy game interface panel, subtle scratches and tooling, low contrast, very dark. ${TEXTURE}`);
