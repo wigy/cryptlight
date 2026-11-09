@@ -69,7 +69,7 @@ Pass an object with these to `new Game(module, ruleset)`. `rules/srd5/ruleset.js
 | `memberFeatures(game, m)` | Optional. The inventory's Features tab: sections of `{ title, groups }`, each group `{ title?, items: [{ name, text, missing }], next?, gains?, note? }` |
 | `onNewGame`, `moveBlocked`, `partyStepSeconds`, `onPartyWillMove`, `markUnaware` | Optional hooks |
 
-`level.explored` records the automap, one number per cell (0 unseen, 1 seen, 2 visited). `Game.updateExplored` fills it in from `light(game).radius` and line of sight, and it's saved with the level. It also counts the squares walked in `party.walked` and stamps each walked cell with that count in `level.visitedAt` (keyed by cell index), so the automap can fade the trail by age: `party.walked - level.visitedAt[i]`.
+`level.explored` records the automap, one number per cell (0 unseen, 1 seen, 2 visited). `Game.updateExplored` fills it in from `light(game).radius` and line of sight, and it's saved with the level.
 
 All game state must stay plain JSON, because saving serializes it directly. Use `game.rng`, never `Math.random`, so runs stay reproducible.
 `main.js` currently wires in Thornwick and srd5 by name; change `MODULE` and the ruleset there to run something else.

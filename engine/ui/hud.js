@@ -82,7 +82,7 @@ export class Hud {
     wrap.prepend(this.app.canvas);
     this.els = Object.fromEntries(['party', 'viewwrap', 'floaters', 'banner', 'loglines', 'status', 'actions'].map((id) => [id, this.stage.querySelector(`#${id}`)]));
     this.els.automap = createAutomap();
-    this.els.automap.dataset.hint = 'Your map. Bright floor is where you have just walked, fading to dim floor as your trail grows older.';
+    this.els.automap.dataset.hint = 'Your map. It shows everything you have seen by your light.';
     this.stage.querySelector('#side').append(this.els.automap);
     this.els.inv = document.createElement('div');
     this.els.inv.id = 'inv';
