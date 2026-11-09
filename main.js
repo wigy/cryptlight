@@ -10,6 +10,9 @@ const SAVE_URL = 'api/save';
 localStorage.removeItem('cryptlight.save'); // Saves from when they were kept in the browser are dropped.
 const MODULES = 'modules/index.json';
 const moduleUrl = (id) => `modules/${id}/module.json`;
+const PROJECT_LICENSE = { name: 'MIT License', file: 'LICENSE' };
+const ART_CREDIT = 'All images were generated with Google Gemini for this game.';
+const SOUND_CREDIT = 'Sound effects are synthesized by the game. Builds that include recordings take them from the Sonniss GameAudioGDC bundles (https://sonniss.com/gameaudiogdc) under their own license (https://sonniss.com/gdc-bundle-license/), not the MIT License.';
 const fetchJson = async (url) => { const r = await fetch(url); if (!r.ok) throw new Error(`${url}: ${r.status}`); return r.json(); };
 
 class App {
@@ -80,6 +83,8 @@ class App {
       <div class="menu">
         <button id="go">New Game</button>
         <button id="cont" disabled>Continue</button>
+        <button id="title-party" disabled>View Party</button>
+        <button id="title-license">License and Attributions</button>
       </div></div>
       <div class="legal">${this.ruleset.attribution}</div>
       <dialog id="confirm-new" class="panelbg">
@@ -94,9 +99,20 @@ class App {
     this.stage.querySelector('#newgame-yes').onclick = () => this.showCreator();
     this.stage.querySelector('#newgame-no').onclick = () => confirm.close();
     this.stage.querySelector('#cont').onclick = () => { this.audio.unlock(); this.continueGame(); };
+    this.stage.querySelector('#title-party').onclick = async () => this.showParty(JSON.parse(await saved), () => this.showTitle());
+    this.stage.querySelector('#title-license').onclick = () => this.showLicense('License and Attributions', [
+      { title: 'Cryptlight', text: `Released under the ${PROJECT_LICENSE.name}, shown below, except for the material credited here.` },
+      { title: 'Rules', text: this.ruleset.attribution },
+      ...this.modules.map((m) => ({ title: m.name, text: `${m.license.credit} ${m.license.name}.` })),
+      { title: 'Art', text: ART_CREDIT },
+      { title: 'Sound', text: SOUND_CREDIT },
+    ], PROJECT_LICENSE, () => this.showTitle());
     saved.then((json) => {
-      const cont = this.stage.querySelector('#cont');
-      if (cont && json) cont.disabled = false;
+      if (!json) return;
+      for (const id of ['#cont', '#title-party']) {
+        const button = this.stage.querySelector(id);
+        if (button) button.disabled = false;
+      }
     });
   }
 
@@ -134,20 +150,38 @@ class App {
     this.stage.querySelectorAll('input').forEach((el) => { el.oninput = () => { names[el.dataset.name] = el.value; }; });
   }
 
-  /** The party's four characters in full, with a way to replace any who have died. */
-  showParty(save) {
-    const cards = save.members.map((m, i) => `<div class="pc partycard${m.dead ? ' dead' : ''}"><img src="${this.assetUrl(this.ruleset.portrait(m))}" alt="">
+  /** Credits, then the full text of a license, on a screen of their own. */
+  async showLicense(title, sections, license, back) {
+    let text;
+    try {
+      const r = await fetch(license.file);
+      if (!r.ok) throw new Error(`${r.status}`);
+      text = await r.text();
+    } catch {
+      text = `The text of the ${license.name} could not be loaded.`;
+    }
+    const credits = sections.map((s) => `<h3>${esc(s.title)}</h3><p>${esc(s.text)}</p>`).join('');
+    this.screen(`<div class="body" id="license"><h2>${esc(title)}</h2>
+      <div class="license-text">${credits}<h3>${esc(license.name)}</h3><pre>${esc(text)}</pre></div>
+      <div class="menu" style="flex-direction:row;width:auto"><button id="license-back">Back</button></div></div>`, this.titleImage);
+    this.stage.querySelector('#license-back').onclick = back;
+  }
+
+  /** The party's four characters in full. Those who have died can be replaced on vacation, but not from a save inside an adventure. */
+  showParty(save, back) {
+    const leave = back ?? (() => this.showVacation(save)); // A hire makes a new save, which going back to vacation has to show.
+    const cards = (save.members ?? save.party.members).map((m, i) => `<div class="pc partycard${m.dead ? ' dead' : ''}"><img src="${this.assetUrl(this.ruleset.portrait(m))}" alt="">
       <div class="sheet">${sheetHtml(this.ruleset.memberSheet(null, m))}</div>
-      ${m.dead ? `<div class="fallen">Fallen</div><button data-hire="${i}">Hire New Character</button>` : ''}</div>`).join('');
+      ${m.dead ? `<div class="fallen">Fallen</div>${save.vacation ? `<button data-hire="${i}">Hire New Character</button>` : ''}` : ''}</div>`).join('');
     this.screen(`<div class="body" id="party-view"><h2>Your party</h2><div class="creator">${cards}</div>
       <div class="menu" style="flex-direction:row;width:auto"><button id="party-back">Back</button></div></div>
       <div class="legal">${this.ruleset.attribution}</div>`, this.titleImage);
-    this.stage.querySelector('#party-back').onclick = () => this.showVacation(save);
-    this.stage.querySelectorAll('[data-hire]').forEach((el) => { el.onclick = () => this.showHire(save, Number(el.dataset.hire)); });
+    this.stage.querySelector('#party-back').onclick = leave;
+    this.stage.querySelectorAll('[data-hire]').forEach((el) => { el.onclick = () => this.showHire(save, Number(el.dataset.hire), back); });
   }
 
   /** Chooses a replacement for a dead character, starting at the level of the lowest one still alive. */
-  showHire(save, slot) {
+  showHire(save, slot, back) {
     const steps = this.ruleset.creationSteps();
     const fallen = save.members[slot];
     const level = this.ruleset.hireLevel(save.members);
@@ -162,10 +196,10 @@ class App {
         <div class="menu" style="flex-direction:row;width:auto"><button id="hire-back">Back</button><button id="hire-go">Hire</button></div></div>
         <div class="legal">${this.ruleset.attribution}</div>`, this.titleImage);
       this.bindCreatorCards(picks, names, draw);
-      this.stage.querySelector('#hire-back').onclick = () => this.showParty(save);
+      this.stage.querySelector('#hire-back').onclick = () => this.showParty(save, back);
       this.stage.querySelector('#hire-go').onclick = async () => {
         const hired = { ...save, members: this.ruleset.hire(save.members, slot, { ...pick, name: names[0].trim() || 'Recruit' }) };
-        if (await this.putSave(JSON.stringify(hired))) this.showParty(hired);
+        if (await this.putSave(JSON.stringify(hired))) this.showParty(hired, back);
         else { problem = 'The character could not be saved, so nobody was hired. Try again.'; draw(); }
       };
     };
@@ -176,7 +210,7 @@ class App {
   showVacation(save, message = 'Your party rests between adventures.') {
     const levels = ({ min, max }) => (min === max ? `Recommended level ${min}` : `Recommended levels ${min}\u2013${max}`);
     const roster = save.members.map((m) => `<div class="member${m.dead ? ' dead' : ''}"><img src="${this.assetUrl(this.ruleset.portrait(m))}" alt=""><b>${esc(m.name)}</b><span>${esc(this.ruleset.memberTitle(m))}</span></div>`).join('');
-    const adventures = this.modules.map((m) => `<div class="adventure"><h3>${esc(m.name)}</h3><div class="levels">${levels(m.recommendedLevels)}</div><p>${esc(m.summary)}</p>${outgrown(m, this.ruleset, save.members) ? '<button disabled>Your party has outgrown this</button>' : `<button data-adventure="${esc(m.id)}">Set Out</button>`}</div>`).join('');
+    const adventures = this.modules.map((m) => `<div class="adventure"><h3>${esc(m.name)}</h3><div class="levels">${levels(m.recommendedLevels)}</div><p>${esc(m.summary)}</p>${outgrown(m, this.ruleset, save.members) ? '<button disabled>Your party has outgrown this</button>' : `<button data-adventure="${esc(m.id)}">Set Out</button>`}<button class="license-link" data-license="${esc(m.id)}">License and Attributions</button></div>`).join('');
     this.screen(`<div class="body" id="vacation"><h1>On Vacation</h1><h2>${esc(message)}</h2>
       <div class="roster">${roster}</div>
       <h2>Choose an adventure</h2>
@@ -185,6 +219,10 @@ class App {
       <div class="legal">${this.ruleset.attribution}</div>`, this.titleImage);
     this.stage.querySelector('#vacation-menu').onclick = () => this.showTitle();
     this.stage.querySelector('#view-party').onclick = () => this.showParty(save);
+    this.stage.querySelectorAll('[data-license]').forEach((el) => {
+      const m = this.modules.find((o) => o.id === el.dataset.license);
+      el.onclick = () => this.showLicense(m.name, [{ title: 'Adventure', text: m.license.credit }, { title: 'Rules', text: this.ruleset.attribution }], m.license, () => this.showVacation(save, message));
+    });
     this.stage.querySelectorAll('[data-adventure]').forEach((el) => {
       el.onclick = () => { this.audio.unlock(); this.beginAdventure(this.modules.find((m) => m.id === el.dataset.adventure), save); };
     });

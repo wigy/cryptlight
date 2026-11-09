@@ -120,4 +120,5 @@ available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the 
 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.
 
 Only the SRD is used, not the rest of the publisher's site, whose other content isn't openly licensed.
-The game shows this notice on its title, creation and end screens. Keep it there if you redistribute the game.
+The game shows this notice on its title, creation and end screens, and under **License and Attributions** on the main menu
+and each adventure. Keep it there if you redistribute the game.

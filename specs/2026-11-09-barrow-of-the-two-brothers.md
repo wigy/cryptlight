@@ -117,7 +117,7 @@ Each is small and general, not Barrow-specific. All must stay plain JSON for sav
 4. **`removeObject` action and `rule passTime`** for the rubble.
 5. **`rule dread`** in srd5. A timed effect giving Disadvantage on attacks and ability checks, applied to members with the Criminal background (decision 3). `attackModifiers` and `d20` need to honour it.
 6. **`rule reward`**: gold into a pack rather than on the floor, as `win` ends play at once.
-7. **Per-module credit.** `credit` and `licence` fields shown on the adventure card and end screen, as `TODO.md` already calls for.
+7. **Per-module credit.** Done: every module has a `license` field, and its adventure card links to the License and Attributions screen. The Barrow only needs its own entry, with the BY-SA text as its `file`.
 8. **Test helpers.** `loadModule()` in `test/helpers.mjs` is hard-coded to Thornwick, so it takes an id. The reference checks in `test/srd-data.test.js` loop over every listed module.
 
 Already sufficient: `spawn` with `name`, `plate`, `zone`, `if`, `ifAll`, `onDeath`, `awardXp`, `unique`, `stays`, and multiple modules. Sprites already map `ghoul` to `zombie` and `shadow` to `shade`.

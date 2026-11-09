@@ -17,6 +17,7 @@ A module can be played any number of times, until the party's average level is a
 {
   "id": "my-module", "name": "My Module", "summary": "Shown when choosing an adventure.", "ruleset": "srd5", "titleImage": "title",
   "recommendedLevels": { "min": 1, "max": 2 },
+  "license": { "name": "MIT License", "credit": "Who made it, and where it comes from.", "file": "LICENSE" },
   "start": { "level": "first", "x": 2, "y": 2, "dir": 0 },
   "intro": ["Shown in the log at the start."],
   "items": { "my-key": { "name": "Brass Key", "kind": "gear", "icon": "key" } },
@@ -33,6 +34,8 @@ A module can be played any number of times, until the party's average level is a
   }
 }
 ```
+
+`license` is required, and is shown from the module's adventure card: `file` is the path of the full text from the game's root, which must also be in `.dockerignore`'s allowlist.
 
 `#` is wall, `.` is floor and any other character is looked up in `legend`, giving one object or a list. Cells are
 10 feet across, and `dir` is 0-3 for N E S W.

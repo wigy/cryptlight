@@ -52,6 +52,20 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   // Back to the default party through the menu, proving Continue exists now.
   await reloadToMenu();
   assert.equal(await ev(`document.querySelector('#cont').disabled`), false);
+  // View Party and the licenses are on the main menu too.
+  await clickEl('#title-party');
+  await wait(200);
+  assert.equal(await ev(`document.querySelectorAll('.partycard').length`), 4, 'the menu shows the saved party');
+  await clickEl('#party-back');
+  await wait(200);
+  await until(`document.querySelector('#cont')?.disabled === false`);
+  await clickEl('#title-license');
+  await until(`!!document.querySelector('#license-back')`);
+  assert.match(await ev(`document.querySelector('.license-text').textContent`), /MIT License.*SRD 5\.2\.1.*The Well at Thornwick.*Gemini.*Permission is hereby granted/s);
+  await shot('license-menu');
+  await clickEl('#license-back');
+  await wait(200);
+  await until(`document.querySelector('#cont')?.disabled === false`);
   // With a save to lose, New Game asks first, and Cancel or Escape leaves everything as it was.
   const asking = `document.querySelector('#confirm-new').open`;
   await clickEl('#go');
@@ -332,6 +346,15 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await wait(100);
   await shot('28-exit');
   assert.equal(await ev(`document.querySelector('#go') !== null`), true, 'Exit reaches the main menu');
+  // A save from inside an adventure can be looked at from the menu too, with no way to hire into it.
+  await until(`document.querySelector('#title-party')?.disabled === false`);
+  await clickEl('#title-party');
+  await wait(200);
+  assert.equal(await ev(`document.querySelectorAll('.partycard').length`), 4, 'the party in the adventure');
+  assert.equal(await ev(`document.querySelector('[data-hire]')`), null);
+  await clickEl('#party-back');
+  await wait(200);
+  await until(`document.querySelector('#cont')?.disabled === false`);
   await clickEl('#cont');
   await wait(300);
   assert.equal(await state(`g.party.x`), 10, 'Exit saved the step taken after the last manual save');
@@ -361,6 +384,12 @@ export default async function ({ eval: ev, click, key, wait, shot }) {
   await wait(300);
   assert.ok(await ev(`!!document.querySelector('#vacation')`), 'the end of the adventure is an exit too');
   assert.ok(await ev(`!!document.querySelector('[data-adventure="thornwick"]')`), 'and it can be played again');
+  await clickEl('[data-license="thornwick"]');
+  await until(`!!document.querySelector('#license-back')`);
+  assert.match(await ev(`document.querySelector('.license-text').textContent`), /Adventure.*SRD 5\.2\.1.*Permission is hereby granted/s);
+  await clickEl('#license-back');
+  await wait(200);
+  await shot('vacation-license-link');
   await clickEl('#view-party');
   await wait(200);
   assert.equal(await ev(`document.querySelectorAll('.partycard').length`), 4, 'View Party shows all four');

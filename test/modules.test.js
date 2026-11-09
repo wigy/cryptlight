@@ -1,6 +1,6 @@
 // Adventures as the player meets them: chosen from a list, entered at the start, and left by an exit.
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { Game, outgrown } from '../engine/world.js';
 import { newGame } from './helpers.mjs';
@@ -12,6 +12,8 @@ test('every listed module has a usable recommended level range', () => {
     const m = JSON.parse(readFileSync(new URL(`../modules/${id}/module.json`, import.meta.url)));
     assert.equal(m.id, id);
     assert.ok(m.summary, `${id} has a summary`);
+    assert.ok(m.license?.name && m.license.credit, `${id} has a license and credit`);
+    assert.ok(existsSync(new URL(`../${m.license.file}`, import.meta.url)), `${id} has its license text`);
     const { min, max } = m.recommendedLevels;
     assert.ok(Number.isInteger(min) && Number.isInteger(max) && min >= 1 && min <= max, `${id} level range`);
   }

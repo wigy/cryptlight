@@ -3,6 +3,7 @@
   "name": "The Well at Thornwick",
   "summary": "The village well runs foul, and things climb out at night. Someone has stolen the stone that kept it pure.",
   "recommendedLevels": { "min": 1, "max": 2 },
+  "license": { "name": "MIT License", "credit": "An original adventure for Cryptlight. Copyright (c) 2026 Tommi Ronkainen.", "file": "LICENSE" },
   "titleImage": "title",
   "ruleset": "srd5",
   "start": { "level": "warren", "x": 11, "y": 20, "dir": 0 },
