@@ -167,7 +167,7 @@ export class Srd5Ruleset {
   itemInfo(item) {
     const def = this.itemDef(item);
     if (!def) return { name: item.proto, icon: 'unknown', weight: 0, slots: [] };
-    const haystack = `${item.proto} ${def.name}`.toLowerCase();
+    const haystack = `${item.proto} ${def.id} ${def.name}`.toLowerCase(); // def.id is the base weapon for unique weapons
     const icon = def.icon ?? ICONS.find(([re]) => re.test(haystack))?.[1] ?? 'pouch';
     return {
       name: item.qty > 1 ? `${def.name} x${item.qty}` : def.name,

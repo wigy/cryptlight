@@ -240,3 +240,8 @@ test('old saves from inside an adventure still load', async () => {
   other.restore(JSON.stringify(saved));
   assert.equal(other.party.members.length, 4);
 });
+
+test('a unique weapon shows its base weapon icon, whatever it is called', async () => {
+  const { ruleset } = await newGame();
+  assert.equal(ruleset.itemInfo({ proto: 'thornwick-fang' }).icon, 'sword');
+});
