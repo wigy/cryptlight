@@ -168,6 +168,18 @@ test('line of sight stops at walls and shut doors, not portcullises', () => {
   assert.equal(g.los(1, 1, 3, 3), false, 'through the wall');
 });
 
+test('cover: none down a straight corridor, some around a corner, both ways', () => {
+  const g = fresh();
+  g.party.x = 1; g.party.y = 3;
+  const [me] = g.party.members;
+  const ahead = g.spawnMonster('m', 1, 1, 'a');
+  assert.equal(g.coverFraction(ahead, me), 0, 'straight up the corridor');
+  assert.equal(g.coverFraction(me, ahead), 0);
+  const round = g.spawnMonster('m', 2, 1, 'a');
+  assert.ok(g.coverFraction(round, me) > 0, 'the wall shields the party');
+  assert.ok(g.coverFraction(me, round) > 0, 'and the monster');
+});
+
 test('five-foot positions: front rank is next to the cell ahead, back rank is not', () => {
   const g = new Game(structuredClone(MODULE), new StubRules(), {});
   g.start([0, 1, 2, 3].map((i) => ({ kind: 'pc', name: `P${i}`, equipment: {}, pack: [] })));

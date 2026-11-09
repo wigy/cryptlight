@@ -55,6 +55,13 @@ export function addEffect(c, effect) {
 export const removeEffect = (c, id) => { c.effects = (c.effects ?? []).filter((x) => x.id !== id); };
 
 // ------------------------------------------------------------------- armor
+/**
+ * SRD Cover from the share of sight lines a wall or shut door blocks: Half Cover (+2) when one or two of
+ * the four are blocked, Three-Quarters Cover (+5) when three or more are. It adds to AC and Dexterity saves.
+ * Total Cover needs no number: without a line of sight there is no attack.
+ */
+export const coverBonus = (fraction) => (fraction >= 0.75 ? 5 : fraction > 0 ? 2 : 0);
+export const coverName = (bonus) => (bonus >= 5 ? 'three-quarters cover' : bonus > 0 ? 'half cover' : '');
 export function armorClass(c, srd) {
   if (c.kind !== 'pc') return c.ac + (hasEffect(c, 'shield-of-faith') ? 2 : 0);
   const armor = c.equipment.armor && srd.items[c.equipment.armor.proto];
@@ -108,7 +115,7 @@ export function d20(rng, c, { bonus = 0, advantage = false, disadvantage = false
   return { natural, values, keep: values.length > 1 ? (advantage ? 'high' : 'low') : null, total: natural + bonus - 2 * exhaustion(c ?? {}) };
 }
 
-export function savingThrow(rng, c, ability, dc, { advantage = false, disadvantage = false } = {}) {
+export function savingThrow(rng, c, ability, dc, { advantage = false, disadvantage = false, cover = 0 } = {}) {
   if ((ability === 'str' || ability === 'dex') && (hasCondition(c, 'paralyzed') || hasCondition(c, 'stunned') || hasCondition(c, 'unconscious') || hasCondition(c, 'petrified'))) {
     return { success: false, total: 0, natural: 0, auto: true };
   }
@@ -117,6 +124,7 @@ export function savingThrow(rng, c, ability, dc, { advantage = false, disadvanta
   else bonus = c.saves?.[ability] ?? mod(c, ability);
   if (hasEffect(c, 'bless')) bonus += roll(rng, '1d4');
   if (hasEffect(c, 'bane')) bonus -= roll(rng, '1d4');
+  if (ability === 'dex') bonus += cover;
   const gnome = c.kind === 'pc' && SPECIES[c.speciesId]?.mentalSaveAdvantage && ['int', 'wis', 'cha'].includes(ability);
   const rageStr = ability === 'str' && hasEffect(c, 'rage');
   const r = d20(rng, c, {

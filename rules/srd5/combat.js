@@ -1,5 +1,5 @@
 // Attack resolution for characters and monsters, including weapon mastery and class damage riders.
-import { applyDamage, addCondition, addEffect, armorClass, attackModifiers, canAct, checkConcentration, d20, getEffect, hasEffect, isDown, mod, pb, removeEffect, rollDice } from './core.js';
+import { applyDamage, addCondition, addEffect, armorClass, attackModifiers, canAct, checkConcentration, coverBonus, coverName, d20, getEffect, hasEffect, isDown, mod, pb, removeEffect, rollDice } from './core.js';
 import { CLASS_TABLE } from './data.js';
 
 export const ROUND = 6; // Game seconds in a round.
@@ -20,10 +20,13 @@ export function attackBlessings(rng, c, mods) {
 }
 
 /** An attack roll as the log shows it: "d20(14) + 1d4(3) + 4 = 21 vs AC 15". With two dice, "d20(5,14 high)". */
-export function attackRollText(r, mods, ac) {
+/** The cover bonus `target` has against `from`, from the engine's line-of-sight geometry. */
+export const coverOf = (game, from, target) => coverBonus(game.coverFraction?.(from, target) ?? 0);
+
+export function attackRollText(r, mods, ac, cover = 0) {
   const dice = `d20(${r.values.join(',')}${r.keep ? ` ${r.keep}` : ''})${mods.map((d) => `${d.sign < 0 ? ' - ' : ' + '}${d.die}(${d.values.join(',')})`).join('')}`;
   const flat = r.total - r.natural - sumOf(mods.map((d) => d.sign * d.total));
-  return `${dice}${signed(flat)}${mods.length || flat ? ` = ${r.total}` : ''} vs AC ${ac}`;
+  return `${dice}${signed(flat)}${mods.length || flat ? ` = ${r.total}` : ''} vs AC ${ac}${cover ? ` (${coverName(cover)})` : ''}`;
 }
 
 /** Damage dice as the log shows them: "2d6(3,5) + 1d6(4) + 2 = 14". Empty when no dice were rolled. */
@@ -97,11 +100,12 @@ export function characterAttack(ctx) {
   const r = d20(rng, a, { bonus, advantage: m.advantage, disadvantage: m.disadvantage });
   removeEffect(a, 'sapped'); removeEffect(a, 'vex'); removeEffect(a, 'mocked');
   removeEffect(t, 'guided');
-  const ac = armorClass(t, srd);
+  const cover = coverOf(game, a, t);
+  const ac = armorClass(t, srd) + cover;
   const mastery = a.weaponMasteries?.includes(weapon.id) ? weapon.mastery : null;
   const crit = r.natural === 20 || (m.autoCrit && r.natural !== 1);
   const hit = r.natural !== 1 && (r.natural === 20 || r.total >= ac);
-  const out = { hit, crit: hit && crit, natural: r.natural, total: r.total, ac, damage: 0, killed: false, advantage: m.advantage && !m.disadvantage, dice: attackRollText(r, toHit, ac) };
+  const out = { hit, crit: hit && crit, natural: r.natural, total: r.total, ac, damage: 0, killed: false, advantage: m.advantage && !m.disadvantage, dice: attackRollText(r, toHit, ac, cover) };
 
   if (!hit) {
     if (mastery === 'graze' && !ctx.isExtra && abilityBonus > 0) {
@@ -233,11 +237,12 @@ export function monsterAttack(game, m, entry, target, { feet, ranged, longRange,
   removeEffect(m, 'sapped'); removeEffect(m, 'mocked');
   const hadAdvantage = am.advantage && !am.disadvantage;
   const crit = r.natural === 20 || (am.autoCrit && r.natural !== 1);
-  let ac = armorClass(target, srd);
+  const cover = coverOf(game, m, target);
+  let ac = armorClass(target, srd) + cover;
   let hit = r.natural !== 1 && (r.natural === 20 || r.total >= ac);
   // The Shield spell is a Reaction taken after being hit.
-  if (hit && r.natural !== 20 && game.ruleset.tryShieldReaction?.(game, target, r.total)) { ac = armorClass(target, srd); hit = r.total >= ac; }
-  const out = { hit, crit: hit && crit, natural: r.natural, total: r.total, ac, dealt: 0, killed: false, droppedToZero: false, dice: attackRollText(r, toHit, ac) };
+  if (hit && r.natural !== 20 && game.ruleset.tryShieldReaction?.(game, target, r.total - cover)) { ac = armorClass(target, srd) + cover; hit = r.total >= ac; }
+  const out = { hit, crit: hit && crit, natural: r.natural, total: r.total, ac, dealt: 0, killed: false, droppedToZero: false, dice: attackRollText(r, toHit, ac, cover) };
   if (!hit) return out;
   const thrown = [];
   let rolled = 0;

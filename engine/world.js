@@ -183,6 +183,30 @@ export class Game {
     return true;
   }
 
+  /**
+   * How much of `target` is hidden from `from` by walls and shut doors, as the share (0, 0.25 … 1) of
+   * sight lines blocked: from the centre of the attacker's square to the four corners of the target's,
+   * pulled a little inwards so a line that just grazes a corner doesn't count. The ruleset turns this
+   * into cover. Only cells between the two block; the ones they stand in never do.
+   */
+  coverFraction(from, target) {
+    const a = this.posOf(from), b = this.posOf(target);
+    const level = target.kind === 'pc' ? this.party.level : target.level;
+    const ax = (a.x + a.w / 2) / 2, ay = (a.y + a.w / 2) / 2;
+    const own = (x, y) => (x === Math.floor(ax) && y === Math.floor(ay)) || (x >= Math.floor(b.x / 2) && x <= Math.floor((b.x + b.w - 1) / 2) && y >= Math.floor(b.y / 2) && y <= Math.floor((b.y + b.w - 1) / 2));
+    const inset = 0.1 * b.w;
+    const corners = [[b.x / 2 + inset, b.y / 2 + inset], [(b.x + b.w) / 2 - inset, b.y / 2 + inset], [b.x / 2 + inset, (b.y + b.w) / 2 - inset], [(b.x + b.w) / 2 - inset, (b.y + b.w) / 2 - inset]];
+    const blocked = (tx, ty) => {
+      const steps = Math.ceil(Math.hypot(tx - ax, ty - ay) / 0.05);
+      for (let i = 1; i < steps; i++) {
+        const x = Math.floor(ax + ((tx - ax) * i) / steps), y = Math.floor(ay + ((ty - ay) * i) / steps);
+        if (!own(x, y) && this.blocksSight(x, y, level)) return true;
+      }
+      return false;
+    };
+    return corners.filter(([x, y]) => blocked(x, y)).length / corners.length;
+  }
+
   // ---------------------------------------------------------------- automap
   /**
    * Records what the party can see now: lit cells in the first-person view with a clear line, walls included.

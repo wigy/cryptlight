@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { addCondition, addEffect, applyDamage, armorClass, attackModifiers, d20, hasCondition, heal, roll, rollDice, savingThrow } from '../rules/srd5/core.js';
+import { addCondition, addEffect, applyDamage, armorClass, attackModifiers, coverBonus, d20, hasCondition, heal, roll, rollDice, savingThrow } from '../rules/srd5/core.js';
 import { characterAttack, monsterAttack, multiattackPlan, usesMartialArts } from '../rules/srd5/combat.js';
 import { createCharacter, longRest, makeItem, maybeLevelUp, shortRest } from '../rules/srd5/characters.js';
 import { fakeRng, newGame, tick } from './helpers.mjs';
@@ -601,4 +601,12 @@ test('the creator leaves out the classes and species held back for now, but thei
   for (const id of ['orc', 'goliath', 'dragonborn', 'tiefling']) assert.ok(!offered('speciesId').includes(id), id);
   for (const id of ['dwarf', 'elf', 'halfling', 'human']) assert.ok(offered('speciesId').includes(id), id);
   assert.equal(g.ruleset.createMember({ name: 'T', classId: 'warlock', speciesId: 'tiefling' }).classId, 'warlock');
+});
+
+test('cover adds +2 or +5 to AC and Dexterity saves', () => {
+  assert.deepEqual([0, 0.25, 0.5, 0.75, 1].map(coverBonus), [0, 2, 2, 5, 5]);
+  const c = { kind: 'monster', abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 }, saves: {} };
+  const rng = () => fakeRng([10]);
+  assert.equal(savingThrow(rng(), c, 'dex', 12, { cover: 2 }).success, true, 'Dex: 10 + 2 makes 12');
+  assert.equal(savingThrow(rng(), c, 'wis', 12, { cover: 2 }).success, false, 'other saves get nothing');
 });

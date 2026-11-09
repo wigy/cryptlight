@@ -5,7 +5,7 @@ import {
   heal, isDown, isIncapacitated, lacksArmorTraining, mod, passivePerception, pb, removeCondition, removeEffect, roll, rollDice, savingThrow, skillBonus, speedOf,
 } from './core.js';
 import { MAX_LEVEL, PACK_SIZE, SLOTS, createCharacter, hitPointGain, longRest, makeItem, maybeLevelUp, newUid, shortRest, spellsAtLevel, xpForNextLevel } from './characters.js';
-import { ROUND, attackBlessings, attackRollText, characterAttack, damageRollText, monsterAttack, multiattackPlan, rangeOf, reachOf, unarmedStrike } from './combat.js';
+import { ROUND, attackBlessings, attackRollText, characterAttack, coverOf, damageRollText, monsterAttack, multiattackPlan, rangeOf, reachOf, unarmedStrike } from './combat.js';
 import { SPELL_FX } from './spells.js';
 
 // Message and effect colours: indices into the engine's named palette (engine/colors.js).
@@ -581,7 +581,7 @@ export class Srd5Ruleset {
     m.resources.breath -= 1; this.spendAction(game, m);
     const dc = 8 + mod(m, 'con') + pb(m);
     game.fxBolt(11, targets[0]);
-    for (const t of targets) this.harm(game, m, t, roll(game.rng, '1d10') >> (this.save(game, t, 'dex', dc).success ? 1 : 0), 'fire');
+    for (const t of targets) this.harm(game, m, t, roll(game.rng, '1d10') >> (this.save(game, t, 'dex', dc, { cover: coverOf(game, m, t) }).success ? 1 : 0), 'fire');
     return true;
   }
 
@@ -764,11 +764,12 @@ export class Srd5Ruleset {
         if (hasEffect(m, 'innate-sorcery')) am.advantage = true;
         const toHit = [];
         const r = d20(game.rng, m, { bonus: this.spellAttackBonus(m) + attackBlessings(game.rng, m, toHit), advantage: am.advantage, disadvantage: am.disadvantage });
-        const ac = armorClass(t, this.srd);
+        const cover = coverOf(game, m, t);
+        const ac = armorClass(t, this.srd) + cover;
         const crit = r.natural === 20 || (am.autoCrit && r.natural !== 1);
         if (atRange) game.fxBolt(fx.color, t);
         removeEffect(m, 'mocked'); removeEffect(m, 'sapped');
-        const toHitText = attackRollText(r, toHit, ac);
+        const toHitText = attackRollText(r, toHit, ac, cover);
         if (r.natural === 1 || (!crit && r.total < ac)) { game.log(`${m.name}'s ${spell.name} misses ${t.name}. ${toHitText}`); return true; }
         const damage = rollDice(game.rng, dice, { crit });
         game.log(`${m.name}'s ${spell.name} strikes ${t.name}${crit ? ' (CRIT)' : ''}. ${toHitText}; ${damageRollText([damage], damage.total)}`, crit ? YELLOW : WHITE);
@@ -782,7 +783,7 @@ export class Srd5Ruleset {
         const ability = spell.saveAbility ?? 'dex';
         game.fxBolt(fx.color, list[0]);
         for (const t of list) {
-          const s = this.save(game, t, ability, dc);
+          const s = this.save(game, t, ability, dc, { cover: coverOf(game, m, t) });
           const full = roll(game.rng, dice);
           if (s.success && !fx.half) { game.log(`${t.name} resists ${spell.name}.`); this.wake(game, t); continue; }
           this.harm(game, m, t, s.success ? Math.floor(full / 2) : full, type);
@@ -847,7 +848,7 @@ export class Srd5Ruleset {
         for (const t of list) {
           this.wake(game, t);
           if (fx.sleeping && t.conditionImmunities?.includes('exhaustion')) continue; // They don't sleep.
-          if (this.save(game, t, fx.ability, dc).success) continue;
+          if (this.save(game, t, fx.ability, dc, { cover: coverOf(game, m, t) }).success) continue;
           affected++;
           if (fx.effect) addEffect(t, { id: fx.effect, until: game.time + ROUND * fx.rounds, caster: m.uid });
           if (fx.condition && addCondition(t, fx.condition, { until: game.time + ROUND * fx.rounds, source: m.uid })) {
@@ -1349,7 +1350,7 @@ export class Srd5Ruleset {
     game.fxBoltFrom(m, 13);
     const half = /Success: Half/.test(entry.text);
     for (const t of targets) {
-      const s = this.save(game, t, entry.save.ability, entry.save.dc);
+      const s = this.save(game, t, entry.save.ability, entry.save.dc, { cover: coverOf(game, m, t) });
       if (s.success && !half) { game.log(`${t.name} avoids it.`); continue; }
       for (const d of entry.damage ?? []) {
         const n = roll(game.rng, d.dice);
