@@ -46,7 +46,7 @@
       "name": "Gold Crown",
       "kind": "gear",
       "weight": 3,
-      "icon": "ring",
+      "icon": "crown",
       "description": "The dead queen's crown, worth 300 GP. Her two sons killed each other for it."
     },
     "ethelred-dagger": {

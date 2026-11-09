@@ -200,6 +200,7 @@ add('corpse-slab', 'sprite', '1:1', `${SOLO} The legs and one arm of a dead youn
 add('salt-line', 'sprite', '1:1', `Top-down view of a thick, rough band of coarse white salt poured straight across the middle of the frame from the left edge to the right edge, with scattered white grains along it. Only the salt. ${CUTOUT}`, { noTrim: true, neutral: true, standIn: 'plate' });
 add('ghoul', 'sprite', '3:4', `A gaunt, hunched ghoul with grey-white leathery skin stretched over its bones, long black claws, a lolling tongue and pointed teeth, in rotted burial wrappings. ${CREATURE}`);
 attackPose('ghoul', '3:4', 'The ghoul springs at the viewer with both clawed hands reaching out and its jaws gaping wide to bite. The whole body down to the feet fits in the frame with a wide empty margin on every side.');
+add('icon-crown', 'sprite', '1:1', `An old royal crown of heavy dark gold with a band and tall pointed tips, set with a few dull red stones, seen from the front and slightly above. ${ACTION}`, { size: 128 });
 add('title-barrow', 'image', '16:9', `${PAINT} A wide view of a grassy burial mound at night with a freshly dug stone-lined entrance, a heap of spoil and a spade beside it, and a second, smaller mound with a blocked entrance behind it, under a dark cloudy sky. No text, no border.`, { crop: 0.035, standIn: 'title' });
 
 // --- screens and interface
