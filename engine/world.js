@@ -194,6 +194,14 @@ export class Game {
       }
     }
     mark(p.x, p.y, VISITED);
+    // Stamp the cell with the squares walked so far, which is how the automap tells a cell's age.
+    level.visitedAt ??= {};
+    p.walked ??= 0;
+    const here = p.y * level.width + p.x;
+    if (level.visitedAt[here] !== p.walked) {
+      level.visitedAt[here] = ++p.walked;
+      this.exploreVersion = (this.exploreVersion ?? 0) + 1;
+    }
   }
 
   // ---------------------------------------------------------------- five-foot-square positions

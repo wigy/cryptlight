@@ -8,6 +8,19 @@ const COLORS = {
   door: '#d9b45a', portcullis: '#a8a8a8', party: '#ff5a3c', partyEdge: '#000',
 };
 
+const TRAIL_SQUARES = 10; // A walked cell is back to the plain floor colour after this many more squares.
+
+const rgb = (hex) => [1, 3, 5].map((k) => parseInt(hex.slice(k, k + 2), 16));
+const TRAIL = Array.from({ length: TRAIL_SQUARES }, (_, age) => {
+  const [from, to] = [rgb(COLORS.visited), rgb(COLORS.seen)];
+  return `rgb(${from.map((c, k) => Math.round(c + ((to[k] - c) * age) / TRAIL_SQUARES)).join()})`;
+});
+
+/** Floor colour for a cell walked `age` squares ago: anything older, or never walked, is plain floor. */
+export function floorColor(age) {
+  return TRAIL[age] ?? COLORS.seen;
+}
+
 export function createAutomap() {
   const canvas = document.createElement('canvas');
   canvas.id = 'automap';
@@ -59,12 +72,12 @@ export function drawAutomap(canvas, game) {
   const ox = Math.floor((WIDTH - level.width * CELL) / 2), oy = Math.floor((HEIGHT - level.height * CELL) / 2);
   for (let y = 0; y < level.height; y++) {
     for (let x = 0; x < level.width; x++) {
-      const state = level.explored?.[y * level.width + x];
-      if (!state) continue;
+      const i = y * level.width + x;
+      if (!level.explored?.[i]) continue;
       const c = level.cells[y][x];
       const px = ox + x * CELL, py = oy + y * CELL;
       // Hidden doors ('S') stay walls until found, so the map gives nothing away.
-      ctx.fillStyle = c === '#' || c === ' ' || c === 'S' ? COLORS.wall : c === '<' ? COLORS.stairs : state === 2 ? COLORS.visited : COLORS.seen;
+      ctx.fillStyle = c === '#' || c === ' ' || c === 'S' ? COLORS.wall : c === '<' ? COLORS.stairs : floorColor(p.walked - level.visitedAt?.[i]);
       ctx.fillRect(px, py, CELL, CELL);
     }
   }
