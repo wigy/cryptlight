@@ -57,6 +57,7 @@ button:disabled { opacity: .45; cursor: default; }
 #pad { flex: none; display: grid; grid-template-columns: repeat(3, 56px); grid-auto-rows: 60px; gap: 4px; }
 #pad button { padding: 0; font-size: 24px; line-height: 1; }
 #pad button.pressed { animation: padpress .18s ease-out; }
+#pad button.waiting { transform: scale(.86); border-color: var(--gold); color: #fff3cf; background: linear-gradient(#6b5530, #3e3019); }
 @keyframes padpress { 0% { transform: scale(.86); border-color: var(--gold); color: #fff3cf; background: linear-gradient(#6b5530, #3e3019); } 100% { transform: scale(1); } }
 #hint { position: absolute; left: 0; bottom: 140px; width: 896px; max-height: 190px; padding: 8px 12px; background: #120e09ee; font-size: 15px; line-height: 19px; overflow: hidden; border-top: 1px solid var(--gold); pointer-events: none; z-index: 5; }
 #hint b { color: var(--gold); }

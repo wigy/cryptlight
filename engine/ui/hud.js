@@ -56,6 +56,7 @@ export class Hud {
   // ---------------------------------------------------------------- play layout
   mountGame(game) {
     this.game = game;
+    this.moveQueue = []; // Turns and steps pressed while a step is under way, run in order (see queueMove).
     this.menu = null;
     this.inventory = null;
     this.hint = null;
@@ -132,6 +133,7 @@ export class Hud {
     const pauseLabel = g.paused ? 'Resume' : 'Pause';
     if (this.pauseButton.textContent !== pauseLabel) this.pauseButton.textContent = pauseLabel;
     for (const el of this.lockable) el.disabled = g.paused;
+    this.runQueuedMoves();
     this.els.hint.hidden = !this.hint;
     if (this.hint) setHtml(this.els.hint, this.hint);
     this.handEl.hidden = !g.hand;
@@ -393,12 +395,47 @@ export class Hud {
     el.classList.add('pressed');
   }
 
+  /**
+   * Movement asked for while the party is still finishing a step waits instead of being lost, its button
+   * held down until it happens. A turn after a waiting step waits behind it, so the step still goes the way
+   * the party faced when it was pressed. A step pressed straight after a waiting step replaces it, so a held
+   * key walks steadily instead of running on after it is let go. Pausing drops what's waiting.
+   */
+  queueMove(act) {
+    const last = this.moveQueue.at(-1);
+    if (act.startsWith('step') && last?.startsWith('step')) this.moveQueue[this.moveQueue.length - 1] = act;
+    else if (this.moveQueue.length < 4) this.moveQueue.push(act);
+    this.showQueue();
+  }
+  showQueue() {
+    for (const el of this.stage.querySelectorAll('#pad .waiting')) el.classList.remove('waiting');
+    for (const act of this.moveQueue) this.stage.querySelector(`#pad [data-act="${act}"]`)?.classList.add('waiting');
+  }
+  runQueuedMoves() {
+    const g = this.game;
+    if (!this.moveQueue.length) return;
+    if (g.paused || g.over) { this.moveQueue = []; this.showQueue(); return; }
+    while (this.moveQueue.length) {
+      const act = this.moveQueue[0];
+      const [verb, n] = act.split(':');
+      if (verb === 'step' && g.realTime < g.party.stepReadyAt) break;
+      this.moveQueue.shift();
+      this.pressPad(act);
+      if (verb === 'step') g.step(Number(n)); else g.turn(Number(n));
+    }
+    this.showQueue();
+  }
+
   /** Runs a HUD command. Also the entry point for keyboard shortcuts. */
   command(act) {
     const g = this.game;
     const [verb, a, b] = act.split(':');
     if (g.paused && PAUSE_LOCKED.has(verb)) return;
-    if (verb === 'turn' || verb === 'step') this.pressPad(act);
+    if (verb === 'turn' || verb === 'step') {
+      const busy = this.moveQueue.length > 0 || (verb === 'step' && g.realTime < g.party.stepReadyAt);
+      if (busy && !g.over) { this.queueMove(act); return; }
+      this.pressPad(act);
+    }
     switch (verb) {
       case 'pause':
         g.paused = !g.paused;
