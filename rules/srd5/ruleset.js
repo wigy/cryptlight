@@ -164,11 +164,13 @@ export class Srd5Ruleset {
   // ---------------------------------------------------------------- items
   itemDef(item) { return item ? this.srd.items[item.proto] : null; }
 
-  itemInfo(item) {
+  /** `slot` is where the item sits, if equipped: a torch is lit only in a hand. */
+  itemInfo(item, slot) {
     const def = this.itemDef(item);
     if (!def) return { name: item.proto, icon: 'unknown', weight: 0, slots: [] };
     const haystack = `${item.proto} ${def.id} ${def.name}`.toLowerCase(); // def.id is the base weapon for unique weapons
-    const icon = def.icon ?? ICONS.find(([re]) => re.test(haystack))?.[1] ?? 'pouch';
+    let icon = def.icon ?? ICONS.find(([re]) => re.test(haystack))?.[1] ?? 'pouch';
+    if (item.proto === 'torch' && slot !== 'mainHand' && slot !== 'offHand') icon = 'torch-unlit';
     return {
       name: item.qty > 1 ? `${def.name} x${item.qty}` : def.name,
       baseName: def.name,

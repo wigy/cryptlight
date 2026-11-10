@@ -51,7 +51,7 @@ export class Hud {
     const url = this.app.assetUrl(`icon-${name}`);
     return url ? `<img src="${url}" alt="">` : GLYPHS[name] ?? '';
   }
-  itemImg(item) { return this.img(`icon-${this.game.ruleset.itemInfo(item).icon}`); }
+  itemImg(item, slot) { return this.img(`icon-${this.game.ruleset.itemInfo(item, slot).icon}`); }
 
   // ---------------------------------------------------------------- play layout
   mountGame(game) {
@@ -221,7 +221,7 @@ export class Hud {
       const hand = (slot, label) => {
         const it = m.equipment[slot];
         const info = it && g.ruleset.itemInfo(it);
-        return `<button class="slot" data-act="slot:${i}:${slot}" data-hint="${esc(info ? `<b>${info.name}</b>. ${info.description}` : `${label}: empty. Click with an item to equip it.`)}">${it ? `<img src="${this.itemImg(it)}" alt=""><span class="q">${it.qty > 1 ? it.qty : ''}</span>` : ''}</button>`;
+        return `<button class="slot" data-act="slot:${i}:${slot}" data-hint="${esc(info ? `<b>${info.name}</b>. ${info.description}` : `${label}: empty. Click with an item to equip it.`)}">${it ? `<img src="${this.itemImg(it, slot)}" alt=""><span class="q">${it.qty > 1 ? it.qty : ''}</span>` : ''}</button>`;
       };
       const dragged = this.drag?.ghost ? (i === this.drag.from ? ' dragfrom' : i === this.drag.over ? ' dragto' : '') : '';
       return `<div class="card${s.dead ? ' dead' : ''}${dragged}" data-card="${i}">
@@ -310,11 +310,11 @@ export class Hud {
       setHtml(inv, `${top}${this.featuresHtml(m)}<div class="sheet">${sheet}</div>${close}`);
       return;
     }
-    const slot = (act, it, label) => {
+    const slot = (act, it, label, where) => {
       const info = it && g.ruleset.itemInfo(it);
-      return `<button class="slot" data-act="${act}" data-hint="${esc(info ? `<b>${info.name}</b>. ${info.description}` : `${label}: empty.`)}">${it ? `<img src="${this.itemImg(it)}" alt=""><span class="q">${it.qty > 1 ? it.qty : ''}</span>` : ''}</button>`;
+      return `<button class="slot" data-act="${act}" data-hint="${esc(info ? `<b>${info.name}</b>. ${info.description}` : `${label}: empty.`)}">${it ? `<img src="${this.itemImg(it, where)}" alt=""><span class="q">${it.qty > 1 ? it.qty : ''}</span>` : ''}</button>`;
     };
-    const doll = g.ruleset.slots.map((s) => `<div class="dollslot">${slot(`slot:${i}:${s.id}`, m.equipment[s.id], s.label)}<span>${esc(s.label)}</span></div>`).join('');
+    const doll = g.ruleset.slots.map((s) => `<div class="dollslot">${slot(`slot:${i}:${s.id}`, m.equipment[s.id], s.label, s.id)}<span>${esc(s.label)}</span></div>`).join('');
     const pack = m.pack.map((it, n) => slot(`pack:${i}:${n}`, it, 'Pack')).join('');
     const weight = g.ruleset.carriedWeight(m);
     setHtml(inv, `${top}<div><h2>Equipped</h2><div class="doll">${doll}</div></div>

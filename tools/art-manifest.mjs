@@ -79,6 +79,9 @@ export const ICONS = ['sword', 'dagger', 'axe', 'mace', 'bow', 'staff', 'spear',
 const iconDesc = 'row 1: longsword, dagger, battle axe, spiked mace, wooden bow; row 2: wizard staff, spear, round shield, steel chain mail shirt, brown leather armor; row 3: red potion bottle, rolled parchment scroll, iron key, lit torch, bread and cheese; row 4: leather roll of lockpicks, stack of gold coins, silver amulet, gold ring, leather-bound book; row 5: quiver of arrows, leather pouch, glowing blue gemstone, pile of bones, small wooden crate';
 add('icons', 'sheet', '1:1', `A game inventory icon sheet: exactly 25 separate fantasy items in a neat 5 by 5 grid, evenly spaced, each centered in its own cell and not touching any other, painted in a consistent hand-painted fantasy RPG style with strong readable silhouettes. In order, ${iconDesc}. ${CUTOUT}`, { grid: 5 });
 
+// A torch not in a hand is out, so it has its own icon beside the lit one on the sheet.
+add('icon-torch-unlit', 'sprite', '1:1', `${SOLO} One unlit wooden torch lying diagonally across the frame, handle at the bottom left and head at the top right, its head wrapped in dark oil-soaked cloth bound with twine, the cloth charred black at the tip. Cold and dark: no flame, no fire, no glow, no smoke, no sparks. Painted in a hand-painted fantasy RPG inventory icon style with a strong readable silhouette, centered, filling most of the frame. Only this one object: no symbols, no frame, no background plate. ${CUTOUT}`, { size: 128 });
+
 // --- action icons for the character boxes; items already have theirs on the sheet above
 // Saying "icon" here made Gemini add graphic symbols and pictograms, so these ask for a plain painted object.
 const ACTION = `${SOLO} One single painted object with a strong simple silhouette, centered, filling most of the frame. Only this one object: no symbols, no pictograms, no arrows, no graphic overlays, no frame, no background plate. ${CUTOUT}`;

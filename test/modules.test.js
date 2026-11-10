@@ -231,6 +231,15 @@ test('a torch still burning from the last adventure is not joined by another', a
   assert.equal(count(), packed);
 });
 
+test('a torch shows lit only in a hand', async () => {
+  const { ruleset } = await newGame();
+  const torch = { uid: 'i1', proto: 'torch' };
+  assert.equal(ruleset.itemInfo(torch, 'offHand').icon, 'torch');
+  assert.equal(ruleset.itemInfo(torch, 'mainHand').icon, 'torch');
+  assert.equal(ruleset.itemInfo(torch).icon, 'torch-unlit');
+  assert.ok(existsSync(new URL('../assets/game/icon-torch-unlit.webp', import.meta.url)));
+});
+
 test('old saves from inside an adventure still load', async () => {
   const { game: g, ruleset } = await newGame();
   const saved = JSON.parse(g.serialize());
