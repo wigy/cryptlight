@@ -109,6 +109,11 @@ export class Hud {
     this.els.paused.id = 'paused';
     this.els.paused.textContent = 'PAUSED';
     wrap.append(this.els.paused);
+    this.els.combat = document.createElement('div');
+    this.els.combat.id = 'combat';
+    this.els.combat.textContent = 'COMBAT';
+    this.els.combat.hidden = true;
+    wrap.append(this.els.combat);
     this.els.hint = document.createElement('div');
     this.els.hint.id = 'hint';
     this.stage.append(this.els.hint);
@@ -129,6 +134,8 @@ export class Hud {
     this.renderInventory();
     // The overlay would cover the inventory, which is exactly what can still be used while paused.
     this.els.paused.hidden = !g.paused || this.inventory != null;
+    // The ruleset decides what counts as a fight (in srd5 it is also when the party slows to combat pace).
+    this.els.combat.hidden = !g.ruleset.inCombat?.(g) || !!g.over || this.inventory != null;
     this.stage.classList.toggle('paused', g.paused);
     const pauseLabel = g.paused ? 'Resume' : 'Pause';
     if (this.pauseButton.textContent !== pauseLabel) this.pauseButton.textContent = pauseLabel;
