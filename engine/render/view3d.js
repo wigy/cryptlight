@@ -40,9 +40,10 @@ const EYE = 0.5;
 const FOV_Y = 62 * Math.PI / 180;
 // A monster's melee attack rakes across the view just in front of the eye, so it shows even from behind the party.
 const SLASH = { ahead: 0.4, side: 0.14, height: 0.36 };
-// How long a monster holds its attack pose, outlasting the slash, and how much taller it is drawn: the raised weapon
-// reaches the top of that picture, so at the same height the body would shrink.
-const ATTACK_POSE = { seconds: 0.6, scale: 1.12 };
+// How long a monster holds its attack pose, outlasting the slash, and how much taller each pose is drawn: a raised
+// weapon reaches the top of the picture, so at the same height the body would shrink. The ruleset names the pose
+// (`attackPose`); a sprite without that picture falls back to its melee one, then to its usual one.
+const ATTACK_POSE = { seconds: 0.6, scale: { attack: 1.12, shoot: 1.06, throw: 1.04 } };
 
 const hash = (x, y) => { let h = (x * 374761393 + y * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return h >>> 0; };
 const ease = (t) => t * t * (3 - 2 * t);
@@ -417,16 +418,16 @@ export class View3D {
     const k = Math.min(1, dt * 7);
     v.x += (gx - v.x) * k; v.y += (gy - v.y) * k;
     const age = game.realTime - (e.attackAnim ?? -9);
-    const lunge = age < 0.3 ? Math.sin(age / 0.3 * Math.PI) : 0;
+    const kind = e.attackPose ?? 'attack';
+    const lunge = age < 0.3 && kind === 'attack' ? Math.sin(age / 0.3 * Math.PI) : 0; // Archers stand their ground.
     const toCamX = this.cam.x - v.x, toCamY = this.cam.y - v.y, l = Math.hypot(toCamX, toCamY) || 1;
     const x = v.x + toCamX / l * lunge * 0.14, y = v.y + toCamY / l * lunge * 0.14;
     const hitAge = game.realTime - (e.hitAt ?? -9);
     const flash = hitAge < 0.16 ? 0.75 * (1 - hitAge / 0.16) : 0;
-    // Sprites without an attack picture keep their usual one.
-    const pose = age < ATTACK_POSE.seconds && this.assetUrl(`${info.sprite}-attack`) ? `${info.sprite}-attack` : null;
+    const pose = age < ATTACK_POSE.seconds ? [kind, 'attack'].map((k) => `${info.sprite}-${k}`).find((n) => this.assetUrl(n)) ?? null : null;
     const height = 0.74 * info.scale;
     const breathe = 1 + 0.012 * Math.sin(game.realTime * 2.2 + hash(e.x, e.y) % 7);
-    this.billboard(draws, pose ?? info.sprite, x, y, height * breathe * (pose ? ATTACK_POSE.scale : 1), { flash, pick: { type: 'monster', ref: e } });
+    this.billboard(draws, pose ?? info.sprite, x, y, height * breathe * (pose ? ATTACK_POSE.scale[pose.slice(info.sprite.length + 1)] ?? 1 : 1), { flash, pick: { type: 'monster', ref: e } });
     if (e.hitAt != null && e.hitShown !== e.hitAt) {
       e.hitShown = e.hitAt;
       this.floaters.push({ x, y, z: height * 0.8, text: String(e.hitAmount), born: game.realTime });

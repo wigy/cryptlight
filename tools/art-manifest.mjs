@@ -58,6 +58,14 @@ attackPose('shade', '3:4', 'The shadow creature lashes out with one long clawed 
 attackPose('spider', '1:1', 'The spider rears up with its front legs raised high and its dripping fangs spread wide, about to strike.');
 attackPose('centipede', '1:1', 'The centipede has uncoiled and lashes straight at the viewer in a long diagonal strike across the frame, head huge and close, mandibles spread wide open, legs splayed out.');
 
+// Ranged attacks get their own pose: a bow drawn, or a blade let fly, aimed at someone directly in front of it.
+const RANGED = `The reference image only shows what this character looks like: keep its colors, clothing and painting style, but do not copy its pose. Draw a completely new full-body pose with the limbs in clearly different positions, facing the viewer and aiming straight at someone directly in front of it. ${SOLO} ${CUTOUT}`;
+const rangedPose = (id, kind, aspect, pose) => add(`${id}-${kind}`, 'sprite', aspect, `${pose} ${RANGED}`, { ref: id });
+rangedPose('goblin', 'shoot', '3:4', 'The goblin has slung its shield on its back and draws a short wooden bow at full stretch, arrow nocked and pointed straight at the viewer, one yellow eye squinting along the shaft.');
+rangedPose('goblin', 'throw', '3:4', 'The goblin is in the middle of throwing a dagger overarm at the viewer: throwing arm whipped forward at shoulder height, the dagger just leaving its fingers, shield arm swung back for balance.');
+rangedPose('goblin-boss', 'shoot', '3:4', 'The goblin chieftain, scimitar sheathed at its hip, draws a short bow at full stretch with an arrow pointed straight at the viewer, cloak hanging behind it.');
+rangedPose('skeleton', 'shoot', '3:4', 'The skeleton has its shortsword sheathed at its hip and draws a battered short bow at full stretch, arrow pointed straight at the viewer, bony fingers at its jaw.');
+
 // --- effects
 add('slash', 'sprite', '1:1', `${SOLO} Three parallel curved claw slash marks raking diagonally through empty space from upper right to lower left, like a monster's claws tearing the air, tapering to sharp points at both ends, pale bone-white hot core fading to deep blood red edges, with a few flecks of blood. Only the three slash marks: no creature, no hand, no claws, no symbols. ${CUTOUT}`, { size: 512, loose: true });
 

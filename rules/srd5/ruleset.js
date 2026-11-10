@@ -1382,6 +1382,8 @@ export class Srd5Ruleset {
   resolveMonsterAttack(game, m, entry, t, ctx) {
     const r = monsterAttack(game, m, entry, t, ctx);
     m.attackAnim = game.realTime;
+    // Which picture the renderer shows: bows and slings are shot, anything else at range is thrown.
+    m.attackPose = !ctx.ranged ? 'attack' : /bow|sling|blowgun/i.test(entry.name) ? 'shoot' : 'throw';
     if (ctx.ranged) game.sound('throw');
     else if (game.fxSlash(m)) game.sound('claw'); // Once however many attacks a Multiattack makes at this moment.
     const name = entry.name.replace(/ \(.*$/, '');
