@@ -240,6 +240,23 @@ test('a torch shows lit only in a hand', async () => {
   assert.ok(existsSync(new URL('../assets/game/icon-torch-unlit.webp', import.meta.url)));
 });
 
+test('a candle shows lit, burns and gives a little light only in a hand', async () => {
+  const { game: g, ruleset } = await newGame();
+  const candle = { uid: 'i2', proto: 'candle' };
+  assert.equal(ruleset.itemInfo(candle, 'mainHand').icon, 'candle');
+  assert.equal(ruleset.itemInfo(candle).icon, 'candle-unlit');
+  for (const name of ['candle', 'candle-unlit']) assert.ok(existsSync(new URL(`../assets/game/icon-${name}.webp`, import.meta.url)));
+  for (const m of g.party.members) for (const s of ['mainHand', 'offHand']) if (m.equipment[s]?.proto === 'torch') m.equipment[s] = null;
+  const m = g.party.members[0];
+  assert.equal(ruleset.light(g).bright, false);
+  m.equipment.offHand = candle;
+  const lit = ruleset.light(g);
+  assert.ok(lit.bright && lit.radius < 4.2 && lit.radius >= 1);
+  ruleset.tickMember(g, m, 3601 / ruleset.timeScale);
+  assert.equal(m.equipment.offHand, null);
+  assert.match(g.logLines.at(-1).text, /candle burns out/);
+});
+
 test('old saves from inside an adventure still load', async () => {
   const { game: g, ruleset } = await newGame();
   const saved = JSON.parse(g.serialize());

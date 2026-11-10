@@ -82,6 +82,11 @@ add('icons', 'sheet', '1:1', `A game inventory icon sheet: exactly 25 separate f
 // A torch not in a hand is out, so it has its own icon beside the lit one on the sheet.
 add('icon-torch-unlit', 'sprite', '1:1', `${SOLO} One unlit wooden torch lying diagonally across the frame, handle at the bottom left and head at the top right, its head wrapped in dark oil-soaked cloth bound with twine, the cloth charred black at the tip. Cold and dark: no flame, no fire, no glow, no smoke, no sparks. Painted in a hand-painted fantasy RPG inventory icon style with a strong readable silhouette, centered, filling most of the frame. Only this one object: no symbols, no frame, no background plate. ${CUTOUT}`, { size: 128 });
 
+// Candles likewise, lit in a hand and out elsewhere; both share one description so they match.
+const CANDLE = 'One short thick tallow candle, cream-coloured with wax drips down its sides, standing upright in a small round dented brass candleholder with a ring handle, seen from slightly above and to the side, centered, filling most of the frame. Painted in a hand-painted fantasy RPG inventory icon style with a strong readable silhouette. Only this one object: no symbols, no frame, no background plate, no table.';
+add('icon-candle', 'sprite', '1:1', `${SOLO.replace('no flames, no candles, ', '')} ${CANDLE} Lit: a small bright yellow-orange teardrop flame on the wick, crisply painted, with no halo, no glow and no light spilling onto the background. ${CUTOUT}`, { size: 128, loose: true });
+add('icon-candle-unlit', 'sprite', '1:1', `${SOLO} ${CANDLE} Unlit: a short blackened wick, no flame, no glow, no smoke. ${CUTOUT}`, { size: 128 });
+
 // --- action icons for the character boxes; items already have theirs on the sheet above
 // Saying "icon" here made Gemini add graphic symbols and pictograms, so these ask for a plain painted object.
 const ACTION = `${SOLO} One single painted object with a strong simple silhouette, centered, filling most of the frame. Only this one object: no symbols, no pictograms, no arrows, no graphic overlays, no frame, no background plate. ${CUTOUT}`;

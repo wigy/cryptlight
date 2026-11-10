@@ -21,10 +21,13 @@ const SPRITE_BY_ID = {
 };
 const SPRITE_BY_TYPE = { undead: 'zombie', beast: 'rat', humanoid: 'cultist', fey: 'goblin', giant: 'zombie', dragon: 'spider', fiend: 'cultist-boss', monstrosity: 'spider', aberration: 'spider', construct: 'skeleton', elemental: 'shade', ooze: 'shade', plant: 'shade', celestial: 'cultist-boss', swarm: 'rat' };
 
+// What burns while held: how far it lights, in cells (10 ft each), and what the log says when it is used up. Both last an hour.
+const FLAMES = { torch: { radius: 4.2, out: 'torch gutters out' }, candle: { radius: 1.5, out: 'candle burns out' } };
+
 const ICONS = [
   [/greatsword|longsword|shortsword|scimitar|rapier|sword/, 'sword'], [/dagger|sickle/, 'dagger'], [/axe|halberd|glaive/, 'axe'], [/mace|club|hammer|flail|morningstar|maul|pick/, 'mace'],
   [/longbow|shortbow|crossbow/, 'bow'], [/quarterstaff|staff|wand|rod/, 'staff'], [/spear|javelin|pike|trident|lance/, 'spear'], [/shield/, 'shield'],
-  [/plate|mail|splint|breastplate/, 'heavy-armor'], [/armor|shirt/, 'light-armor'], [/potion|vial|flask|antitoxin|oil/, 'potion'], [/scroll|parchment/, 'scroll'], [/key/, 'key'], [/torch|candle/, 'torch'],
+  [/plate|mail|splint|breastplate/, 'heavy-armor'], [/armor|shirt/, 'light-armor'], [/potion|vial|flask|antitoxin|oil/, 'potion'], [/scroll|parchment/, 'scroll'], [/key/, 'key'], [/torch/, 'torch'], [/candle/, 'candle'],
   [/ration|food|berry/, 'food'], [/tools|kit/, 'tools'], [/gold|coin|silver/, 'coin'], [/amulet|symbol|holy/, 'amulet'], [/ring/, 'ring'], [/book|tome/, 'book'], [/arrows|bolts|bullets|needles|dart/, 'arrows'],
 ];
 
@@ -164,13 +167,13 @@ export class Srd5Ruleset {
   // ---------------------------------------------------------------- items
   itemDef(item) { return item ? this.srd.items[item.proto] : null; }
 
-  /** `slot` is where the item sits, if equipped: a torch is lit only in a hand. */
+  /** `slot` is where the item sits, if equipped: a torch or candle is lit only in a hand. */
   itemInfo(item, slot) {
     const def = this.itemDef(item);
     if (!def) return { name: item.proto, icon: 'unknown', weight: 0, slots: [] };
     const haystack = `${item.proto} ${def.id} ${def.name}`.toLowerCase(); // def.id is the base weapon for unique weapons
     let icon = def.icon ?? ICONS.find(([re]) => re.test(haystack))?.[1] ?? 'pouch';
-    if (item.proto === 'torch' && slot !== 'mainHand' && slot !== 'offHand') icon = 'torch-unlit';
+    if (FLAMES[item.proto] && slot !== 'mainHand' && slot !== 'offHand') icon = `${icon}-unlit`;
     return {
       name: item.qty > 1 ? `${def.name} x${item.qty}` : def.name,
       baseName: def.name,
@@ -307,11 +310,11 @@ export class Srd5Ruleset {
   spellAttackBonus(c) { return pb(c) + mod(c, this.spellAbility(c)); }
 
   // ---------------------------------------------------------------- light and sight
-  /** Party light from a held torch, the Light cantrip or Darkvision. Radius in cells (10 ft each). */
+  /** Party light from a held torch or candle, the Light cantrip or Darkvision. Radius in cells (10 ft each). */
   light(game) {
-    const held = game.party.members.some((m) => !m.dead && ['mainHand', 'offHand'].some((s) => m.equipment[s]?.proto === 'torch'));
-    const lit = held || game.party.members.some((m) => hasEffect(m, 'light'));
-    if (lit) return { radius: 4.2, mono: false, bright: true };
+    const flames = game.party.members.filter((m) => !m.dead).flatMap((m) => ['mainHand', 'offHand'].map((s) => FLAMES[m.equipment[s]?.proto]?.radius ?? 0));
+    const radius = Math.max(0, ...flames, game.party.members.some((m) => hasEffect(m, 'light')) ? FLAMES.torch.radius : 0);
+    if (radius) return { radius, mono: false, bright: true };
     const dark = Math.max(0, ...game.party.members.filter((m) => !m.dead).map((m) => m.darkvision ?? 0));
     if (dark > 0) return { radius: dark / this.cellFeet * 0.7, mono: true, bright: false };
     return { radius: 0.9, mono: true, bright: false };
@@ -1260,12 +1263,12 @@ export class Srd5Ruleset {
       m.actionReadyAt = Math.max(m.actionReadyAt, game.time + ROUND / 2);
     }
     if (m.hp > 0 && hasCondition(m, 'unconscious') && !m.sleeping) removeCondition(m, 'unconscious');
-    // Burn torches.
+    // Burn torches and candles.
     for (const slot of ['mainHand', 'offHand']) {
-      const it = m.equipment[slot];
-      if (it?.proto !== 'torch') continue;
+      const it = m.equipment[slot], flame = FLAMES[it?.proto];
+      if (!flame) continue;
       it.burn = (it.burn ?? 3600) - dt * this.timeScale;
-      if (it.burn <= 0) { m.equipment[slot] = null; game.log(`${m.name}'s torch gutters out.`, RED); }
+      if (it.burn <= 0) { m.equipment[slot] = null; game.log(`${m.name}'s ${flame.out}.`, RED); }
     }
     // Death saving throws once per round at 0 HP.
     if (m.hp <= 0 && !m.death.stable) {
